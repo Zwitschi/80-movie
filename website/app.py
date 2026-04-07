@@ -1,4 +1,7 @@
-from movie_site import create_app
+try:
+    from .movie_site import create_app
+except ImportError:
+    from movie_site import create_app
 
 
 app = create_app()

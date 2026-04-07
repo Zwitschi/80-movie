@@ -35,6 +35,12 @@ If the virtual environment is missing dependencies, install Flask first:
 f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe -m pip install Flask
 ```
 
+Or install the tracked project dependencies from the repository root:
+
+```powershell
+f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
 The main routes are:
 
 - `/`: overview page
@@ -59,7 +65,33 @@ Examples:
 - Platforms that support direct Flask or WSGI entrypoints: point them at `website.app:app`.
 - If deploying behind a reverse proxy, keep static files under `website/static` available at `/static`.
 
-If you add `gunicorn` or other deployment dependencies later, record them in your environment setup for the target platform.
+## Gunicorn
+
+`gunicorn` is now included in the tracked project dependencies in `requirements.txt`.
+
+Typical production-style startup command from the repository root:
+
+```text
+gunicorn website.app:app --bind 0.0.0.0:8000
+```
+
+Recommended environment variables for deployment:
+
+- `FLASK_ENV=production`
+- `PYTHONUNBUFFERED=1`
+
+Example Linux or WSL validation command:
+
+```bash
+source .venv/bin/activate
+gunicorn website.app:app --bind 127.0.0.1:8000
+```
+
+Windows note:
+
+- `gunicorn` installs successfully in the project environment, but it does not run natively on Windows because it depends on the Unix-only `fcntl` module.
+- In this workspace, local gunicorn startup was attempted and failed for that expected platform reason.
+- For local Windows development, continue using the Flask development server or run the gunicorn validation step inside WSL or another Linux environment before deploying.
 
 ## Schema Generation
 
