@@ -1,0 +1,34 @@
+{
+  "@type": "Movie",
+  "@id": {{ movie_id|tojson }},
+  "url": {{ base_url|tojson }},
+  "name": {{ movie.title|tojson }},
+  "alternateName": {{ movie.tagline|tojson }},
+  "description": {{ movie.description|tojson }},
+  "genre": {{ movie.genre|tojson }},
+  "keywords": {{ movie.keywords|join(', ')|tojson }},
+  "duration": {{ movie.duration_iso|tojson }},
+{% if movie.date_published %}
+  "datePublished": {{ movie.date_published|tojson }},
+{% endif %}
+  "inLanguage": {{ movie.in_language|tojson }},
+  "image": {{ movie.poster_image|tojson }},
+  "contentRating": {{ movie.content_rating|tojson }},
+  "mainEntityOfPage": {{ base_url|tojson }},
+  "productionCompany": {
+    "@id": {{ organization_id|tojson }}
+  },
+  "trailer": {
+    "@id": {{ trailer_id|tojson }}
+  },
+  "aggregateRating": {
+    "@id": {{ (base_url ~ '/#aggregate-rating')|tojson }}
+  },
+  "director": {{ director_refs|tojson }},
+  "producer": {{ producer_refs|tojson }},
+  "actor": {{ actor_refs|tojson }},
+  "review": {{ review_refs|tojson }},
+  "subjectOf": {{ screening_refs|tojson }},
+  "offers": {{ offer_refs|tojson }},
+  "schemaVersion": {{ schema_version|tojson }}
+}

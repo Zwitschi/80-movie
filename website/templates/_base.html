@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{{ movie_title }}{% endblock %}</title>
+    {% if movie_schema_json %}
+    <script type="application/ld+json">
+      {{ movie_schema_json | safe }}
+    </script>
+    {% endif %}
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/site.css') }}"
+    />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <nav class="nav" aria-label="Main navigation">
+          <a href="{{ url_for('main.index') }}" class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-title">{{ movie_title }}</span>
+          </a>
+
+          <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">Overview</a>
+            <a href="{{ url_for('main.film') }}#trailer">Trailer</a>
+            <a href="{{ url_for('main.credits') }}">Credits</a>
+            <a href="{{ url_for('main.film') }}#tickets">Showtimes</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    {% block page_content %}{% endblock %}
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          &copy; {{ current_year|default(2026) }} {{ movie_title }}. All rights
+          reserved.
+        </p>
+      </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>

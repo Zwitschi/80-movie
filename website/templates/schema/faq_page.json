@@ -1,0 +1,17 @@
+{
+  "@type": "FAQPage",
+  "@id": {{ faq_id|tojson }},
+  "url": {{ page_url|tojson }},
+  "mainEntity": [
+{% for item in faq_items %}
+    {
+      "@type": "Question",
+      "name": {{ item.question|tojson }},
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": {{ item.answer|tojson }}
+      }
+    }{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+}

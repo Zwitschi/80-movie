@@ -1,0 +1,21 @@
+{
+  "@type": "VideoObject",
+  "@id": {{ trailer_id|tojson }},
+  "name": {{ trailer.name|tojson }},
+  "description": {{ trailer.description|tojson }},
+  "url": {{ trailer.url|tojson }},
+  "embedUrl": {{ trailer.embed_url|tojson }},
+  "thumbnailUrl": {{ trailer.thumbnail_url|tojson }},
+  "uploadDate": {{ trailer.upload_date|tojson }},
+  "duration": {{ trailer.duration_iso|tojson }},
+  "encodingFormat": {{ trailer.encoding_format|tojson }},
+  "encodesCreativeWork": {
+    "@id": {{ movie_id|tojson }}
+  },
+  "productionCompany": {
+    "@id": {{ organization_id|tojson }}
+  },
+  "director": {{ director_refs|tojson }},
+  "actor": {{ actor_refs|tojson }},
+  "isFamilyFriendly": {{ trailer.is_family_friendly|tojson }}
+}

@@ -1,0 +1,21 @@
+{
+  "@type": "Review",
+  "@id": {{ review_id|tojson }},
+  "itemReviewed": {
+    "@id": {{ movie_id|tojson }}
+  },
+  "author": {
+    "@type": "Organization",
+    "name": {{ review.author_name|tojson }},
+    "url": {{ review.author_url|tojson }}
+  },
+  "datePublished": {{ review.date_published|tojson }},
+  "name": {{ review.name|tojson }},
+  "reviewBody": {{ review.review_body|tojson }},
+  "reviewRating": {
+    "@type": "Rating",
+    "ratingValue": {{ review.review_rating|tojson }},
+    "bestRating": 5,
+    "worstRating": 1
+  }
+}

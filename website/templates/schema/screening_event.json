@@ -1,0 +1,32 @@
+{
+  "@type": "ScreeningEvent",
+  "@id": {{ screening_id|tojson }},
+  "name": {{ screening.name|tojson }},
+  "description": {{ screening.description|tojson }},
+  "startDate": {{ screening.start_date|tojson }},
+  "endDate": {{ screening.end_date|tojson }},
+  "eventStatus": {{ screening.event_status|tojson }},
+  "eventAttendanceMode": {{ screening.event_attendance_mode|tojson }},
+  "organizer": {
+    "@id": {{ organization_id|tojson }}
+  },
+  "location": {
+    "@type": "Place",
+    "name": {{ screening.location.name|tojson }},
+    "url": {{ screening.location.url|tojson }},
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": {{ screening.location.address.street_address|tojson }},
+      "addressLocality": {{ screening.location.address.address_locality|tojson }},
+      "addressRegion": {{ screening.location.address.address_region|tojson }},
+      "postalCode": {{ screening.location.address.postal_code|tojson }},
+      "addressCountry": {{ screening.location.address.address_country|tojson }}
+    }
+  },
+  "videoFormat": {{ screening.video_format|tojson }},
+  "subtitleLanguage": {{ screening.subtitle_language|tojson }},
+  "workPresented": {
+    "@id": {{ movie_id|tojson }}
+  },
+  "offers": {{ offer_refs|tojson }}
+}

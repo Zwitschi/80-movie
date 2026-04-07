@@ -1,0 +1,8 @@
+{
+  "@type": "Person",
+  "@id": {{ person_id|tojson }},
+  "name": {{ person.name|tojson }},
+  "jobTitle": {{ person.job_title|tojson }},
+  "url": {{ person.url|tojson }},
+  "sameAs": {{ person.same_as|tojson }}
+}

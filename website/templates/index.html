@@ -1,0 +1,280 @@
+{% extends '_base.html' %} {% block page_content %}
+<main>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Feature Documentary</span>
+        <h1>
+          {{ movie_title }}
+          <span>{{ movie_tagline|default('A cinematic event') }}</span>
+        </h1>
+        <p class="hero-lede">{{ movie_description }}</p>
+
+        <div class="hero-actions">
+          <a href="#trailer" class="btn btn-primary">Watch Trailer</a>
+          <a href="#synopsis" class="btn btn-secondary">Read Synopsis</a>
+          <a href="#tickets" class="btn btn-secondary">See Showtimes</a>
+        </div>
+
+        <div class="hero-meta">
+          <span class="meta-pill">{{ movie_genre }}</span>
+          <span class="meta-pill">{{ movie_runtime }}</span>
+          <span class="meta-pill">{{ release_date }}</span>
+        </div>
+
+        <div class="content-card hero-note">
+          <p>
+            Open Mic Odyssey is positioned here as a character-first road film:
+            funny, uncertain, and emotionally grounded instead of
+            over-explained.
+          </p>
+          <div class="hero-note-grid">
+            <div>
+              <span class="note-label">Tone</span>
+              <strong>Funny, intimate, restless</strong>
+            </div>
+            <div>
+              <span class="note-label">Lens</span>
+              <strong>Friendship under creative pressure</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="poster-card" aria-label="Movie poster preview">
+          <div class="poster-frame">
+            <div class="poster-title">
+              {{ movie_title.split(' ')[0] if movie_title else 'Movie' }}
+              <strong
+                >{{ movie_title.split(' ', 1)[1] if movie_title and ' ' in
+                movie_title else 'Title' }}</strong
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card hero-facts">
+          <span class="eyebrow eyebrow-small">Overview</span>
+          <h2>Clearer hierarchy, faster reading</h2>
+          <ul class="fact-list">
+            <li>
+              <span class="fact-label">Trailer</span>
+              <span class="fact-value">Immediate viewing path</span>
+            </li>
+            <li>
+              <span class="fact-label">Synopsis</span>
+              <span class="fact-value">Story and themes grouped together</span>
+            </li>
+            <li>
+              <span class="fact-label">Credits</span>
+              <span class="fact-value">Key contributors surfaced early</span>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container">
+    <section class="overview-band" aria-label="Overview highlights">
+      <article class="feature feature-highlight">
+        <h3>Built for Discovery</h3>
+        <p>
+          Visitors can now move naturally from hook to trailer to story details
+          without scanning generic placeholder sections.
+        </p>
+      </article>
+      <article class="feature feature-highlight">
+        <h3>Documentary Framing</h3>
+        <p>
+          The page now emphasizes the road, the comedy circuit, and the human
+          relationships behind the documentary.
+        </p>
+      </article>
+      <article class="feature feature-highlight">
+        <h3>Production Signals</h3>
+        <p>
+          Credits, screening info, and structured data support trust and make
+          the film feel more publication-ready.
+        </p>
+      </article>
+    </section>
+
+    <section id="trailer">
+      <div class="section-header">
+        <h2>Trailer</h2>
+        <p>The first action on the page should feel obvious and worthwhile.</p>
+      </div>
+      <div class="section-split">
+        <div class="content-card trailer-panel">
+          <div class="trailer-copy">
+            <span class="eyebrow eyebrow-small">Watch</span>
+            <h3>{{ movie.trailer.name }}</h3>
+            <p>{{ movie.trailer.description }}</p>
+            <div class="hero-actions hero-actions-compact">
+              <a href="{{ movie.trailer.url }}" class="btn btn-primary"
+                >Open Trailer</a
+              >
+              <a href="{{ movie.trailer.embed_url }}" class="btn btn-secondary"
+                >Embed Link</a
+              >
+            </div>
+          </div>
+          <div class="trailer-frame">
+            <div class="trailer-placeholder">
+              <span class="play-badge">Play</span>
+              <strong>{{ movie.trailer.duration_iso }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Purpose</span>
+          <h3>Trailer-first layout</h3>
+          <p>
+            This section gives the trailer its own visual weight instead of
+            treating it like an afterthought below generic body copy.
+          </p>
+          <ul class="bullet-list">
+            <li>Dedicated CTA above the fold</li>
+            <li>Room for an embedded player or still</li>
+            <li>Short copy for context before the click</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="synopsis">
+      <div class="section-header">
+        <h2>Synopsis</h2>
+        <p>
+          Story and emotional framing live together here, not scattered across
+          the page.
+        </p>
+      </div>
+      <div class="section-split section-split-wide">
+        <div class="content-card story-panel">
+          {% block about %}
+          <p class="story-intro">{{ movie_description }}</p>
+          <p>
+            The documentary follows three best friends through a moving
+            landscape of cheap motels, late sets, long drives, and the strange
+            optimism it takes to keep betting on yourself.
+          </p>
+          <p>
+            The redesigned layout makes that human throughline easier to read by
+            giving the synopsis enough room to breathe and by separating it from
+            operational details like tickets and credits.
+          </p>
+          {% endblock %}
+        </div>
+
+        <div class="stack-panel">
+          <div class="content-card side-panel">
+            <span class="eyebrow eyebrow-small">Themes</span>
+            <ul class="bullet-list">
+              <li>Creative ambition</li>
+              <li>Friendship under stress</li>
+              <li>The comedy grind as lived experience</li>
+            </ul>
+          </div>
+          <div class="content-card side-panel">
+            <span class="eyebrow eyebrow-small">Audience</span>
+            <p>
+              Best positioned for audiences interested in independent
+              documentary, performance culture, and road stories with
+              personality.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="credits">
+      <div class="section-header">
+        <h2>Credits</h2>
+        <p>
+          Key people and production information should be visible without
+          hunting for them.
+        </p>
+      </div>
+      <div class="grid-3 credits-grid">
+        <article class="feature feature-credit">
+          <h3>Production Company</h3>
+          <p>{{ movie.production_company.name }}</p>
+          <a href="{{ movie.production_company.url }}" class="text-link"
+            >Official site</a
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Director</h3>
+          <p>{{ movie.contributors.directors[0].name }}</p>
+          <span class="credit-role"
+            >{{ movie.contributors.directors[0].job_title }}</span
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Producer</h3>
+          <p>{{ movie.contributors.producers[0].name }}</p>
+          <span class="credit-role"
+            >{{ movie.contributors.producers[0].job_title }}</span
+          >
+        </article>
+      </div>
+    </section>
+
+    <section id="tickets">
+      <div class="section-header">
+        <h2>Showtimes & Access</h2>
+        <p>
+          Separate live screening information from digital follow-up so both
+          calls to action stay clear.
+        </p>
+      </div>
+      <div class="section-split">
+        <div class="content-card showtime-panel">
+          {% block tickets %}
+          <span class="eyebrow eyebrow-small">Upcoming Screening</span>
+          <h3>{{ movie.screenings[0].name }}</h3>
+          <p>{{ movie.screenings[0].description }}</p>
+          <dl class="detail-list">
+            <div>
+              <dt>Venue</dt>
+              <dd>{{ movie.screenings[0].location.name }}</dd>
+            </div>
+            <div>
+              <dt>Ticket</dt>
+              <dd>
+                ${{ movie.screenings[0].offers[0].price }} {{
+                movie.screenings[0].offers[0].price_currency }}
+              </dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Scheduled preview screening</dd>
+            </div>
+          </dl>
+          <a
+            href="{{ movie.screenings[0].offers[0].url }}"
+            class="btn btn-primary"
+            >Get Screening Tickets</a
+          >
+          {% endblock %}
+        </div>
+
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Digital Release</span>
+          <h3>{{ movie.offers[0].name }}</h3>
+          <p>{{ movie.offers[0].description }}</p>
+          <a href="{{ movie.offers[0].url }}" class="btn btn-secondary"
+            >Join The Waitlist</a
+          >
+        </div>
+      </div>
+    </section>
+
+    {% block extra_sections %}{% endblock %}
+  </div>
+</main>
+{% endblock %}

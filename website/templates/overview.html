@@ -1,0 +1,57 @@
+{% extends '_base.html' %} {% block page_content %}
+<main>
+  <section class="hero overview-hero">
+    <div class="container overview-grid">
+      <aside
+        class="poster-card overview-poster"
+        aria-label="Movie poster preview"
+      >
+        <div class="poster-frame">
+          <div class="poster-title">
+            {{ movie_title.split(' ')[0] if movie_title else 'Movie' }}
+            <strong
+              >{{ movie_title.split(' ', 1)[1] if movie_title and ' ' in
+              movie_title else 'Title' }}</strong
+            >
+          </div>
+        </div>
+      </aside>
+
+      <div class="content-card overview-card">
+        <span class="eyebrow">Overview</span>
+        <h1>
+          {{ movie_title }}
+          <span>{{ movie_tagline }}</span>
+        </h1>
+        <p class="hero-lede">{{ movie_description }}</p>
+
+        <div class="hero-meta">
+          <span class="meta-pill">{{ movie_genre }}</span>
+          <span class="meta-pill">{{ movie_runtime }}</span>
+          <span class="meta-pill">{{ release_date }}</span>
+        </div>
+
+        <div class="overview-copy">
+          <p>
+            A documentary road story about three best friends, stand-up stages,
+            and the emotional math of trying to make a creative life real.
+          </p>
+          <p>
+            Start with the trailer, then continue into the full film page for
+            the expanded synopsis, credits, and screening information.
+          </p>
+        </div>
+
+        <div class="hero-actions overview-actions">
+          <a href="{{ url_for('main.film') }}#trailer" class="btn btn-primary"
+            >Watch Trailer</a
+          >
+          <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+            >Learn More About The Film</a
+          >
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

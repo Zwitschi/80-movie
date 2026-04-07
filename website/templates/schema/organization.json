@@ -1,0 +1,7 @@
+{
+  "@type": "Organization",
+  "@id": {{ organization_id|tojson }},
+  "name": {{ organization.name|tojson }},
+  "url": {{ organization.url|tojson }},
+  "sameAs": {{ organization.same_as|tojson }}
+}

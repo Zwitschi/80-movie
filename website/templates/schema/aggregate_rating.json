@@ -1,0 +1,12 @@
+{
+  "@type": "AggregateRating",
+  "@id": {{ rating_id|tojson }},
+  "itemReviewed": {
+    "@id": {{ movie_id|tojson }}
+  },
+  "ratingValue": {{ aggregate_rating.rating_value|tojson }},
+  "bestRating": {{ aggregate_rating.best_rating|tojson }},
+  "worstRating": {{ aggregate_rating.worst_rating|tojson }},
+  "ratingCount": {{ aggregate_rating.rating_count|tojson }},
+  "reviewCount": {{ aggregate_rating.review_count|tojson }}
+}
