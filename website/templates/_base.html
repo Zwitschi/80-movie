@@ -16,6 +16,28 @@
     {% block extra_head %}{% endblock %}
   </head>
   <body>
+    <div class="site-background" aria-hidden="true">
+      <video
+        class="site-background-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        poster="{{ url_for('static', filename='images/jplenio-desert-2340326.jpg') }}"
+      >
+        <source
+          src="{{ url_for('static', filename='video/drive.webm') }}"
+          type="video/webm"
+        />
+        <source
+          src="{{ url_for('static', filename='video/drive.mp4') }}"
+          type="video/mp4"
+        />
+      </video>
+      <div class="site-background-overlay"></div>
+    </div>
+
     <header class="site-header">
       <div class="container">
         <nav class="nav" aria-label="Main navigation">
@@ -26,10 +48,9 @@
 
           <div class="nav-links">
             <a href="{{ url_for('main.index') }}">Overview</a>
-            <a href="{{ url_for('main.watch') }}">Watch</a>
+            <a href="{{ url_for('main.film') }}">Film</a>
             <a href="{{ url_for('main.gallery') }}">Gallery</a>
             <a href="{{ url_for('main.support') }}">Support</a>
-            <a href="{{ url_for('main.credits') }}">Credits</a>
             <a href="{{ url_for('main.film') }}#tickets">Showtimes</a>
           </div>
         </nav>

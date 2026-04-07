@@ -24,10 +24,44 @@ html {
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--black);
+  color: var(--text-main);
+  min-height: 100vh;
+  line-height: 1.6;
+  position: relative;
+  isolation: isolate;
+}
+
+.site-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
   background:
-    linear-gradient(rgba(0, 0, 0, 0.44), rgba(0, 0, 0, 0.64)),
-    url("/static/images/jplenio-desert-2340326.jpg") center center / cover fixed
+    url("/static/images/jplenio-desert-2340326.jpg") center center / cover
       no-repeat,
+    linear-gradient(
+      135deg,
+      var(--black) 0%,
+      var(--deep-burgundy) 45%,
+      var(--burnt-maroon) 100%
+    );
+}
+
+.site-background-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.42;
+}
+
+.site-background-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.44), rgba(0, 0, 0, 0.68)),
     radial-gradient(
       circle at top left,
       rgba(255, 249, 79, 0.08),
@@ -37,17 +71,14 @@ body {
       circle at right center,
       rgba(213, 137, 54, 0.12),
       transparent 30%
-    ),
-    linear-gradient(
-      135deg,
-      var(--black) 0%,
-      var(--deep-burgundy) 45%,
-      var(--burnt-maroon) 100%
     );
-  background-color: var(--black);
-  color: var(--text-main);
-  min-height: 100vh;
-  line-height: 1.6;
+}
+
+.site-header,
+main,
+.site-footer {
+  position: relative;
+  z-index: 1;
 }
 
 a {
@@ -144,7 +175,7 @@ img {
 }
 
 .overview-hero {
-  padding-top: 7rem;
+  padding-top: 2rem;
 }
 
 .credits-hero {
@@ -208,6 +239,103 @@ img {
   display: grid;
   gap: 1rem;
   margin: 1.5rem 0;
+}
+
+.overview-synopsis-section {
+  padding-bottom: 4rem;
+}
+
+.overview-synopsis-shell {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.overview-synopsis-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.8rem;
+}
+
+.overview-synopsis-actions {
+  margin-top: 0.2rem;
+}
+
+.overview-trailer-section {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.overview-trailer-shell {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.overview-trailer-card {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  padding: 1.8rem;
+}
+
+.overview-trailer-copy {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.overview-trailer-copy h3 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: var(--text-main);
+}
+
+.overview-trailer-header {
+  margin-bottom: 0;
+}
+
+.overview-page-title {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 0.95;
+  margin: 0.75rem 0 1rem;
+  text-transform: uppercase;
+}
+
+.overview-page-title span {
+  display: block;
+  color: var(--golden-amber);
+}
+
+.overview-meta {
+  margin-top: 1rem;
+}
+
+.overview-trailer-actions {
+  margin-top: 0.2rem;
+}
+
+.overview-video-shell {
+  margin: 0;
+  min-height: 360px;
+}
+
+.overview-next-step-section {
+  padding-bottom: 4rem;
+}
+
+.overview-cta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.overview-cta-card {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.overview-cta-card .btn {
+  margin-top: 0.35rem;
 }
 
 .credits-page {
@@ -875,6 +1003,8 @@ section {
   .grid-3,
   .overview-band,
   .overview-grid,
+  .overview-cta-grid,
+  .overview-trailer-card,
   .credits-hero-grid,
   .watch-grid,
   .support-hero-grid,
@@ -906,14 +1036,8 @@ section {
 }
 
 @media (max-width: 560px) {
-  body {
-    background-attachment: scroll, scroll, scroll, scroll, scroll;
-    background-position:
-      center top,
-      center top,
-      top left,
-      right center,
-      center;
+  .site-background-video {
+    opacity: 0.28;
   }
 
   .container {
@@ -930,5 +1054,11 @@ section {
 
   .hero {
     padding-top: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-background-video {
+    display: none;
   }
 }

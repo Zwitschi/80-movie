@@ -6,20 +6,20 @@
       <div class="content-card support-intro">
         <span class="eyebrow">Support</span>
         <h1>
-          Follow And Back
+          Official Updates And
           <span>{{ movie_title }}</span>
         </h1>
         <p class="hero-lede">
-          One page for the official channels, supporter paths, and
-          campaign-adjacent links that audiences should use instead of scattered
-          placeholders.
+          The broad public hub for trailer viewing, official channels, release
+          updates, and the lighter support actions that should stay easy to
+          scan.
         </p>
         <div class="hero-actions overview-actions">
-          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
-            >Watch Trailer</a
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >Support The Film</a
           >
-          <a href="{{ url_for('main.credits') }}" class="btn btn-secondary"
-            >View Credits</a
+          <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+            >Open Film Page</a
           >
         </div>
       </div>
@@ -38,13 +38,13 @@
             >
           </li>
           <li>
-            <span class="fact-label">Supporter Hub</span>
-            <span class="fact-value">Dedicated Patreon page now live</span>
+            <span class="fact-label">Membership</span>
+            <span class="fact-value">Separate membership conversion page</span>
           </li>
         </ul>
         <div class="hero-actions overview-actions support-summary-actions">
           <a href="{{ url_for('main.patreon') }}" class="btn btn-secondary"
-            >Open Supporter Page</a
+            >Open Patreon Page</a
           >
         </div>
       </aside>
@@ -93,10 +93,10 @@
 
     <section>
       <div class="section-header">
-        <h2>Supporter Paths</h2>
+        <h2>Low-Friction Support Actions</h2>
         <p>
-          Give visitors a few clear ways to help without forcing them into a
-          single funnel.
+          Keep the public asks simple here: follow, subscribe, and choose the
+          dedicated membership page only if someone wants a deeper commitment.
         </p>
       </div>
       <div class="grid-3 support-grid">
@@ -113,24 +113,26 @@
 
     <section>
       <div class="section-header">
-        <h2>Supporter Membership</h2>
+        <h2>Need The Deeper Support Offer?</h2>
         <p>
-          The deeper bonus-content pitch now lives on its own page so audiences
-          can understand what supporter access actually means.
+          Patreon is now treated as a separate conversion page for visitors who
+          already want bonus access, tiers, and a more direct financial ask.
         </p>
       </div>
       <div class="content-card support-membership-panel">
-        <span class="eyebrow eyebrow-small">Member Access</span>
-        <h3>{{ movie.supporter_page.title }}</h3>
-        <p>{{ movie.supporter_page.membership_pitch }}</p>
+        <span class="eyebrow eyebrow-small">Conversion Path</span>
+        <h3>Patreon And Member Access</h3>
+        <p>
+          Use this page to explain the public-facing paths first. Move visitors
+          to Patreon only when they want bonus material, supporter tiers, and a
+          direct backing decision.
+        </p>
         <div class="hero-actions overview-actions">
           <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-            >See Membership Details</a
+            >Support The Film</a
           >
-          <a
-            href="{{ movie.supporter_page.primary_link.url }}"
-            class="btn btn-secondary"
-            >{{ movie.supporter_page.primary_link.label }}</a
+          <a href="{{ url_for('main.film') }}#credits" class="btn btn-secondary"
+            >Open Film Page</a
           >
         </div>
       </div>

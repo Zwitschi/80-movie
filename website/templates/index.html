@@ -11,11 +11,14 @@
         <p class="hero-lede">{{ movie_description }}</p>
 
         <div class="hero-actions">
-          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >Support The Film</a
+          >
+          <a
+            href="{{ url_for('main.index') }}#trailer"
+            class="btn btn-secondary"
             >Watch Trailer</a
           >
-          <a href="#synopsis" class="btn btn-secondary">Read Synopsis</a>
-          <a href="#tickets" class="btn btn-secondary">See Showtimes</a>
         </div>
 
         <div class="hero-meta">
@@ -70,7 +73,7 @@
             </li>
             <li>
               <span class="fact-label">Credits</span>
-              <span class="fact-value">Key contributors surfaced early</span>
+              <span class="fact-value">Folded into the film page</span>
             </li>
           </ul>
         </div>
@@ -116,8 +119,8 @@
             <p>{{ movie.trailer.description }}</p>
             <p>{{ release_status.summary }}</p>
             <div class="hero-actions hero-actions-compact">
-              <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
-                >Open Watch Page</a
+              <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+                >Support The Film</a
               >
               <a href="#tickets" class="btn btn-secondary"
                 >See Release Options</a
@@ -126,13 +129,13 @@
           </div>
           <div class="trailer-frame">
             <a
-              href="{{ url_for('main.watch') }}"
+              href="{{ url_for('main.index') }}#trailer"
               class="trailer-placeholder trailer-link-card"
             >
               <span class="play-badge">Play</span>
               <strong>{{ movie.trailer.duration_iso }}</strong>
               <span class="trailer-link-copy"
-                >Dedicated trailer page with release messaging</span
+                >Trailer section on the landing page</span
               >
             </a>
           </div>
@@ -147,7 +150,7 @@
           </p>
           <ul class="bullet-list">
             <li>Dedicated CTA above the fold</li>
-            <li>Embedded player on its own page</li>
+            <li>Trailer anchored from the landing page</li>
             <li>Release messaging separated from synopsis copy</li>
           </ul>
         </div>
@@ -168,7 +171,7 @@
           <p class="story-intro">{{ movie_description }}</p>
           <p>
             The documentary follows three best friends through a moving
-            landscape of cheap motels, late sets, long drives, and the strange
+            landscape of hotel suites, late sets, long drives, and the strange
             optimism it takes to keep betting on yourself.
           </p>
           <p>
@@ -204,8 +207,9 @@
       <div class="section-header">
         <h2>Credits</h2>
         <p>
-          Key people and production information should be visible without
-          hunting for them.
+          Key people, production identity, and the official outward-facing path
+          now live here, with audience follow-through continuing on the support
+          page.
         </p>
       </div>
       <div class="grid-3 credits-grid">
@@ -228,6 +232,14 @@
           <p>{{ movie.contributors.producers[0].name }}</p>
           <span class="credit-role"
             >{{ movie.contributors.producers[0].job_title }}</span
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Official Links</h3>
+          <p>{{ movie.production_company.name }}</p>
+          <span class="credit-role">Audience follow-through</span>
+          <a href="{{ url_for('main.support') }}" class="text-link"
+            >Open Support Hub</a
           >
         </article>
       </div>

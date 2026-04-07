@@ -1,7 +1,7 @@
 def get_movie_data():
     return {
         'title': 'Open Mic Odyssey',
-        'tagline': 'Good Morning, I Apologize',
+        'tagline': 'Good Morning, I\'m Sorry',
         'description': 'Three best friends go across America to pursue the dream...',
         'genre': 'Documentary',
         'keywords': [
@@ -17,7 +17,7 @@ def get_movie_data():
         'release_status': {
             'label': 'Trailer Now Streaming',
             'headline': 'The film is still on the road. The trailer is the first look.',
-            'summary': 'Festival preview screenings are being scheduled now. Use the watch page for the trailer, current release messaging, and the clearest path into screenings or digital updates.',
+            'summary': 'Festival preview screenings are being scheduled now. Use the landing page trailer section for the first look, then move into the film page or support hub for screenings and digital updates.',
             'detail': 'Digital release details have not been announced yet. Join the waitlist for streaming and purchase updates while the film continues its festival and outreach run.',
         },
         'date_published': None,
@@ -27,7 +27,7 @@ def get_movie_data():
         'trailer': {
             'name': 'Open Mic Odyssey official trailer',
             'description': 'Trailer for the documentary feature Open Mic Odyssey.',
-            'url': 'https://openmicodyssey.com/watch',
+            'url': 'https://openmicodyssey.com/',
             'embed_url': 'https://www.youtube.com/embed/NJ2B1PfS9n8',
             'thumbnail_url': 'https://openmicodyssey.com/static/images/trailer-placeholder.jpg',
             'upload_date': '2026-03-15',
@@ -91,7 +91,7 @@ def get_movie_data():
             {
                 'label': 'Patreon',
                 'url': 'https://www.patreon.com/openmicodyssey',
-                'description': 'Direct supporter hub for bonus material and future member-only content.',
+                'description': 'Dedicated membership page for bonus material and future member-only content.',
             },
         ],
         'support_links': {
@@ -103,10 +103,10 @@ def get_movie_data():
                     'description': 'Use the main site as the canonical source for campaign timing, screening announcements, and release news.',
                 },
                 {
-                    'label': 'Trailer & Release Waitlist',
-                    'url': 'https://openmicodyssey.com/watch',
+                    'label': 'Trailer & Release Updates',
+                    'url': 'https://openmicodyssey.com/',
                     'status': 'Live',
-                    'description': 'The current public call to action while full digital release and any funding rollout are still being finalized.',
+                    'description': 'The landing page trailer and the main site remain the current public path while full digital release and any funding rollout are still being finalized.',
                 },
             ],
             'supporters': [
@@ -114,7 +114,7 @@ def get_movie_data():
                     'label': 'Patreon',
                     'url': 'https://www.patreon.com/openmicodyssey',
                     'status': 'Support',
-                    'description': 'Back the project directly and create a home for bonus footage, podcasts, alternate cuts, and community updates.',
+                    'description': 'The direct membership and conversion path for backers who want bonus footage, tiers, and a stronger financial ask.',
                 },
                 {
                     'label': 'YouTube Channel',
@@ -132,8 +132,8 @@ def get_movie_data():
         },
         'supporter_page': {
             'title': 'Patreon & Supporter Access',
-            'intro': 'A dedicated home for the audience that wants to help the film directly and unlock bonus material beyond the main release.',
-            'membership_pitch': 'Supporters are the first audience for extra road footage, extended conversations, side projects, and the rougher, more personal material that does not always belong on the public-facing marketing pages.',
+            'intro': 'A dedicated conversion page for the audience that already wants to back the film directly and unlock bonus material beyond the main release.',
+            'membership_pitch': 'Supporters are the first audience for extra road footage, extended conversations, side projects, and the rougher, more personal material that does not belong on the broader public support hub.',
             'primary_link': {
                 'label': 'Join On Patreon',
                 'url': 'https://www.patreon.com/openmicodyssey',
@@ -275,7 +275,7 @@ def get_movie_data():
         'offers': [
             {
                 'name': 'Digital release waitlist',
-                'url': 'https://openmicodyssey.com/watch',
+                'url': 'https://openmicodyssey.com/support',
                 'category': 'Streaming access',
                 'availability': 'https://schema.org/PreOrder',
                 'price': 0,

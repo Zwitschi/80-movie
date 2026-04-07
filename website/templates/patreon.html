@@ -10,7 +10,11 @@ endblock %} {% block page_content %}
           <span>{{ movie_title }}</span>
         </h1>
         <p class="hero-lede">{{ movie.supporter_page.intro }}</p>
-        <p>{{ movie.supporter_page.membership_pitch }}</p>
+        <p>
+          This page is the direct conversion surface for people who already want
+          the deeper membership offer, bonus material, and a clear pledge
+          decision.
+        </p>
         <div class="hero-actions overview-actions">
           <a
             href="{{ movie.supporter_page.primary_link.url }}"
@@ -54,8 +58,8 @@ endblock %} {% block page_content %}
       <div class="section-header">
         <h2>What Supporters Get</h2>
         <p>
-          This page turns the earlier stakeholder notes into a clear public
-          offer instead of leaving Patreon as a vague bullet point.
+          Keep the value proposition specific here so the support hub does not
+          have to repeat the full membership pitch.
         </p>
       </div>
       <div class="grid-3 patreon-benefits-grid">
@@ -91,28 +95,29 @@ endblock %} {% block page_content %}
       <div class="section-header">
         <h2>Next Step</h2>
         <p>
-          Use the support hub for broader audience links, then move interested
-          backers here when the ask becomes more specific.
+          The split is deliberate: the support hub stays broad and lightweight,
+          while this page handles the stronger membership ask.
         </p>
       </div>
       <div class="section-split">
         <div class="content-card side-panel">
-          <span class="eyebrow eyebrow-small">Public Path</span>
-          <h3>Support hub first</h3>
+          <span class="eyebrow eyebrow-small">Not Ready Yet</span>
+          <h3>Start with the support hub</h3>
           <p>
-            Keep general audiences on the simpler support page, where the ask is
-            lighter and the official links stay easy to scan.
+            If someone mainly wants release news, trailer access, or official
+            channels, send them back to the broader support page instead of
+            forcing the stronger membership pitch.
           </p>
           <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
             >Open Support Hub</a
           >
         </div>
         <div class="content-card side-panel">
-          <span class="eyebrow eyebrow-small">Direct Support</span>
-          <h3>Patreon when they are ready</h3>
+          <span class="eyebrow eyebrow-small">Ready To Back It</span>
+          <h3>Join the membership offer</h3>
           <p>
             When someone wants bonus material and a closer relationship to the
-            project, move them straight to the primary supporter link.
+            project, keep the action direct and move them straight to Patreon.
           </p>
           <a
             href="{{ movie.supporter_page.primary_link.url }}"

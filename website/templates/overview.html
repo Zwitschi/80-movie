@@ -1,54 +1,133 @@
 {% extends '_base.html' %} {% block page_content %}
 <main>
-  <section class="hero overview-hero">
-    <div class="container overview-grid">
-      <aside
-        class="poster-card overview-poster"
-        aria-label="Movie poster preview"
-      >
-        <div class="poster-frame">
-          <div class="poster-title">
-            {{ movie_title.split(' ')[0] if movie_title else 'Movie' }}
-            <strong
-              >{{ movie_title.split(' ', 1)[1] if movie_title and ' ' in
-              movie_title else 'Title' }}</strong
-            >
-          </div>
-        </div>
-      </aside>
-
-      <div class="content-card overview-card">
-        <span class="eyebrow">Overview</span>
-        <h1>
+  <section id="trailer" class="overview-trailer-section">
+    <div class="container overview-trailer-shell">
+      <div class="section-header overview-trailer-header">
+        <span class="eyebrow">Feature Documentary</span>
+        <h1 class="overview-page-title">
           {{ movie_title }}
           <span>{{ movie_tagline }}</span>
         </h1>
-        <p class="hero-lede">{{ movie_description }}</p>
-
-        <div class="hero-meta">
+        <p>
+          {{ release_status.headline }} The trailer leads the landing page, and
+          the deeper story, credits, and screening context now live on the film
+          page.
+        </p>
+        <div class="hero-meta overview-meta">
           <span class="meta-pill">{{ movie_genre }}</span>
           <span class="meta-pill">{{ movie_runtime }}</span>
           <span class="meta-pill">{{ release_date }}</span>
         </div>
+      </div>
 
-        <div class="overview-copy">
-          <p>
-            A documentary road story about three best friends, stand-up stages,
-            and the emotional math of trying to make a creative life real.
-          </p>
-          <p>
-            Start with the dedicated watch page for the trailer and current
-            release messaging, then continue into the full film page for the
-            expanded synopsis, credits, and screening information.
-          </p>
+      <div class="content-card overview-trailer-card">
+        <div class="overview-trailer-copy">
+          <span class="eyebrow eyebrow-small">Now Streaming</span>
+          <h3>{{ movie.trailer.name }}</h3>
+          <p>{{ movie.trailer.description }}</p>
+          <p>{{ release_status.summary }}</p>
+          <div class="hero-actions overview-actions overview-trailer-actions">
+            <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+              >Support The Film</a
+            >
+            <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+              >Open Film Page</a
+            >
+          </div>
         </div>
 
-        <div class="hero-actions overview-actions">
-          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
-            >Watch Trailer</a
-          >
+        <div class="video-shell overview-video-shell">
+          <iframe
+            src="{{ movie.trailer.embed_url }}"
+            title="{{ movie.trailer.name }}"
+            loading="lazy"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="overview-next-step-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Choose Your Next Step</h2>
+        <p>
+          Keep the landing page decision-making compact: go deeper on the film,
+          back the project, or browse visuals without forcing a long scroll.
+        </p>
+      </div>
+
+      <div class="overview-cta-grid">
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Learn More</span>
+          <h3>Film Page</h3>
+          <p>
+            Read the fuller synopsis, review the credits, and see screening and
+            access information in one place.
+          </p>
           <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
-            >Learn More About The Film</a
+            >Open Film Page</a
+          >
+        </article>
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Primary Action</span>
+          <h3>Support The Film</h3>
+          <p>
+            Move straight into the membership offer if you already want to back
+            the project and unlock supporter updates.
+          </p>
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >Support The Film</a
+          >
+        </article>
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Visuals</span>
+          <h3>Browse The Gallery</h3>
+          <p>
+            See poster concepts, stills, and behind-the-scenes imagery without
+            leaving the streamlined landing-page flow.
+          </p>
+          <a href="{{ url_for('main.gallery') }}" class="btn btn-secondary"
+            >Open Gallery</a
+          >
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="overview-synopsis-section">
+    <div class="container overview-synopsis-shell">
+      <div class="section-header">
+        <h2>Quick Story Teaser</h2>
+        <p>
+          Leave only a short emotional preview here. The full synopsis and all
+          remaining credits context stay on the film page.
+        </p>
+      </div>
+
+      <div class="content-card overview-synopsis-card">
+        <p class="story-intro">{{ movie_description }}</p>
+        <p>
+          A documentary road story about three best friends, stand-up stages,
+          hotel suites, long drives, and the emotional math of trying to make a
+          creative life real.
+        </p>
+        <div class="hero-actions overview-actions overview-synopsis-actions">
+          <a
+            href="{{ url_for('main.film') }}#synopsis"
+            class="btn btn-secondary"
+            >Read The Full Film Page</a
           >
         </div>
       </div>

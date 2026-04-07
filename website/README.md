@@ -12,11 +12,9 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `templates/_base.html`: shared layout, stylesheet link, and JSON-LD script injection.
 - `templates/overview.html`: overview page shown at `/`.
 - `templates/index.html`: detailed film page shown at `/film`.
-- `templates/watch.html`: dedicated trailer and release-status page shown at `/watch`.
 - `templates/gallery.html`: seeded photo gallery shown at `/gallery`.
-- `templates/support.html`: social, campaign, and supporter hub shown at `/support`.
+- `templates/support.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/support`.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
-- `templates/credits.html`: credits and official-links page shown at `/credits`.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
 - `static/images/cinema-bg.svg`: full-page background art.
@@ -44,12 +42,12 @@ f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe -m pip install -r req
 The main routes are:
 
 - `/`: overview page
-- `/watch`: trailer and release-status page
+- `/watch`: compatibility redirect to the landing-page trailer section
 - `/gallery`: stills, poster, and behind-the-scenes gallery
-- `/support`: social, campaign, and supporter links hub
-- `/patreon`: supporter-membership and bonus-content page
+- `/support`: broad public hub for official channels, updates, and lightweight support actions
+- `/patreon`: dedicated supporter-membership conversion page
 - `/film`: detailed film page
-- `/credits`: credits and official links page
+- `/credits`: compatibility redirect to the credits section on `/film`
 
 ## Deployment Notes
 
@@ -92,6 +90,41 @@ Windows note:
 - `gunicorn` installs successfully in the project environment, but it does not run natively on Windows because it depends on the Unix-only `fcntl` module.
 - In this workspace, local gunicorn startup was attempted and failed for that expected platform reason.
 - For local Windows development, continue using the Flask development server or run the gunicorn validation step inside WSL or another Linux environment before deploying.
+
+## Mirror Deployment Workflow
+
+The repository includes a GitHub Actions workflow at `.github/workflows/deploy-website-mirror.yml` that can publish the contents of `website/` into a separate repository.
+
+What the workflow does:
+
+- stages a clean deployment bundle from `website/`
+- removes Python caches and common local artifacts
+- copies `requirements.txt` into the mirrored repository root
+- copies `website/README.md` to the mirrored repository root as `README.md`
+- rewrites the mirrored README so the runtime entrypoint reflects the new repository root
+- pushes the result to the target repository and branch you configure
+
+Required GitHub configuration in the source repository:
+
+- Secret: `WEBSITE_DEPLOY_TOKEN`
+  a GitHub token with permission to push to the destination repository
+- Variable: `WEBSITE_DEPLOY_REPOSITORY`
+  the destination repository in `owner/repo` form
+- Optional variable: `WEBSITE_DEPLOY_BRANCH`
+  the destination branch name; defaults to `main` when omitted
+
+Branch behavior:
+
+- the workflow triggers on pushes to `main` that touch `website/**`, `requirements.txt`, or the workflow file itself
+- it also supports manual execution through `workflow_dispatch`
+- if the target branch does not exist yet, the workflow creates it
+- if there are no content changes after staging, the workflow exits without creating a commit
+
+Mirrored repository runtime note:
+
+- in the mirrored repository, the former `website/` folder becomes the repository root
+- because of that layout change, the mirrored app should run with `gunicorn app:app` rather than `gunicorn website.app:app`
+- Flask development startup in the mirrored repository similarly becomes `python -m flask --app app run`
 
 ## Schema Generation
 
@@ -185,14 +218,14 @@ The current site now has:
 - a support page
 - a Patreon/supporter page
 - a detailed film page
-- a credits page
+- credits folded into the film page, with `/credits` retained only as a compatibility redirect
 
 Based on the stakeholder notes in the repository README, the next recommended phases are:
 
 ### Phase 1: Core release and discovery pages
 
-- Trailer and watch page:
-  centralize the trailer embed, teaser copy, and release-status messaging.
+- Trailer and landing page:
+  centralize the trailer embed, teaser copy, and release-status messaging on the overview page and keep `/watch` only as a compatibility redirect.
 - Social and campaign links:
   now centralized on the support page for Instagram, TikTok, YouTube, official site updates, and Patreon.
 - Press and screening support:

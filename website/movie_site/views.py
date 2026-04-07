@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, current_app, redirect, render_template, url_for
 
 from .movie_data import get_movie_page_context
 from .schema import build_movie_schema_json
@@ -32,10 +32,7 @@ def film():
 
 @main_blueprint.get('/watch')
 def watch():
-    return render_template(
-        'watch.html',
-        **build_page_context(),
-    )
+    return redirect(url_for('main.index', _anchor='trailer'))
 
 
 @main_blueprint.get('/support')
@@ -64,7 +61,4 @@ def patreon():
 
 @main_blueprint.get('/credits')
 def credits():
-    return render_template(
-        'credits.html',
-        **build_page_context(),
-    )
+    return redirect(url_for('main.film', _anchor='credits'))
