@@ -1,0 +1,110 @@
+{% extends '_base.html' %} {% block title %}Gallery {{ movie_title }}{% endblock
+%} {% block page_content %}
+<main>
+  <section class="hero gallery-hero">
+    <div class="container gallery-hero-grid">
+      <div class="content-card gallery-intro">
+        <span class="eyebrow">Gallery</span>
+        <h1>
+          Stills, Posters, And
+          <span>Behind-The-Scenes Frames</span>
+        </h1>
+        <p class="hero-lede">
+          A media-friendly gallery for first-look visuals, poster art, road
+          stills, and production moments that can later be swapped with final
+          approved assets.
+        </p>
+        <div class="hero-actions overview-actions">
+          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
+            >Watch Trailer</a
+          >
+          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
+            >Support The Film</a
+          >
+        </div>
+      </div>
+
+      <aside class="content-card gallery-summary">
+        <span class="eyebrow eyebrow-small">Current Scope</span>
+        <ul class="fact-list">
+          <li>
+            <span class="fact-label">Poster Art</span>
+            <span class="fact-value">Festival-ready concepts</span>
+          </li>
+          <li>
+            <span class="fact-label">Stills</span>
+            <span class="fact-value">Road and performance moments</span>
+          </li>
+          <li>
+            <span class="fact-label">Behind The Scenes</span>
+            <span class="fact-value">Crew and process imagery</span>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container gallery-page">
+    <section>
+      <div class="section-header">
+        <h2>Media Gallery</h2>
+        <p>
+          The layout is seeded with placeholders now, but the structure is ready
+          for real stills, captions, and press-kit asset swaps.
+        </p>
+      </div>
+      <div class="gallery-grid">
+        {% for item in movie.gallery_items %}
+        <article class="content-card gallery-card">
+          <div class="gallery-image-wrap">
+            <img
+              src="{{ item.image_url }}"
+              alt="{{ item.alt }}"
+              class="gallery-image"
+            />
+          </div>
+          <div class="gallery-copy">
+            <span class="eyebrow eyebrow-small">{{ item.category }}</span>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.description }}</p>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>How This Page Should Evolve</h2>
+        <p>
+          Use this page as the future home for approved promotional assets, not
+          just internal placeholders.
+        </p>
+      </div>
+      <div class="grid-3 gallery-notes-grid">
+        <article class="feature feature-highlight">
+          <h3>Press Kit Assets</h3>
+          <p>
+            Replace placeholder images with final stills that can also be reused
+            in festival materials and outreach emails.
+          </p>
+        </article>
+        <article class="feature feature-highlight">
+          <h3>Poster Variants</h3>
+          <p>
+            Add final poster treatments, social crops, and one-sheet versions
+            once design approvals are locked.
+          </p>
+        </article>
+        <article class="feature feature-highlight">
+          <h3>Behind-The-Scenes Depth</h3>
+          <p>
+            Expand with location, date, or context metadata if the team wants a
+            stronger production diary angle.
+          </p>
+        </article>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

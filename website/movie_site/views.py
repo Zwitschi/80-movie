@@ -30,6 +30,38 @@ def film():
     )
 
 
+@main_blueprint.get('/watch')
+def watch():
+    return render_template(
+        'watch.html',
+        **build_page_context(),
+    )
+
+
+@main_blueprint.get('/support')
+def support():
+    return render_template(
+        'support.html',
+        **build_page_context(),
+    )
+
+
+@main_blueprint.get('/gallery')
+def gallery():
+    return render_template(
+        'gallery.html',
+        **build_page_context(),
+    )
+
+
+@main_blueprint.get('/patreon')
+def patreon():
+    return render_template(
+        'patreon.html',
+        **build_page_context(),
+    )
+
+
 @main_blueprint.get('/credits')
 def credits():
     return render_template(

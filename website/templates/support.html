@@ -1,0 +1,140 @@
+{% extends '_base.html' %} {% block title %}Support {{ movie_title }}{% endblock
+%} {% block page_content %}
+<main>
+  <section class="hero support-hero">
+    <div class="container support-hero-grid">
+      <div class="content-card support-intro">
+        <span class="eyebrow">Support</span>
+        <h1>
+          Follow And Back
+          <span>{{ movie_title }}</span>
+        </h1>
+        <p class="hero-lede">
+          One page for the official channels, supporter paths, and
+          campaign-adjacent links that audiences should use instead of scattered
+          placeholders.
+        </p>
+        <div class="hero-actions overview-actions">
+          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
+            >Watch Trailer</a
+          >
+          <a href="{{ url_for('main.credits') }}" class="btn btn-secondary"
+            >View Credits</a
+          >
+        </div>
+      </div>
+
+      <aside class="content-card support-summary">
+        <span class="eyebrow eyebrow-small">Support Snapshot</span>
+        <ul class="fact-list">
+          <li>
+            <span class="fact-label">Social</span>
+            <span class="fact-value">Instagram, TikTok, YouTube</span>
+          </li>
+          <li>
+            <span class="fact-label">Campaign</span>
+            <span class="fact-value"
+              >Official updates live on the main site</span
+            >
+          </li>
+          <li>
+            <span class="fact-label">Supporter Hub</span>
+            <span class="fact-value">Dedicated Patreon page now live</span>
+          </li>
+        </ul>
+        <div class="hero-actions overview-actions support-summary-actions">
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-secondary"
+            >Open Supporter Page</a
+          >
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container support-page">
+    <section>
+      <div class="section-header">
+        <h2>Official Social Channels</h2>
+        <p>
+          These are the primary public channels for audience discovery, clips,
+          and release-day updates.
+        </p>
+      </div>
+      <div class="social-grid support-card-grid">
+        {% for link in movie.social_links %}
+        <a href="{{ link.url }}" class="social-card support-card">
+          <span class="fact-label">{{ link.label }}</span>
+          <strong>{{ link.url }}</strong>
+          <p>{{ link.description }}</p>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Campaign & Release Updates</h2>
+        <p>
+          Until a separate crowdfunding campaign is formally announced, keep the
+          canonical call to action on official owned channels.
+        </p>
+      </div>
+      <div class="grid-3 support-grid">
+        {% for item in movie.support_links.campaigns %}
+        <article class="feature feature-highlight support-panel-card">
+          <span class="eyebrow eyebrow-small">{{ item.status }}</span>
+          <h3>{{ item.label }}</h3>
+          <p>{{ item.description }}</p>
+          <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Supporter Paths</h2>
+        <p>
+          Give visitors a few clear ways to help without forcing them into a
+          single funnel.
+        </p>
+      </div>
+      <div class="grid-3 support-grid">
+        {% for item in movie.support_links.supporters %}
+        <article class="feature feature-highlight support-panel-card">
+          <span class="eyebrow eyebrow-small">{{ item.status }}</span>
+          <h3>{{ item.label }}</h3>
+          <p>{{ item.description }}</p>
+          <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Supporter Membership</h2>
+        <p>
+          The deeper bonus-content pitch now lives on its own page so audiences
+          can understand what supporter access actually means.
+        </p>
+      </div>
+      <div class="content-card support-membership-panel">
+        <span class="eyebrow eyebrow-small">Member Access</span>
+        <h3>{{ movie.supporter_page.title }}</h3>
+        <p>{{ movie.supporter_page.membership_pitch }}</p>
+        <div class="hero-actions overview-actions">
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >See Membership Details</a
+          >
+          <a
+            href="{{ movie.supporter_page.primary_link.url }}"
+            class="btn btn-secondary"
+            >{{ movie.supporter_page.primary_link.label }}</a
+          >
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

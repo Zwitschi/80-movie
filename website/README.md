@@ -10,7 +10,13 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `movie_site/movie_data.py`: editable movie content used by the page and schema graph.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
 - `templates/_base.html`: shared layout, stylesheet link, and JSON-LD script injection.
-- `templates/index.html`: home page content that extends the base template.
+- `templates/overview.html`: overview page shown at `/`.
+- `templates/index.html`: detailed film page shown at `/film`.
+- `templates/watch.html`: dedicated trailer and release-status page shown at `/watch`.
+- `templates/gallery.html`: seeded photo gallery shown at `/gallery`.
+- `templates/support.html`: social, campaign, and supporter hub shown at `/support`.
+- `templates/patreon.html`: supporter-membership page shown at `/patreon`.
+- `templates/credits.html`: credits and official-links page shown at `/credits`.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
 - `static/images/cinema-bg.svg`: full-page background art.
@@ -29,7 +35,15 @@ If the virtual environment is missing dependencies, install Flask first:
 f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe -m pip install Flask
 ```
 
-The home page is served at `http://127.0.0.1:5000/`.
+The main routes are:
+
+- `/`: overview page
+- `/watch`: trailer and release-status page
+- `/gallery`: stills, poster, and behind-the-scenes gallery
+- `/support`: social, campaign, and supporter links hub
+- `/patreon`: supporter-membership and bonus-content page
+- `/film`: detailed film page
+- `/credits`: credits and official links page
 
 ## Deployment Notes
 
@@ -135,6 +149,9 @@ If you replace the background image, keep these constraints:
 The current site now has:
 
 - an overview page
+- a gallery page
+- a support page
+- a Patreon/supporter page
 - a detailed film page
 - a credits page
 
@@ -145,16 +162,16 @@ Based on the stakeholder notes in the repository README, the next recommended ph
 - Trailer and watch page:
   centralize the trailer embed, teaser copy, and release-status messaging.
 - Social and campaign links:
-  add official outbound links for Instagram, TikTok, YouTube, crowdfunding, and Patreon in a dedicated, easy-to-scan section or page.
+  now centralized on the support page for Instagram, TikTok, YouTube, official site updates, and Patreon.
 - Press and screening support:
   expand screening details, press-ready synopsis copy, and contact paths for festivals or media.
 
 ### Phase 2: Content-rich supporting pages
 
 - Photo gallery page:
-  for stills, posters, behind-the-scenes images, and promotional assets.
+  now added as a dedicated page for seeded stills, posters, and behind-the-scenes assets that can be replaced with approved media later.
 - Patreon or supporter page:
-  explain membership content such as the main movie, Texas podcast material, driving footage, alternate edits, and bonus releases.
+  now added as a dedicated page describing supporter access, bonus material, and a starter tier structure.
 - Interactive stops map:
   if the trip structure is central to the documentary story, add a map page showing locations, dates, photos, and story beats.
 
@@ -167,12 +184,8 @@ Based on the stakeholder notes in the repository README, the next recommended ph
 
 ### Recommended implementation order
 
-1. Trailer/watch page
-2. Social and crowdfunding links pass
-3. Gallery page
-4. Patreon/supporter page
-5. Interactive map of stops
-6. Experimental web game
+1. Interactive map of stops
+2. Experimental web game
 
 ### Approval gates
 

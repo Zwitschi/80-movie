@@ -151,6 +151,22 @@ img {
   padding-top: 7rem;
 }
 
+.watch-hero {
+  padding-top: 7rem;
+}
+
+.support-hero {
+  padding-top: 7rem;
+}
+
+.gallery-hero {
+  padding-top: 7rem;
+}
+
+.patreon-hero {
+  padding-top: 7rem;
+}
+
 .overview-grid {
   display: grid;
   grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
@@ -199,6 +215,77 @@ img {
   gap: 1rem;
 }
 
+.support-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.gallery-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.patreon-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.support-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.gallery-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.patreon-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.watch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.watch-page,
+.watch-sidebar {
+  display: grid;
+  gap: 1rem;
+}
+
+.watch-player-card,
+.watch-status-card,
+.watch-meta-card {
+  padding: 2rem;
+}
+
+.support-intro,
+.support-summary {
+  padding: 2rem;
+}
+
+.gallery-intro,
+.gallery-summary {
+  padding: 2rem;
+}
+
+.patreon-intro,
+.patreon-summary,
+.support-membership-panel {
+  padding: 2rem;
+}
+
 .production-panel {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
@@ -239,6 +326,88 @@ img {
   color: var(--text-main);
   font-size: 0.95rem;
   word-break: break-word;
+}
+
+.social-card p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.support-card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.support-grid {
+  align-items: stretch;
+}
+
+.support-panel-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.gallery-card {
+  display: grid;
+  gap: 0;
+  padding: 0;
+}
+
+.gallery-image-wrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gallery-copy {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.4rem;
+}
+
+.gallery-copy h3 {
+  font-size: 1.2rem;
+  color: var(--text-main);
+}
+
+.gallery-copy p {
+  color: var(--text-muted);
+}
+
+.gallery-notes-grid {
+  align-items: stretch;
+}
+
+.patreon-benefits-grid,
+.patreon-tiers-grid {
+  align-items: stretch;
+}
+
+.patreon-card,
+.patreon-tier-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.social-actions {
+  margin-top: 1.25rem;
+}
+
+.support-summary-actions {
+  margin-top: 1.25rem;
 }
 
 .overview-copy p {
@@ -364,6 +533,24 @@ img {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+
+.video-shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 1.5rem 0;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.video-shell iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .note-label,
@@ -559,6 +746,27 @@ section {
   color: var(--text-main);
 }
 
+.trailer-link-card {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.trailer-link-card:hover,
+.trailer-link-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(255, 249, 79, 0.3);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+  outline: none;
+}
+
+.trailer-link-copy {
+  max-width: 18ch;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
 .play-badge {
   display: inline-flex;
   align-items: center;
@@ -668,6 +876,12 @@ section {
   .overview-band,
   .overview-grid,
   .credits-hero-grid,
+  .watch-grid,
+  .support-hero-grid,
+  .gallery-hero-grid,
+  .patreon-hero-grid,
+  .support-card-grid,
+  .gallery-grid,
   .section-split,
   .section-split-wide,
   .trailer-panel,

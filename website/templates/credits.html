@@ -16,8 +16,8 @@
           <a href="{{ url_for('main.film') }}" class="btn btn-primary"
             >Back To Film Page</a
           >
-          <a href="{{ movie.production_company.url }}" class="btn btn-secondary"
-            >Official Site</a
+          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
+            >Support & Links</a
           >
         </div>
       </div>
@@ -115,20 +115,25 @@
 
     <section>
       <div class="section-header">
-        <h2>Links & Social Profiles</h2>
+        <h2>Official Links</h2>
         <p>
-          Centralize the official links so this page can double as a clean media
-          and outreach reference.
+          The dedicated support page now acts as the main audience-facing hub
+          for social channels, supporter links, and campaign updates.
         </p>
       </div>
       <div class="content-card social-panel">
         <div class="social-grid">
-          {% for link in movie.social_links %}
+          {% for link in movie.social_links[:3] %}
           <a href="{{ link.url }}" class="social-card">
             <span class="fact-label">{{ link.label }}</span>
             <strong>{{ link.url }}</strong>
           </a>
           {% endfor %}
+        </div>
+        <div class="hero-actions overview-actions social-actions">
+          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
+            >Open Support Hub</a
+          >
         </div>
       </div>
     </section>

@@ -1,0 +1,127 @@
+{% extends '_base.html' %} {% block title %}Supporters {{ movie_title }}{%
+endblock %} {% block page_content %}
+<main>
+  <section class="hero patreon-hero">
+    <div class="container patreon-hero-grid">
+      <div class="content-card patreon-intro">
+        <span class="eyebrow">Supporters</span>
+        <h1>
+          {{ movie.supporter_page.title }}
+          <span>{{ movie_title }}</span>
+        </h1>
+        <p class="hero-lede">{{ movie.supporter_page.intro }}</p>
+        <p>{{ movie.supporter_page.membership_pitch }}</p>
+        <div class="hero-actions overview-actions">
+          <a
+            href="{{ movie.supporter_page.primary_link.url }}"
+            class="btn btn-primary"
+            >{{ movie.supporter_page.primary_link.label }}</a
+          >
+          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
+            >Back To Support Hub</a
+          >
+        </div>
+      </div>
+
+      <aside class="content-card patreon-summary">
+        <span class="eyebrow eyebrow-small">Why It Exists</span>
+        <ul class="fact-list">
+          <li>
+            <span class="fact-label">Bonus Content</span>
+            <span class="fact-value"
+              >Road footage, podcasts, alternate cuts</span
+            >
+          </li>
+          <li>
+            <span class="fact-label">Closer Access</span>
+            <span class="fact-value"
+              >A smaller audience for more personal updates</span
+            >
+          </li>
+          <li>
+            <span class="fact-label">Direct Support</span>
+            <span class="fact-value"
+              >A clear way to back the film financially</span
+            >
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container patreon-page">
+    <section>
+      <div class="section-header">
+        <h2>What Supporters Get</h2>
+        <p>
+          This page turns the earlier stakeholder notes into a clear public
+          offer instead of leaving Patreon as a vague bullet point.
+        </p>
+      </div>
+      <div class="grid-3 patreon-benefits-grid">
+        {% for benefit in movie.supporter_page.benefits %}
+        <article class="feature feature-highlight patreon-card">
+          <h3>{{ benefit.title }}</h3>
+          <p>{{ benefit.description }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Suggested Membership Tiers</h2>
+        <p>
+          These tier descriptions are flexible placeholders that give the team a
+          concrete structure to refine once the offer is approved.
+        </p>
+      </div>
+      <div class="grid-3 patreon-tiers-grid">
+        {% for tier in movie.supporter_page.tiers %}
+        <article class="content-card patreon-tier-card">
+          <span class="eyebrow eyebrow-small">{{ tier.price }}</span>
+          <h3>{{ tier.name }}</h3>
+          <p>{{ tier.description }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Next Step</h2>
+        <p>
+          Use the support hub for broader audience links, then move interested
+          backers here when the ask becomes more specific.
+        </p>
+      </div>
+      <div class="section-split">
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Public Path</span>
+          <h3>Support hub first</h3>
+          <p>
+            Keep general audiences on the simpler support page, where the ask is
+            lighter and the official links stay easy to scan.
+          </p>
+          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
+            >Open Support Hub</a
+          >
+        </div>
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Direct Support</span>
+          <h3>Patreon when they are ready</h3>
+          <p>
+            When someone wants bonus material and a closer relationship to the
+            project, move them straight to the primary supporter link.
+          </p>
+          <a
+            href="{{ movie.supporter_page.primary_link.url }}"
+            class="btn btn-primary"
+            >{{ movie.supporter_page.primary_link.label }}</a
+          >
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

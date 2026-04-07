@@ -1,0 +1,141 @@
+{% extends '_base.html' %} {% block title %}Watch {{ movie_title }}{% endblock
+%} {% block page_content %}
+<main>
+  <section class="hero watch-hero">
+    <div class="container watch-grid">
+      <div class="content-card watch-player-card">
+        <span class="eyebrow">Watch</span>
+        <h1>
+          {{ movie.trailer.name }}
+          <span>{{ release_status.label }}</span>
+        </h1>
+        <p class="hero-lede">{{ release_status.headline }}</p>
+
+        <div class="video-shell">
+          <iframe
+            src="{{ movie.trailer.embed_url }}"
+            title="{{ movie.trailer.name }}"
+            loading="lazy"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <div class="hero-actions watch-actions">
+          <a href="{{ url_for('main.film') }}" class="btn btn-primary"
+            >Learn More About The Film</a
+          >
+          <a href="{{ url_for('main.film') }}#tickets" class="btn btn-secondary"
+            >View Showtimes</a
+          >
+        </div>
+      </div>
+
+      <aside class="watch-sidebar">
+        <div class="content-card watch-status-card">
+          <span class="eyebrow eyebrow-small">Release Status</span>
+          <h2>{{ movie.release_date }}</h2>
+          <p>{{ release_status.summary }}</p>
+          <p>{{ release_status.detail }}</p>
+        </div>
+
+        <div class="content-card watch-meta-card">
+          <span class="eyebrow eyebrow-small">Trailer Details</span>
+          <dl class="detail-list">
+            <div>
+              <dt>Runtime</dt>
+              <dd>{{ movie.trailer.duration_iso }}</dd>
+            </div>
+            <div>
+              <dt>Language</dt>
+              <dd>{{ movie.in_language|upper }}</dd>
+            </div>
+            <div>
+              <dt>Availability</dt>
+              <dd>{{ movie.offers[0].category }}</dd>
+            </div>
+          </dl>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container watch-page">
+    <section>
+      <div class="section-header">
+        <h2>What The Trailer Sets Up</h2>
+        <p>
+          The watch page carries the film's first impression on its own, without
+          forcing trailer intent to compete with synopsis and credits.
+        </p>
+      </div>
+      <div class="grid-3">
+        <article class="feature feature-highlight">
+          <h3>Road Story</h3>
+          <p>
+            Three best friends crossing the country, chasing stage time and
+            trying to keep their sense of humor intact.
+          </p>
+        </article>
+        <article class="feature feature-highlight">
+          <h3>Teaser Copy</h3>
+          <p>
+            Character-first, restless, and intimate. The trailer frames the
+            documentary as a lived-in friendship story before anything else.
+          </p>
+        </article>
+        <article class="feature feature-highlight">
+          <h3>Next Step</h3>
+          <p>
+            After watching, move straight into screenings, the full film page,
+            or the credits hub depending on what the visitor needs next.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-header">
+        <h2>Continue Exploring</h2>
+        <p>
+          Keep the viewer flow simple: watch first, then choose the next layer
+          of detail.
+        </p>
+      </div>
+      <div class="section-split">
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Film Page</span>
+          <h3>Synopsis, themes, and showtimes</h3>
+          <p>
+            The full film page expands the documentary framing, highlights the
+            story structure, and keeps screening calls to action visible.
+          </p>
+          <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+            >Open Film Page</a
+          >
+        </div>
+        <div class="content-card side-panel">
+          <span class="eyebrow eyebrow-small">Credits</span>
+          <h3>Core team and official links</h3>
+          <p>
+            The credits page collects the production identity, contributor
+            notes, and official audience channels in one place.
+          </p>
+          <a href="{{ url_for('main.credits') }}" class="btn btn-secondary"
+            >Open Credits Page</a
+          >
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

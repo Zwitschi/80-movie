@@ -11,7 +11,9 @@
         <p class="hero-lede">{{ movie_description }}</p>
 
         <div class="hero-actions">
-          <a href="#trailer" class="btn btn-primary">Watch Trailer</a>
+          <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
+            >Watch Trailer</a
+          >
           <a href="#synopsis" class="btn btn-secondary">Read Synopsis</a>
           <a href="#tickets" class="btn btn-secondary">See Showtimes</a>
         </div>
@@ -112,20 +114,27 @@
             <span class="eyebrow eyebrow-small">Watch</span>
             <h3>{{ movie.trailer.name }}</h3>
             <p>{{ movie.trailer.description }}</p>
+            <p>{{ release_status.summary }}</p>
             <div class="hero-actions hero-actions-compact">
-              <a href="{{ movie.trailer.url }}" class="btn btn-primary"
-                >Open Trailer</a
+              <a href="{{ url_for('main.watch') }}" class="btn btn-primary"
+                >Open Watch Page</a
               >
-              <a href="{{ movie.trailer.embed_url }}" class="btn btn-secondary"
-                >Embed Link</a
+              <a href="#tickets" class="btn btn-secondary"
+                >See Release Options</a
               >
             </div>
           </div>
           <div class="trailer-frame">
-            <div class="trailer-placeholder">
+            <a
+              href="{{ url_for('main.watch') }}"
+              class="trailer-placeholder trailer-link-card"
+            >
               <span class="play-badge">Play</span>
               <strong>{{ movie.trailer.duration_iso }}</strong>
-            </div>
+              <span class="trailer-link-copy"
+                >Dedicated trailer page with release messaging</span
+              >
+            </a>
           </div>
         </div>
 
@@ -138,8 +147,8 @@
           </p>
           <ul class="bullet-list">
             <li>Dedicated CTA above the fold</li>
-            <li>Room for an embedded player or still</li>
-            <li>Short copy for context before the click</li>
+            <li>Embedded player on its own page</li>
+            <li>Release messaging separated from synopsis copy</li>
           </ul>
         </div>
       </div>
