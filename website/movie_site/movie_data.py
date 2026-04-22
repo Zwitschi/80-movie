@@ -23,6 +23,7 @@ def get_movie_data():
         'date_published': None,
         'in_language': 'en',
         'content_rating': 'Not yet rated',
+        'contact_email': 'openmicodyssey@allucanget.biz',
         'poster_image': 'https://openmicodyssey.com/static/images/poster.jpg',
         'trailer': {
             'name': 'Open Mic Odyssey official trailer',

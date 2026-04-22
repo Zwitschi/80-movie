@@ -65,6 +65,9 @@
           &copy; {{ current_year|default(2026) }} {{ movie_title }}. All rights
           reserved.
         </p>
+        <p>
+          Contact: <a href="mailto:{{ movie.contact_email }}">{{ movie.contact_email }}</a>
+        </p>
       </div>
     </footer>
 
