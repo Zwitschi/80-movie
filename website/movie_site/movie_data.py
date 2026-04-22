@@ -66,7 +66,36 @@ def get_movie_data():
                     'credit_note': 'Coordinates production, release planning, and how the film reaches audiences.',
                 }
             ],
-            'actors': [],
+            'actors': [
+                {
+                    'name': 'Bobby Ludlam',
+                    'job_title': 'Self',
+                    'url': 'https://www.bobbyludlam.com',
+                    'same_as': [
+                        'https://www.bobbyludlam.com',
+                        'https://www.instagram.com/bobbyludlam/',
+                    ],
+                    'credit_note': 'One of the three best friends at the heart of the documentary, a comedian chasing stage time and a bigger creative dream.',
+                },
+                {
+                    'name': 'Corey Pelizzi',
+                    'job_title': 'Self',
+                    'url': 'https://instagram.com/owlmovement',
+                    'same_as': ['https://instagram.com/owlmovement'],
+                    'credit_note': 'Directing, filming, and drawn to places of his childhood, creativity and freedom.',
+                },
+                {
+                    'name': 'Georg Sinn',
+                    'job_title': 'Self',
+                    'url': 'https://zwitschi.net',
+                    'same_as': [
+                        'https://zwitschi.net',
+                        'https://allucanget.biz',
+                        'https://www.instagram.com/allucanget',
+                    ],
+                    'credit_note': 'From far away, driving across America and keeping the crew rolling toward the next place to film, perform, and connect with the comedy world.',
+                }
+            ],
         },
         'credits_people': [
             {

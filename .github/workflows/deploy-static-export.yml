@@ -1,42 +1,61 @@
 name: Deploy Static Export
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
 
 jobs:
-  export-and-deploy:
-    name: Export and deploy static site
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    export-and-deploy:
+        name: Export and deploy static site
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        env:
+            WEBSITE_DEPLOY_REPOSITORY: ${{ vars.WEBSITE_DEPLOY_REPOSITORY }}
+            WEBSITE_DEPLOY_BRANCH: ${{ vars.WEBSITE_DEPLOY_BRANCH }}
 
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install -r requirements.txt
 
-      - name: Export static site
-        run: python export_static.py
+            - name: Export static site
+              run: python export_static.py
 
-      - name: Deploy dist/ to Pages repository
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: dist
-          branch: ${{ vars['WEBSITE_DEPLOY_BRANCH'] || 'build' }}
-          repository-name: ${{ vars['WEBSITE_DEPLOY_REPOSITORY'] }}
-          token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
-          clean: true
-          single-commit: true
-          commit-message: "deploy: static export from ${{ github.sha }}"
+            - name: Validate deployment target configuration
+              shell: bash
+              run: |
+                  if [ -z "${WEBSITE_DEPLOY_REPOSITORY}" ]; then
+                    echo "WEBSITE_DEPLOY_REPOSITORY is not set."
+                    exit 1
+                  fi
+
+                  if [ -z "${WEBSITE_DEPLOY_BRANCH}" ]; then
+                    echo "WEBSITE_DEPLOY_BRANCH not set; defaulting to build."
+                    echo "WEBSITE_DEPLOY_BRANCH=build" >> "$GITHUB_ENV"
+                  fi
+
+                  echo "Deploy repository: ${WEBSITE_DEPLOY_REPOSITORY}"
+                  echo "Deploy branch: ${WEBSITE_DEPLOY_BRANCH:-build}"
+
+            - name: Deploy dist/ to Pages repository
+              uses: JamesIves/github-pages-deploy-action@v4
+              with:
+                  folder: dist
+                  branch: ${{ env.WEBSITE_DEPLOY_BRANCH }}
+                  repository-name: ${{ env.WEBSITE_DEPLOY_REPOSITORY }}
+                  token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+                  clean: true
+                  single-commit: true
+                  commit-message: "deploy: static export from ${{ github.sha }}"
