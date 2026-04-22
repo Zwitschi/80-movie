@@ -1,17 +1,18 @@
 {% extends '_base.html' %} {% block page_content %}
-<main>
+<main id="main-content" tabindex="-1">
   <section id="trailer" class="overview-trailer-section">
     <div class="container overview-trailer-shell">
       <div class="section-header overview-trailer-header">
         <span class="eyebrow">Feature Documentary</span>
-        <h1 class="overview-page-title">
-          {{ movie_title }}
-          <span>{{ movie_tagline }}</span>
-        </h1>
+        <h1 class="overview-page-title">{{ movie_title }}</h1>
+        <p class="hero-lede">{{ movie_description }}</p>
         <p>
-          {{ release_status.headline }} The trailer leads the landing page, and
-          the deeper story, credits, and screening context now live on the film
-          page.
+          Subscribe to our channels for updates, news, and upcoming preview
+          screenings.
+        </p>
+        <p>
+          Start with the trailer, then move into the film page, media, or
+          connect hub depending on what you want next.
         </p>
         <div class="hero-meta overview-meta">
           <span class="meta-pill">{{ movie_genre }}</span>
@@ -25,34 +26,34 @@
           <span class="eyebrow eyebrow-small">Now Streaming</span>
           <h3>{{ movie.trailer.name }}</h3>
           <p>{{ movie.trailer.description }}</p>
-          <p>{{ release_status.summary }}</p>
           <div class="hero-actions overview-actions overview-trailer-actions">
             <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
               >Support The Film</a
             >
             <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
-              >Open Film Page</a
+              >Read more</a
             >
           </div>
         </div>
 
         <div class="video-shell overview-video-shell">
-          <video
-            class="overview-trailer-player"
-            controls
-            preload="metadata"
-            poster="{{ url_for('static', filename='images/trailer_thumbnail.jpg') }}"
-          >
-            <source
-              src="{{ url_for('static', filename='video/trailer.webm') }}"
-              type="video/webm"
-            />
-            <source
-              src="{{ url_for('static', filename='video/trailer.mp4') }}"
-              type="video/mp4"
-            />
-            Your browser does not support the HTML5 video tag.
-          </video>
+          <iframe
+            class="video-embed"
+            src="{{ movie.trailer.embed_url | replace('https://www.youtube.com/embed/', 'https://www.youtube-nocookie.com/embed/') }}"
+            title="YouTube video player"
+            loading="lazy"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
         </div>
       </div>
     </div>
@@ -62,10 +63,6 @@
     <div class="container">
       <div class="section-header">
         <h2>Choose Your Next Step</h2>
-        <p>
-          Keep the landing page decision-making compact: go deeper on the film,
-          back the project, or browse visuals without forcing a long scroll.
-        </p>
       </div>
 
       <div class="overview-cta-grid">
@@ -95,8 +92,8 @@
           <span class="eyebrow eyebrow-small">Visuals</span>
           <h3>Browse The Media</h3>
           <p>
-            See poster concepts, stills, and behind-the-scenes imagery without
-            leaving the streamlined landing-page flow.
+            See poster concepts, stills, and behind-the-scenes imagery in a
+            dedicated media view.
           </p>
           <a href="{{ url_for('main.media') }}" class="btn btn-secondary"
             >Open Media</a
@@ -110,18 +107,13 @@
     <div class="container overview-synopsis-shell">
       <div class="section-header">
         <h2>Quick Story Teaser</h2>
-        <p>
-          Leave only a short emotional preview here. The full synopsis and all
-          remaining credits context stay on the film page.
-        </p>
       </div>
 
       <div class="content-card overview-synopsis-card">
         <p class="story-intro">{{ movie_description }}</p>
         <p>
-          A documentary road story about three best friends, stand-up stages,
-          hotel suites, long drives, and the emotional math of trying to make a
-          creative life real.
+          A documentary road story about stand-up stages, hotel suites, long
+          drives, and the emotional math of trying to make a creative life real.
         </p>
         <div class="hero-actions overview-actions overview-synopsis-actions">
           <a

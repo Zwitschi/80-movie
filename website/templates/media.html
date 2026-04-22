@@ -1,9 +1,9 @@
 {% extends '_base.html' %} {% block title %}Media {{ movie_title }}{% endblock
 %} {% block page_content %}
-<main>
-  <section class="hero gallery-hero">
-    <div class="container gallery-hero-grid">
-      <div class="content-card gallery-intro">
+<main id="main-content" tabindex="-1">
+  <section class="hero hero-compact">
+    <div class="container hero-grid">
+      <div class="hero-copy">
         <span class="eyebrow">Media</span>
         <h1>
           Stills, Posters, And
@@ -11,10 +11,9 @@
         </h1>
         <p class="hero-lede">
           A media-friendly gallery for first-look visuals, poster art, road
-          stills, and production moments that can later be swapped with final
-          approved assets.
+          stills, and production moments.
         </p>
-        <div class="hero-actions overview-actions">
+        <div class="hero-actions">
           <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
             >Support The Film</a
           >
@@ -24,21 +23,12 @@
         </div>
       </div>
 
-      <aside class="content-card gallery-summary">
+      <aside class="content-card side-panel">
         <span class="eyebrow eyebrow-small">Current Scope</span>
-        <ul class="fact-list">
-          <li>
-            <span class="fact-label">Poster Art</span>
-            <span class="fact-value">Festival-ready concepts</span>
-          </li>
-          <li>
-            <span class="fact-label">Stills</span>
-            <span class="fact-value">Road and performance moments</span>
-          </li>
-          <li>
-            <span class="fact-label">Behind The Scenes</span>
-            <span class="fact-value">Crew and process imagery</span>
-          </li>
+        <ul class="bullet-list">
+          <li>Poster art concepts</li>
+          <li>Road and performance stills</li>
+          <li>Behind-the-scenes crew and process imagery</li>
         </ul>
       </aside>
     </div>
@@ -49,8 +39,8 @@
       <div class="section-header">
         <h2>Media Gallery</h2>
         <p>
-          The layout is seeded with placeholders now, but the structure is ready
-          for real stills, captions, and press-kit asset swaps.
+          The layout is ready for real stills, captions, and press-kit asset
+          swaps.
         </p>
       </div>
       <div class="gallery-grid">
@@ -70,39 +60,6 @@
           </div>
         </article>
         {% endfor %}
-      </div>
-    </section>
-
-    <section>
-      <div class="section-header">
-        <h2>How This Page Should Evolve</h2>
-        <p>
-          Use this page as the future home for approved promotional assets, not
-          just internal placeholders.
-        </p>
-      </div>
-      <div class="grid-3 gallery-notes-grid">
-        <article class="feature feature-highlight">
-          <h3>Press Kit Assets</h3>
-          <p>
-            Replace placeholder images with final stills that can also be reused
-            in festival materials and outreach emails.
-          </p>
-        </article>
-        <article class="feature feature-highlight">
-          <h3>Poster Variants</h3>
-          <p>
-            Add final poster treatments, social crops, and one-sheet versions
-            once design approvals are locked.
-          </p>
-        </article>
-        <article class="feature feature-highlight">
-          <h3>Behind-The-Scenes Depth</h3>
-          <p>
-            Expand with location, date, or context metadata if the team wants a
-            stronger production diary angle.
-          </p>
-        </article>
       </div>
     </section>
   </div>

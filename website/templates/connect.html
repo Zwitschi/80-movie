@@ -1,20 +1,21 @@
 {% extends '_base.html' %} {% block title %}Connect {{ movie_title }}{% endblock
 %} {% block page_content %}
-<main>
-  <section class="hero support-hero">
-    <div class="container support-hero-grid">
-      <div class="content-card support-intro">
+<main id="main-content" tabindex="-1">
+  <section class="hero hero-compact">
+    <div class="container hero-grid">
+      <div class="hero-copy">
         <span class="eyebrow">Connect</span>
-        <h1>
-          Official Updates And
-          <span>{{ movie_title }}</span>
-        </h1>
+        <h1>Be a Part of {{ movie_title }}</h1>
         <p class="hero-lede">
-          The broad public hub for trailer viewing, official channels, release
-          updates, and the lighter support actions that should stay easy to
-          scan.
+          Follow the film's official channels for updates, trailers, and release
+          news.
         </p>
-        <div class="hero-actions overview-actions">
+        <p>
+          Join the journey on Patreon for exclusive content and early access to
+          updates.
+        </p>
+        <p>"Producer Circle" patrons will get their names in the credits.</p>
+        <div class="hero-actions">
           <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
             >Support The Film</a
           >
@@ -24,29 +25,30 @@
         </div>
       </div>
 
-      <aside class="content-card support-summary">
-        <span class="eyebrow eyebrow-small">Connect Snapshot</span>
-        <ul class="fact-list">
+      <aside class="content-card side-panel">
+        <span class="eyebrow eyebrow-small">Support Channels</span>
+        <ul class="bullet-list">
           <li>
-            <span class="fact-label">Social</span>
-            <span class="fact-value">Instagram, TikTok, YouTube</span>
-          </li>
-          <li>
-            <span class="fact-label">Campaign</span>
-            <span class="fact-value"
-              >Official updates live on the main site</span
+            <a href="https://www.instagram.com/openmicodyssey" class="text-link"
+              >Instagram</a
             >
           </li>
           <li>
-            <span class="fact-label">Membership</span>
-            <span class="fact-value">Separate membership conversion page</span>
+            <a href="https://www.tiktok.com/@openmicodyssey" class="text-link"
+              >TikTok</a
+            >
+          </li>
+          <li>
+            <a href="https://www.youtube.com/@openmicodyssey" class="text-link"
+              >YouTube</a
+            >
+          </li>
+          <li>
+            <a href="https://www.patreon.com/openmicodyssey" class="text-link"
+              >Patreon</a
+            >
           </li>
         </ul>
-        <div class="hero-actions overview-actions support-summary-actions">
-          <a href="{{ url_for('main.patreon') }}" class="btn btn-secondary"
-            >Open Patreon Page</a
-          >
-        </div>
       </aside>
     </div>
   </section>
@@ -56,15 +58,14 @@
       <div class="section-header">
         <h2>Official Social Channels</h2>
         <p>
-          These are the primary public channels for audience discovery, clips,
-          and release-day updates.
+          Follow the film's official channels for updates, trailers, and release
+          news.
         </p>
       </div>
       <div class="social-grid support-card-grid">
         {% for link in movie.social_links %}
         <a href="{{ link.url }}" class="social-card support-card">
-          <span class="fact-label">{{ link.label }}</span>
-          <strong>{{ link.url }}</strong>
+          <h3>{{ link.label }}</h3>
           <p>{{ link.description }}</p>
         </a>
         {% endfor %}
@@ -75,16 +76,15 @@
       <div class="section-header">
         <h2>Campaign & Release Updates</h2>
         <p>
-          Until a separate crowdfunding campaign is formally announced, keep the
-          canonical call to action on official owned channels.
+          The main site and trailer section will be the primary public paths for
+          release news and updates while plans are finalized.
         </p>
       </div>
-      <div class="grid-3 support-grid">
+      <div class="grid-2 support-grid">
         {% for item in movie.support_links.campaigns %}
         <article class="feature feature-highlight support-panel-card">
           <span class="eyebrow eyebrow-small">{{ item.status }}</span>
           <h3>{{ item.label }}</h3>
-          <p>{{ item.description }}</p>
           <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
         </article>
         {% endfor %}
@@ -93,10 +93,12 @@
 
     <section>
       <div class="section-header">
-        <h2>Low-Friction Connect Actions</h2>
+        <h2>Follow and Support now!</h2>
         <p>
-          Keep the public asks simple here: follow, subscribe, and choose the
-          dedicated membership page only if someone wants a deeper commitment.
+          Following the film's official channels is the best way to stay in the
+          loop on release news, trailers, and campaign updates. For those who
+          want to go a step further, the Patreon page offers a direct way to
+          support the film and access bonus content.
         </p>
       </div>
       <div class="grid-3 support-grid">
@@ -105,36 +107,19 @@
           <span class="eyebrow eyebrow-small">{{ item.status }}</span>
           <h3>{{ item.label }}</h3>
           <p>{{ item.description }}</p>
+          {% if item.label == 'Patreon' %}
+          <a href="{{ url_for('main.patreon') }}" class="text-link"
+            >Open Patreon Page</a
+          >
+          {% elif item.label == 'YouTube Channel' %}
+          <a href="{{ item.url }}" class="text-link">Visit YouTube</a>
+          {% elif item.label == 'Instagram' %}
+          <a href="{{ item.url }}" class="text-link">Visit Instagram</a>
+          {% else %}
           <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
+          {% endif %}
         </article>
         {% endfor %}
-      </div>
-    </section>
-
-    <section>
-      <div class="section-header">
-        <h2>Need The Deeper Support Offer?</h2>
-        <p>
-          Patreon is now treated as a separate conversion page for visitors who
-          already want bonus access, tiers, and a more direct financial ask.
-        </p>
-      </div>
-      <div class="content-card support-membership-panel">
-        <span class="eyebrow eyebrow-small">Conversion Path</span>
-        <h3>Patreon And Member Access</h3>
-        <p>
-          Use this page to explain the public-facing paths first. Move visitors
-          to Patreon only when they want bonus material, supporter tiers, and a
-          direct backing decision.
-        </p>
-        <div class="hero-actions overview-actions">
-          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-            >Support The Film</a
-          >
-          <a href="{{ url_for('main.film') }}#credits" class="btn btn-secondary"
-            >Open Film Page</a
-          >
-        </div>
       </div>
     </section>
   </div>

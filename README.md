@@ -50,7 +50,30 @@ Something that says all the content you get from patreon like the main movie, th
 Generate a deployable static bundle in `dist/` from the Flask app templates and data:
 
 ```powershell
-f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe generate_static_site.py
+f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe export_static.py
 ```
 
 This command renders the public routes into HTML files, copies static assets into `dist/static/`, validates HTML structure, and validates JSON-LD blocks as JSON with a schema.org envelope check.
+
+The repository also keeps `generate_static_site.py` as the implementation module behind this command. `export_static.py` is the stable entrypoint for local use and CI.
+
+## Static Export Deployment
+
+GitHub Actions can export and deploy the static bundle to the dedicated Pages repository.
+
+Workflow:
+
+- `.github/workflows/deploy-static-export.yml`
+- triggers on push to `main` and on manual dispatch
+- runs `python export_static.py`
+- deploys the generated `dist/` contents to the repository in `WEBSITE_DEPLOY_REPOSITORY`
+- pushes to the branch in `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
+
+Required GitHub configuration in this source repository:
+
+- Secret: `WEBSITE_DEPLOY_TOKEN`
+  token with push permission to the destination Pages repository
+- Variable: `WEBSITE_DEPLOY_REPOSITORY`
+  destination repository in `owner/name` format, for example `Zwitschi/openmicodyssey-website`
+- Optional variable: `WEBSITE_DEPLOY_BRANCH`
+  destination branch; defaults to `build`

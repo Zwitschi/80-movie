@@ -1,21 +1,16 @@
 {% extends '_base.html' %} {% block title %}Supporters {{ movie_title }}{%
 endblock %} {% block page_content %}
-<main>
-  <section class="hero patreon-hero">
-    <div class="container patreon-hero-grid">
-      <div class="content-card patreon-intro">
+<main id="main-content" tabindex="-1">
+  <section class="hero hero-compact">
+    <div class="container hero-grid">
+      <div class="hero-copy">
         <span class="eyebrow">Supporters</span>
         <h1>
           {{ movie.supporter_page.title }}
           <span>{{ movie_title }}</span>
         </h1>
         <p class="hero-lede">{{ movie.supporter_page.intro }}</p>
-        <p>
-          This page is the direct conversion surface for people who already want
-          the deeper membership offer, bonus material, and a clear pledge
-          decision.
-        </p>
-        <div class="hero-actions overview-actions">
+        <div class="hero-actions">
           <a
             href="{{ movie.supporter_page.primary_link.url }}"
             class="btn btn-primary"
@@ -27,27 +22,12 @@ endblock %} {% block page_content %}
         </div>
       </div>
 
-      <aside class="content-card patreon-summary">
+      <aside class="content-card side-panel">
         <span class="eyebrow eyebrow-small">Why It Exists</span>
-        <ul class="fact-list">
-          <li>
-            <span class="fact-label">Bonus Content</span>
-            <span class="fact-value"
-              >Road footage, podcasts, alternate cuts</span
-            >
-          </li>
-          <li>
-            <span class="fact-label">Closer Access</span>
-            <span class="fact-value"
-              >A smaller audience for more personal updates</span
-            >
-          </li>
-          <li>
-            <span class="fact-label">Direct Support</span>
-            <span class="fact-value"
-              >A clear way to back the film financially</span
-            >
-          </li>
+        <ul class="bullet-list">
+          <li>Road footage, podcasts, and alternate cuts</li>
+          <li>A smaller audience for more personal updates</li>
+          <li>A direct way to back the film financially</li>
         </ul>
       </aside>
     </div>
@@ -57,10 +37,6 @@ endblock %} {% block page_content %}
     <section>
       <div class="section-header">
         <h2>What Supporters Get</h2>
-        <p>
-          Keep the value proposition specific here so the connect hub does not
-          have to repeat the full membership pitch.
-        </p>
       </div>
       <div class="grid-3 patreon-benefits-grid">
         {% for benefit in movie.supporter_page.benefits %}
@@ -74,11 +50,7 @@ endblock %} {% block page_content %}
 
     <section>
       <div class="section-header">
-        <h2>Suggested Membership Tiers</h2>
-        <p>
-          These tier descriptions are flexible placeholders that give the team a
-          concrete structure to refine once the offer is approved.
-        </p>
+        <h2>Membership Tiers</h2>
       </div>
       <div class="grid-3 patreon-tiers-grid">
         {% for tier in movie.supporter_page.tiers %}
@@ -88,43 +60,6 @@ endblock %} {% block page_content %}
           <p>{{ tier.description }}</p>
         </article>
         {% endfor %}
-      </div>
-    </section>
-
-    <section>
-      <div class="section-header">
-        <h2>Next Step</h2>
-        <p>
-          The split is deliberate: the connect hub stays broad and lightweight,
-          while this page handles the stronger membership ask.
-        </p>
-      </div>
-      <div class="section-split">
-        <div class="content-card side-panel">
-          <span class="eyebrow eyebrow-small">Not Ready Yet</span>
-          <h3>Start with the connect hub</h3>
-          <p>
-            If someone mainly wants release news, trailer access, or official
-            channels, send them back to the broader connect page instead of
-            forcing the stronger membership pitch.
-          </p>
-          <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
-            >Open Connect Hub</a
-          >
-        </div>
-        <div class="content-card side-panel">
-          <span class="eyebrow eyebrow-small">Ready To Back It</span>
-          <h3>Join the membership offer</h3>
-          <p>
-            When someone wants bonus material and a closer relationship to the
-            project, keep the action direct and move them straight to Patreon.
-          </p>
-          <a
-            href="{{ movie.supporter_page.primary_link.url }}"
-            class="btn btn-primary"
-            >{{ movie.supporter_page.primary_link.label }}</a
-          >
-        </div>
       </div>
     </section>
   </div>
