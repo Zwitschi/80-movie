@@ -41,6 +41,12 @@ jobs:
                     exit 1
                   fi
 
+                  if [[ "${WEBSITE_DEPLOY_REPOSITORY}" != */* ]]; then
+                    WEBSITE_DEPLOY_REPOSITORY="${GITHUB_REPOSITORY_OWNER}/${WEBSITE_DEPLOY_REPOSITORY}"
+                    echo "Normalized deploy repository to ${WEBSITE_DEPLOY_REPOSITORY}."
+                    echo "WEBSITE_DEPLOY_REPOSITORY=${WEBSITE_DEPLOY_REPOSITORY}" >> "$GITHUB_ENV"
+                  fi
+
                   if [ -z "${WEBSITE_DEPLOY_BRANCH}" ]; then
                     echo "WEBSITE_DEPLOY_BRANCH not set; defaulting to build."
                     echo "WEBSITE_DEPLOY_BRANCH=build" >> "$GITHUB_ENV"
@@ -49,13 +55,45 @@ jobs:
                   echo "Deploy repository: ${WEBSITE_DEPLOY_REPOSITORY}"
                   echo "Deploy branch: ${WEBSITE_DEPLOY_BRANCH:-build}"
 
-            - name: Deploy dist/ to Pages repository
-              uses: JamesIves/github-pages-deploy-action@v4
-              with:
-                  folder: dist
-                  branch: ${{ env.WEBSITE_DEPLOY_BRANCH }}
-                  repository-name: ${{ env.WEBSITE_DEPLOY_REPOSITORY }}
-                  token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
-                  clean: true
-                  single-commit: true
-                  commit-message: "deploy: static export from ${{ github.sha }}"
+            - name: Push deployment branch and open pull request
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+                  DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+              run: |
+                  set -euo pipefail
+
+                  DEPLOY_REPO="${WEBSITE_DEPLOY_REPOSITORY}"
+                  TARGET_BRANCH="${WEBSITE_DEPLOY_BRANCH}"
+                  PR_BRANCH="static-export/${GITHUB_RUN_ID}-${GITHUB_SHA::7}"
+                  REPO_URL="https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEPLOY_REPO}.git"
+                  WORKDIR="$(mktemp -d)"
+
+                  git clone --depth 1 --branch "${TARGET_BRANCH}" "${REPO_URL}" "${WORKDIR}"
+
+                  rsync -av --delete \
+                    --exclude '.git' \
+                    dist/ "${WORKDIR}/"
+
+                  cd "${WORKDIR}"
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+                  git checkout -b "${PR_BRANCH}"
+                  git add -A
+
+                  if git diff --cached --quiet; then
+                    echo "No changes to deploy."
+                    exit 0
+                  fi
+
+                  git commit -m "deploy: static export from ${GITHUB_SHA}"
+                  git push origin "${PR_BRANCH}"
+
+                  gh pr create \
+                    --repo "${DEPLOY_REPO}" \
+                    --base "${TARGET_BRANCH}" \
+                    --head "${PR_BRANCH}" \
+                    --title "Deploy static export from ${GITHUB_SHA::7}" \
+                    --body "Automated static export deployment PR created from ${GITHUB_REPOSITORY}@${GITHUB_SHA}."

@@ -66,8 +66,8 @@ Workflow:
 - `.github/workflows/deploy-static-export.yml`
 - triggers on push to `main` and on manual dispatch
 - runs `python export_static.py`
-- deploys the generated `dist/` contents to the repository in `WEBSITE_DEPLOY_REPOSITORY`
-- pushes to the branch in `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
+- stages the generated `dist/` contents in a new branch in `WEBSITE_DEPLOY_REPOSITORY`
+- opens a pull request targeting `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
 
 Required GitHub configuration in this source repository:
 
