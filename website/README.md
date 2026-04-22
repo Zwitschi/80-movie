@@ -49,82 +49,64 @@ The main routes are:
 - `/film`: detailed film page
 - `/credits`: compatibility redirect to the credits section on `/film`
 
-## Deployment Notes
+## Deployment
 
-The application object is exposed as `app` in `website.app`, so a WSGI-compatible deployment target can use:
+Deployment is documented only through this two-step model:
 
-```text
-website.app:app
-```
+1. GitHub Actions mirrors `website/` content to `zwitschi/openmicodyssey-website`.
+2. Terraform provisions and updates OCI infrastructure that runs that mirrored repository.
 
-Examples:
+## GitHub Mirror Workflow
 
-- Heroku or other Procfile-based platforms: use a command such as `gunicorn website.app:app`.
-- Platforms that support direct Flask or WSGI entrypoints: point them at `website.app:app`.
-- If deploying behind a reverse proxy, keep static files under `website/static` available at `/static`.
-
-## Gunicorn
-
-`gunicorn` is now included in the tracked project dependencies in `requirements.txt`.
-
-Typical production-style startup command from the repository root:
-
-```text
-gunicorn website.app:app --bind 0.0.0.0:8000
-```
-
-Recommended environment variables for deployment:
-
-- `FLASK_ENV=production`
-- `PYTHONUNBUFFERED=1`
-
-Example Linux or WSL validation command:
-
-```bash
-source .venv/bin/activate
-gunicorn website.app:app --bind 127.0.0.1:8000
-```
-
-Windows note:
-
-- `gunicorn` installs successfully in the project environment, but it does not run natively on Windows because it depends on the Unix-only `fcntl` module.
-- In this workspace, local gunicorn startup was attempted and failed for that expected platform reason.
-- For local Windows development, continue using the Flask development server or run the gunicorn validation step inside WSL or another Linux environment before deploying.
-
-## Mirror Deployment Workflow
-
-The repository includes a GitHub Actions workflow at `.github/workflows/deploy-website-mirror.yml` that can publish the contents of `website/` into a separate repository.
+This repository includes `.github/workflows/deploy-website-mirror.yml` to publish only website content.
 
 What the workflow does:
 
-- stages a clean deployment bundle from `website/`
-- removes Python caches and common local artifacts
+- stages a clean bundle from `website/` only
+- removes caches and local artifacts
 - copies `requirements.txt` into the mirrored repository root
-- copies `website/README.md` to the mirrored repository root as `README.md`
-- rewrites the mirrored README so the runtime entrypoint reflects the new repository root
-- pushes the result to the target repository and branch you configure
+- copies `website/README.md` into the mirrored repository root as `README.md`
+- rewrites entrypoint references from `website.app:app` to `app:app`
+- pushes changes to `https://github.com/zwitschi/openmicodyssey-website`
 
-Required GitHub configuration in the source repository:
+Required GitHub configuration in this source repository:
 
 - Secret: `WEBSITE_DEPLOY_TOKEN`
-  a GitHub token with permission to push to the destination repository
-- Variable: `WEBSITE_DEPLOY_REPOSITORY`
-  the destination repository in `owner/repo` form
+  token with push permission to `zwitschi/openmicodyssey-website`
 - Optional variable: `WEBSITE_DEPLOY_BRANCH`
-  the destination branch name; defaults to `main` when omitted
+  destination branch; defaults to `main`
 
-Branch behavior:
+Trigger behavior:
 
-- the workflow triggers on pushes to `main` that touch `website/**`, `requirements.txt`, or the workflow file itself
-- it also supports manual execution through `workflow_dispatch`
-- if the target branch does not exist yet, the workflow creates it
-- if there are no content changes after staging, the workflow exits without creating a commit
+- runs on pushes to `main` when `website/**`, `requirements.txt`, or workflow files change
+- supports manual run via `workflow_dispatch`
+- skips commit if staged content matches destination branch
 
-Mirrored repository runtime note:
+Runtime entrypoint in mirrored repository:
 
-- in the mirrored repository, the former `website/` folder becomes the repository root
-- because of that layout change, the mirrored app should run with `gunicorn app:app` rather than `gunicorn website.app:app`
-- Flask development startup in the mirrored repository similarly becomes `python -m flask --app app run`
+- `gunicorn app:app --bind 0.0.0.0:8000`
+
+## Terraform Deployment (OCI)
+
+Terraform is the only documented infrastructure path for OCI.
+
+Scope:
+
+- provision VCN, subnet, NSG, and routing
+- provision Compute instance(s)
+- provision Load Balancer, TLS, and health checks
+- provision DNS, Object Storage, and monitoring alarms
+- apply bootstrap/runtime configuration for Nginx + Gunicorn
+
+Implementation files are tracked under `infra/` as they are added.
+
+Usage model:
+
+1. Run mirror workflow so the latest `website/` bundle is in `zwitschi/openmicodyssey-website`.
+2. Run `terraform init`, `terraform plan`, and `terraform apply` from `infra/`.
+3. Validate primary routes and alarms after apply.
+
+For detailed OCI build order and validation checklists, use the root deployment guide in `DEPLOYMENT.md`.
 
 ## Schema Generation
 

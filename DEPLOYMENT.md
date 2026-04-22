@@ -139,6 +139,70 @@ Required GitHub configuration in this source repository:
 | Secret   | `WEBSITE_DEPLOY_TOKEN`  | GitHub token with push access to destination repo  |
 | Variable | `WEBSITE_DEPLOY_BRANCH` | destination branch (defaults to `main` if omitted) |
 
+## Terraform Workflow
+
+Use Terraform from the `infra/` directory to create and update OCI resources.
+
+### 1) Prepare variable file
+
+- Copy `infra/terraform.tfvars.example` to `infra/terraform.tfvars`.
+- Replace all placeholder values with real OCI IDs, SSH key, and TLS certificate/key data.
+- Do not commit `infra/terraform.tfvars`.
+
+### 2) Initialize Terraform
+
+```bash
+cd infra
+terraform init
+```
+
+### 3) Validate and review plan
+
+```bash
+terraform validate
+terraform plan -out=tfplan
+```
+
+### 4) Apply changes
+
+```bash
+terraform apply tfplan
+```
+
+### 5) Check outputs
+
+```bash
+terraform output
+```
+
+Expected key outputs include:
+
+- compute `public_ip`
+- load balancer `load_balancer_hostname`
+- `dns_record_fqdn`
+
+### 6) Update or destroy workflow
+
+For normal updates:
+
+```bash
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+For teardown (non-production only):
+
+```bash
+terraform destroy
+```
+
+### 7) Recommended execution order
+
+1. Run the GitHub mirror workflow so `zwitschi/openmicodyssey-website` is current.
+2. Run Terraform `plan` and `apply` in this repository's `infra/` directory.
+3. Verify DNS, HTTPS, and route health checks.
+4. Run smoke tests for `/`, `/film`, `/gallery`, `/support`, and `/patreon`.
+
 ## Future Enhancements
 
 - Add WAF policy in front of CDN/LB if threat profile increases.

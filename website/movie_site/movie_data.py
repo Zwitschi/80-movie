@@ -17,8 +17,8 @@ def get_movie_data():
         'release_status': {
             'label': 'Trailer Now Streaming',
             'headline': 'The film is still on the road. The trailer is the first look.',
-            'summary': 'Festival preview screenings are being scheduled now. Use the landing page trailer section for the first look, then move into the film page or support hub for screenings and digital updates.',
-            'detail': 'Digital release details have not been announced yet. Join the waitlist for streaming and purchase updates while the film continues its festival and outreach run.',
+            'summary': 'Preview screenings are being scheduled now. Use the landing page trailer section for the first look, then move into the film page or support hub for screenings and digital updates.',
+            'detail': 'Digital release details have not been announced yet. Join the waitlist for streaming and purchase updates while the film continues its preview and outreach run.',
         },
         'date_published': None,
         'in_language': 'en',
@@ -28,7 +28,7 @@ def get_movie_data():
             'name': 'Open Mic Odyssey official trailer',
             'description': 'Trailer for the documentary feature Open Mic Odyssey.',
             'url': 'https://openmicodyssey.com/',
-            'embed_url': 'https://www.youtube.com/embed/NJ2B1PfS9n8',
+            'embed_url': 'https://www.youtube.com/embed/HTiKuHDAyuE?si=hdZzgve9sgMM2dIx',
             'thumbnail_url': 'https://openmicodyssey.com/static/images/trailer_thumbnail.jpg',
             'upload_date': '2026-03-15',
             'duration_iso': 'PT2M18S',
@@ -180,7 +180,7 @@ def get_movie_data():
         },
         'gallery_items': [
             {
-                'title': 'Festival poster concept',
+                'title': 'Poster concept',
                 'category': 'Poster',
                 'image_url': 'https://openmicodyssey.com/static/images/poster-placeholder.jpg',
                 'alt': 'Poster artwork for Open Mic Odyssey with bold title treatment.',
@@ -231,7 +231,7 @@ def get_movie_data():
         },
         'reviews': [
             {
-                'author_name': 'Festival Programming Notes',
+                'author_name': 'Preview Programming Notes',
                 'author_url': 'https://openmicodyssey.com',
                 'date_published': '2026-03-20',
                 'name': 'A heartfelt comedy road documentary',
@@ -241,20 +241,20 @@ def get_movie_data():
         ],
         'screenings': [
             {
-                'name': 'Open Mic Odyssey festival preview screening',
+                'name': 'Open Mic Odyssey preview screening',
                 'description': 'A preview screening followed by a filmmaker Q&A.',
-                'start_date': '2026-06-12T19:00:00-05:00',
-                'end_date': '2026-06-12T21:30:00-05:00',
+                'start_date': '2026-06-12T19:00:00-07:00',
+                'end_date': '2026-06-12T21:30:00-07:00',
                 'event_status': 'https://schema.org/EventScheduled',
                 'event_attendance_mode': 'https://schema.org/OfflineEventAttendanceMode',
                 'location': {
-                    'name': 'The Aurora Theater',
+                    'name': 'Digital Debris Video Gallery',
                     'url': 'https://openmicodyssey.com/screenings',
                     'address': {
-                        'street_address': '123 Festival Ave',
-                        'address_locality': 'Austin',
-                        'address_region': 'TX',
-                        'postal_code': '78701',
+                        'street_address': '2646 N Figueroa St',
+                        'address_locality': 'Los Angeles',
+                        'address_region': 'CA',
+                        'postal_code': '90065',
                         'address_country': 'US',
                     },
                 },
