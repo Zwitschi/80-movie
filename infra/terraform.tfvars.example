@@ -1,0 +1,61 @@
+# Copy this file to terraform.tfvars and replace placeholders with your real values.
+# Do not commit terraform.tfvars with secrets.
+
+tenancy_ocid         = "ocid1.tenancy.oc1..exampleuniqueID"
+user_ocid            = "ocid1.user.oc1..exampleuniqueID"
+fingerprint          = "12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef"
+private_key_path     = "~/.oci/oci_api_key.pem"
+compartment_ocid     = "ocid1.compartment.oc1..exampleuniqueID"
+availability_domain  = "kIdk:EU-FRANKFURT-1-AD-1"
+ssh_public_key       = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyExampleReplaceMe yourname@host"
+
+# Region and core instance sizing
+region                 = "eu-frankfurt-1"
+instance_shape         = "VM.Standard.A1.Flex"
+instance_ocpus         = 1
+instance_memory_in_gbs = 6
+instance_display_name  = "openmicodyssey-web"
+
+# Network settings
+vcn_cidr          = "10.0.0.0/16"
+public_subnet_cidr = "10.0.1.0/24"
+admin_cidr         = "203.0.113.10/32"
+
+# DNS settings
+dns_zone_name   = "openmicodyssey.com."
+dns_record_name = "@"
+dns_record_ttl  = 300
+
+# Load balancer and TLS
+lb_shape               = "flexible"
+lb_min_bandwidth_mbps  = 10
+lb_max_bandwidth_mbps  = 100
+tls_certificate_name   = "openmicodyssey-cert"
+tls_public_certificate_pem = <<-EOT
+-----BEGIN CERTIFICATE-----
+REPLACE_WITH_PUBLIC_CERTIFICATE
+-----END CERTIFICATE-----
+EOT
+
+tls_private_key_pem = <<-EOT
+-----BEGIN PRIVATE KEY-----
+REPLACE_WITH_PRIVATE_KEY
+-----END PRIVATE KEY-----
+EOT
+
+tls_ca_certificate_pem = <<-EOT
+-----BEGIN CERTIFICATE-----
+OPTIONAL_INTERMEDIATE_CA_CHAIN_OR_LEAVE_EMPTY
+-----END CERTIFICATE-----
+EOT
+
+# Monitoring and notifications
+monitoring_topic_name       = "openmicodyssey-alerts"
+notification_email          = "alerts@example.com"
+notification_webhook_endpoint = ""
+cpu_alarm_threshold         = 80
+memory_alarm_threshold      = 85
+backend_5xx_alarm_threshold = 5
+
+# Object storage
+objectstorage_bucket_name = "openmicodyssey-artifacts"

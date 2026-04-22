@@ -1,0 +1,26 @@
+# Nginx reverse proxy template for Open Mic Odyssey
+# Gunicorn entrypoint note: use `app:app` in the mirrored repository root.
+
+server {
+    listen 80;
+    server_name ${server_name};
+
+    client_max_body_size 25m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 60s;
+    }
+}

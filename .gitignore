@@ -46,6 +46,13 @@ Thumbs.db
 logs/
 *.log
 
+# Terraform state and local backend
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfplan
+infra/terraform.tfvars
+
 # instructions
 .github/instructions/*
 
