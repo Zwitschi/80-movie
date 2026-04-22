@@ -43,6 +43,7 @@ Thumbs.db
 .DS_Store
 
 # Local logs
+logs/
 *.log
 
 # instructions

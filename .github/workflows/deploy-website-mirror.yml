@@ -1,0 +1,114 @@
+name: Deploy website mirror
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "website/**"
+            - "requirements.txt"
+            - ".github/workflows/deploy-website-mirror.yml"
+    workflow_dispatch:
+
+jobs:
+    mirror:
+        name: Push website/ to openmicodyssey-website
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
+
+            - name: Stage deployment bundle
+              run: |
+                  # Create a clean staging directory
+                  mkdir -p /tmp/deploy
+
+                  # Copy website/ contents to staging root
+                  cp -r website/. /tmp/deploy/
+
+                  # Remove Python caches and development artefacts
+                  find /tmp/deploy -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+                  find /tmp/deploy -name '*.pyc' -delete 2>/dev/null || true
+                  find /tmp/deploy -name '*.pyo' -delete 2>/dev/null || true
+                  find /tmp/deploy -name '.DS_Store' -delete 2>/dev/null || true
+
+                  # Copy project requirements to staging root
+                  cp requirements.txt /tmp/deploy/requirements.txt
+
+                  # Copy website README as the repo root README
+                  cp website/README.md /tmp/deploy/README.md
+
+                  # Rewrite entrypoint references so they reflect the mirrored layout
+                  # (website/app.py becomes app.py at repo root)
+                  sed -i \
+                    -e 's|website\.app:app|app:app|g' \
+                    -e 's|--app website\.app|--app app|g' \
+                    -e 's|website/app\.py|app.py|g' \
+                    /tmp/deploy/README.md
+
+            - name: Check for changes
+              id: diff
+              run: |
+                  # Clone destination repo to compare content
+                  git clone \
+                    "https://x-access-token:${{ secrets.WEBSITE_DEPLOY_TOKEN }}@github.com/zwitschi/openmicodyssey-website.git" \
+                    /tmp/dest \
+                    --depth 1 \
+                    --branch "${{ vars.WEBSITE_DEPLOY_BRANCH || 'main' }}" \
+                  || git clone \
+                    "https://x-access-token:${{ secrets.WEBSITE_DEPLOY_TOKEN }}@github.com/zwitschi/openmicodyssey-website.git" \
+                    /tmp/dest \
+                    --depth 1
+
+                  # Diff staged bundle against current destination (excluding .git)
+                  diff_result=$(diff -rq \
+                    --exclude='.git' \
+                    /tmp/deploy/ /tmp/dest/ 2>/dev/null) || true
+
+                  if [ -z "$diff_result" ]; then
+                    echo "has_changes=false" >> "$GITHUB_OUTPUT"
+                    echo "No content changes — skipping push."
+                  else
+                    echo "has_changes=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Push to destination repository
+              if: steps.diff.outputs.has_changes == 'true'
+              env:
+                  DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+                  DEPLOY_BRANCH: ${{ vars.WEBSITE_DEPLOY_BRANCH || 'main' }}
+              run: |
+                  DEST_REPO="zwitschi/openmicodyssey-website"
+
+                  cd /tmp/dest
+
+                  # Configure git identity for the commit
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+
+                  # Ensure we are on the correct branch; create it if it does not exist
+                  git checkout "$DEPLOY_BRANCH" 2>/dev/null \
+                    || git checkout -b "$DEPLOY_BRANCH"
+
+                  # Sync staged bundle into destination (delete files removed from source)
+                  rsync -av --delete \
+                    --exclude='.git' \
+                    /tmp/deploy/ /tmp/dest/
+
+                  git add -A
+
+                  # Only commit if there is something staged
+                  if git diff --cached --quiet; then
+                    echo "Nothing to commit after rsync."
+                    exit 0
+                  fi
+
+                  COMMIT_SHA="${{ github.sha }}"
+                  git commit -m "deploy: mirror website/ from ${COMMIT_SHA::8}"
+
+                  git push \
+                    "https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEST_REPO}.git" \
+                    "HEAD:${DEPLOY_BRANCH}"
