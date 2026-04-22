@@ -35,20 +35,30 @@ def watch():
     return redirect(url_for('main.index', _anchor='trailer'))
 
 
+@main_blueprint.get('/connect')
+def connect():
+    return render_template(
+        'connect.html',
+        **build_page_context(),
+    )
+
+
 @main_blueprint.get('/support')
 def support():
+    return redirect(url_for('main.connect'))
+
+
+@main_blueprint.get('/media')
+def media():
     return render_template(
-        'support.html',
+        'media.html',
         **build_page_context(),
     )
 
 
 @main_blueprint.get('/gallery')
 def gallery():
-    return render_template(
-        'gallery.html',
-        **build_page_context(),
-    )
+    return redirect(url_for('main.media'))
 
 
 @main_blueprint.get('/patreon')

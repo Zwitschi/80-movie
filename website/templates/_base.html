@@ -11,6 +11,7 @@
     {% endif %}
     <link
       rel="stylesheet"
+      type="text/css"
       href="{{ url_for('static', filename='css/site.css') }}"
     />
     {% block extra_head %}{% endblock %}
@@ -49,8 +50,8 @@
           <div class="nav-links">
             <a href="{{ url_for('main.index') }}">Overview</a>
             <a href="{{ url_for('main.film') }}">Film</a>
-            <a href="{{ url_for('main.gallery') }}">Gallery</a>
-            <a href="{{ url_for('main.support') }}">Support</a>
+            <a href="{{ url_for('main.media') }}">Media</a>
+            <a href="{{ url_for('main.connect') }}">Connect</a>
             <a href="{{ url_for('main.film') }}#tickets">Showtimes</a>
           </div>
         </nav>
@@ -66,7 +67,10 @@
           reserved.
         </p>
         <p>
-          Contact: <a href="mailto:{{ movie.contact_email }}">{{ movie.contact_email }}</a>
+          Contact:
+          <a href="mailto:{{ movie.contact_email }}"
+            >{{ movie.contact_email }}</a
+          >
         </p>
       </div>
     </footer>

@@ -2,7 +2,7 @@ def get_movie_data():
     return {
         'title': 'Open Mic Odyssey',
         'tagline': 'Good Morning, I\'m Sorry',
-        'description': 'Three best friends go across America to pursue the dream...',
+        'description': 'Three best friends embark on an outrageous adventure.',
         'genre': 'Documentary',
         'keywords': [
             'documentary',
@@ -17,7 +17,7 @@ def get_movie_data():
         'release_status': {
             'label': 'Trailer Now Streaming',
             'headline': 'The film is still on the road. The trailer is the first look.',
-            'summary': 'Preview screenings are being scheduled now. Use the landing page trailer section for the first look, then move into the film page or support hub for screenings and digital updates.',
+            'summary': 'Preview screenings are being scheduled now. Use the landing page trailer section for the first look, then move into the film page or connect hub for screenings and digital updates.',
             'detail': 'Digital release details have not been announced yet. Join the waitlist for streaming and purchase updates while the film continues its preview and outreach run.',
         },
         'date_published': None,
@@ -161,14 +161,14 @@ def get_movie_data():
         'supporter_page': {
             'title': 'Patreon & Supporter Access',
             'intro': 'A dedicated conversion page for the audience that already wants to back the film directly and unlock bonus material beyond the main release.',
-            'membership_pitch': 'Supporters are the first audience for extra road footage, extended conversations, side projects, and the rougher, more personal material that does not belong on the broader public support hub.',
+            'membership_pitch': 'Supporters are the first audience for extra road footage, extended conversations, side projects, and the rougher, more personal material that does not belong on the broader public connect hub.',
             'primary_link': {
                 'label': 'Join On Patreon',
                 'url': 'https://www.patreon.com/openmicodyssey',
             },
             'secondary_link': {
-                'label': 'Start With The Support Hub',
-                'url': 'https://openmicodyssey.com/support',
+                'label': 'Start With The Connect Hub',
+                'url': 'https://openmicodyssey.com/connect',
             },
             'benefits': [
                 {
@@ -303,7 +303,7 @@ def get_movie_data():
         'offers': [
             {
                 'name': 'Digital release waitlist',
-                'url': 'https://openmicodyssey.com/support',
+                'url': 'https://openmicodyssey.com/connect',
                 'category': 'Streaming access',
                 'availability': 'https://schema.org/PreOrder',
                 'price': 0,

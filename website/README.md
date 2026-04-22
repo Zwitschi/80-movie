@@ -12,8 +12,8 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `templates/_base.html`: shared layout, stylesheet link, and JSON-LD script injection.
 - `templates/overview.html`: overview page shown at `/`.
 - `templates/index.html`: detailed film page shown at `/film`.
-- `templates/gallery.html`: seeded photo gallery shown at `/gallery`.
-- `templates/support.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/support`.
+- `templates/media.html`: seeded media page shown at `/media`.
+- `templates/connect.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/connect`.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
@@ -43,8 +43,8 @@ The main routes are:
 
 - `/`: overview page
 - `/watch`: compatibility redirect to the landing-page trailer section
-- `/gallery`: stills, poster, and behind-the-scenes gallery
-- `/support`: broad public hub for official channels, updates, and lightweight support actions
+- `/media`: stills, poster, and behind-the-scenes media page
+- `/connect`: broad public hub for official channels, updates, and lightweight support actions
 - `/patreon`: dedicated supporter-membership conversion page
 - `/film`: detailed film page
 - `/credits`: compatibility redirect to the credits section on `/film`
@@ -196,7 +196,7 @@ If you replace the background image, keep these constraints:
 The current site now has:
 
 - an overview page
-- a gallery page
+- a media page
 - a support page
 - a Patreon/supporter page
 - a detailed film page
@@ -215,7 +215,7 @@ Based on the stakeholder notes in the repository README, the next recommended ph
 
 ### Phase 2: Content-rich supporting pages
 
-- Photo gallery page:
+- Media page:
   now added as a dedicated page for seeded stills, posters, and behind-the-scenes assets that can be replaced with approved media later.
 - Patreon or supporter page:
   now added as a dedicated page describing supporter access, bonus material, and a starter tier structure.

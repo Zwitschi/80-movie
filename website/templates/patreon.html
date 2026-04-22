@@ -21,8 +21,8 @@ endblock %} {% block page_content %}
             class="btn btn-primary"
             >{{ movie.supporter_page.primary_link.label }}</a
           >
-          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
-            >Back To Support Hub</a
+          <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
+            >Back To Connect Hub</a
           >
         </div>
       </div>
@@ -58,7 +58,7 @@ endblock %} {% block page_content %}
       <div class="section-header">
         <h2>What Supporters Get</h2>
         <p>
-          Keep the value proposition specific here so the support hub does not
+          Keep the value proposition specific here so the connect hub does not
           have to repeat the full membership pitch.
         </p>
       </div>
@@ -95,21 +95,21 @@ endblock %} {% block page_content %}
       <div class="section-header">
         <h2>Next Step</h2>
         <p>
-          The split is deliberate: the support hub stays broad and lightweight,
+          The split is deliberate: the connect hub stays broad and lightweight,
           while this page handles the stronger membership ask.
         </p>
       </div>
       <div class="section-split">
         <div class="content-card side-panel">
           <span class="eyebrow eyebrow-small">Not Ready Yet</span>
-          <h3>Start with the support hub</h3>
+          <h3>Start with the connect hub</h3>
           <p>
             If someone mainly wants release news, trailer access, or official
-            channels, send them back to the broader support page instead of
+            channels, send them back to the broader connect page instead of
             forcing the stronger membership pitch.
           </p>
-          <a href="{{ url_for('main.support') }}" class="btn btn-secondary"
-            >Open Support Hub</a
+          <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
+            >Open Connect Hub</a
           >
         </div>
         <div class="content-card side-panel">
