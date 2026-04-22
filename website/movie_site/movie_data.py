@@ -9,7 +9,16 @@ def get_movie_data():
             'stand-up comedy',
             'road trip',
             'friendship',
+            'tesla',
+            'self driving car',
+            'comedy film',
             'independent film',
+            'comedy documentary',
+            'open mic comedy',
+            'comedy tour documentary',
+            'comedy road trip',
+            'comedy film',
+            'documentary film',
         ],
         'runtime': '124 min',
         'duration_iso': 'PT124M',
@@ -46,6 +55,24 @@ def get_movie_data():
                 'https://www.tiktok.com/@openmicodyssey',
                 'https://www.patreon.com/openmicodyssey',
             ],
+            'people': [
+                {
+                    'name': 'Corey Pelizzi',
+                    'job_title': 'Director, Producer',
+                    'url': 'https://instagram.com/owlmovement',
+                    'same_as': ['https://instagram.com/owlmovement'],
+                },
+                {
+                    'name': 'Georg Sinn',
+                    'job_title': 'Producer',
+                    'url': 'https://allucanget.biz',
+                    'same_as': [
+                        'https://zwitschi.net',
+                        'https://allucanget.biz',
+                        'https://www.instagram.com/allucanget',
+                    ],
+                }
+            ],
         },
         'contributors': {
             'directors': [
@@ -64,6 +91,17 @@ def get_movie_data():
                     'url': 'https://openmicodyssey.com',
                     'same_as': ['https://openmicodyssey.com'],
                     'credit_note': 'Coordinates production, release planning, and how the film reaches audiences.',
+                },
+                {
+                    'name': 'Georg Sinn',
+                    'job_title': 'Producer',
+                    'url': 'https://allucanget.biz',
+                    'same_as': [
+                        'https://zwitschi.net',
+                        'https://allucanget.biz',
+                        'https://www.instagram.com/allucanget',
+                    ],
+                    'credit_note': 'Infrastructure, logistics, IT, development, finance.',
                 }
             ],
             'actors': [

@@ -631,7 +631,7 @@ img {
 }
 
 .hero-lede {
-  font-size: 1.18rem;
+  font-size: clamp(1.3rem, 2.1vw, 1.55rem);
   color: var(--text-main);
 }
 

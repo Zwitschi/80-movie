@@ -33,7 +33,7 @@ ROUTE_OUTPUTS = {
 
 JSON_LD_ENVELOPE_SCHEMA = {
     'type': 'object',
-    'required': ['@context', '@graph'],
+    'required': ['@context'],
     'properties': {
         '@context': {
             'type': ['string', 'array', 'object'],
@@ -59,7 +59,21 @@ JSON_LD_ENVELOPE_SCHEMA = {
                 'additionalProperties': True,
             },
         },
+        '@type': {
+            'oneOf': [
+                {'type': 'string', 'minLength': 1},
+                {
+                    'type': 'array',
+                    'items': {'type': 'string', 'minLength': 1},
+                    'minItems': 1,
+                },
+            ]
+        },
     },
+    'anyOf': [
+        {'required': ['@graph']},
+        {'required': ['@type']},
+    ],
     'additionalProperties': True,
 }
 
@@ -81,6 +95,22 @@ def build_robots_txt(allow_indexing: bool) -> str:
         return DEFAULT_ALLOW_ALL_ROBOTS
 
     return DEFAULT_DISALLOW_ALL_ROBOTS
+
+
+def build_sitemap_xml(site_url: str) -> str:
+    canonical_base = site_url.rstrip('/')
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    for route in ROUTE_OUTPUTS:
+        lines.append('  <url>')
+        lines.append(f'    <loc>{canonical_base}{route}</loc>')
+        lines.append('  </url>')
+
+    lines.append('</urlset>')
+    return '\n'.join(lines) + '\n'
 
 
 def route_href_to_output(href: str) -> str:
@@ -155,6 +185,12 @@ def write_robots_txt(dist_dir: Path, allow_indexing: bool) -> Path:
     robots_path = dist_dir / 'robots.txt'
     write_text_file(robots_path, build_robots_txt(allow_indexing))
     return robots_path
+
+
+def write_sitemap_xml(dist_dir: Path, site_url: str) -> Path:
+    sitemap_path = dist_dir / 'sitemap.xml'
+    write_text_file(sitemap_path, build_sitemap_xml(site_url))
+    return sitemap_path
 
 
 def output_path_for(route: str) -> Path:
@@ -300,6 +336,10 @@ def generate_static_site(clean: bool = True, allow_indexing: bool = False) -> li
     generated_files = render_routes(app, DIST_DIR)
     copy_static_assets()
     generated_files.append(write_robots_txt(DIST_DIR, allow_indexing))
+    generated_files.append(write_sitemap_xml(
+        DIST_DIR,
+        app.config['SITE_URL'],
+    ))
     return generated_files
 
 

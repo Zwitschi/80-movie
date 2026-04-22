@@ -1,5 +1,5 @@
-{% extends '_base.html' %} {% block title %}Supporters {{ movie_title }}{%
-endblock %} {% block page_content %}
+{% extends '_base.html' %} {% block title %}{{ meta_title }}{% endblock %} {%
+block page_content %}
 <main id="main-content" tabindex="-1">
   <section class="hero hero-compact">
     <div class="container hero-grid">
@@ -37,6 +37,10 @@ endblock %} {% block page_content %}
     <section>
       <div class="section-header">
         <h2>What Supporters Get</h2>
+        <p>
+          Patreon documentary support helps fund post-production outreach while
+          unlocking bonus documentary content for supporters.
+        </p>
       </div>
       <div class="grid-3 patreon-benefits-grid">
         {% for benefit in movie.supporter_page.benefits %}
@@ -51,6 +55,10 @@ endblock %} {% block page_content %}
     <section>
       <div class="section-header">
         <h2>Membership Tiers</h2>
+        <p>
+          Choose the film membership tier that fits your level of support for
+          this independent documentary release.
+        </p>
       </div>
       <div class="grid-3 patreon-tiers-grid">
         {% for tier in movie.supporter_page.tiers %}

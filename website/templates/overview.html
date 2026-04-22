@@ -1,4 +1,5 @@
-{% extends '_base.html' %} {% block page_content %}
+{% extends '_base.html' %} {% block title %}{{ meta_title }}{% endblock %} {%
+block page_content %}
 <main id="main-content" tabindex="-1">
   <section id="trailer" class="overview-trailer-section">
     <div class="container overview-trailer-shell">
@@ -6,6 +7,10 @@
         <span class="eyebrow">Feature Documentary</span>
         <h1 class="overview-page-title">{{ movie_title }}</h1>
         <p class="hero-lede">{{ movie_description }}</p>
+        <p>
+          This independent documentary trailer introduces the comedy road trip
+          documentary journey at the center of Open Mic Odyssey.
+        </p>
         <p>
           Subscribe to our channels for updates, news, and upcoming preview
           screenings.
@@ -24,7 +29,7 @@
       <div class="content-card overview-trailer-card">
         <div class="overview-trailer-copy">
           <span class="eyebrow eyebrow-small">Now Streaming</span>
-          <h3>{{ movie.trailer.name }}</h3>
+          <h2>{{ movie.trailer.name }}</h2>
           <p>{{ movie.trailer.description }}</p>
           <div class="hero-actions overview-actions overview-trailer-actions">
             <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
@@ -114,6 +119,10 @@
         <p>
           A documentary road story about stand-up stages, hotel suites, long
           drives, and the emotional math of trying to make a creative life real.
+        </p>
+        <p>
+          Follow documentary film updates here as our stand-up comedy film moves
+          from trailer release toward wider screenings.
         </p>
         <div class="hero-actions overview-actions overview-synopsis-actions">
           <a
