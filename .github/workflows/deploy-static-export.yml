@@ -34,8 +34,8 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
-          branch: ${{ vars.WEBSITE_DEPLOY_BRANCH || 'build' }}
-          repository-name: ${{ vars.WEBSITE_DEPLOY_REPOSITORY }}
+          branch: ${{ vars['WEBSITE_DEPLOY_BRANCH'] || 'build' }}
+          repository-name: ${{ vars['WEBSITE_DEPLOY_REPOSITORY'] }}
           token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
           clean: true
           single-commit: true
