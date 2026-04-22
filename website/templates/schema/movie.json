@@ -27,6 +27,7 @@
   "director": {{ director_refs|tojson }},
   "producer": {{ producer_refs|tojson }},
   "actor": {{ actor_refs|tojson }},
+  "contributor": {{ contributor_refs|tojson }},
   "review": {{ review_refs|tojson }},
   "subjectOf": {{ screening_refs|tojson }},
   "offers": {{ offer_refs|tojson }},

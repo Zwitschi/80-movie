@@ -935,6 +935,18 @@ section {
   align-items: stretch;
 }
 
+.credit-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.credit-link-list .text-link {
+  margin-top: 0;
+}
+
 .feature-credit p {
   color: var(--text-main);
   font-size: 1.05rem;

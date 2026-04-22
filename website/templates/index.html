@@ -234,6 +234,27 @@
             >{{ movie.contributors.producers[0].job_title }}</span
           >
         </article>
+        {% for person in movie.credits_people %}
+        <article class="feature feature-credit">
+          <h3>{{ person.name }}</h3>
+          <p>{{ person.roles | join(', ') }}</p>
+          {% if person.same_as %}
+          <ul class="credit-link-list">
+            {% for profile_url in person.same_as %}
+            <li>
+              <a
+                href="{{ profile_url }}"
+                class="text-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Profile {{ loop.index }}</a
+              >
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </article>
+        {% endfor %}
         <article class="feature feature-credit">
           <h3>Official Links</h3>
           <p>{{ movie.production_company.name }}</p>

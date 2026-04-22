@@ -32,6 +32,24 @@ def build_movie_schema_graph(movie):
             )
         person_refs_by_role[role_name] = refs
 
+    contributor_refs = []
+    for person in movie.get('credits_people', []):
+        person_id = f'{base_url}/#person-{person_index}'
+        person_index += 1
+        contributor_refs.append({'@id': person_id})
+        person_nodes.append(
+            render_schema_template(
+                'person.json',
+                person_id=person_id,
+                person={
+                    'name': person['name'],
+                    'job_title': ', '.join(person.get('roles', [])),
+                    'url': person.get('primary_url') or person['same_as'][0],
+                    'same_as': person.get('same_as', []),
+                },
+            )
+        )
+
     organization_node = render_schema_template(
         'organization.json',
         organization_id=organization_id,
@@ -113,6 +131,7 @@ def build_movie_schema_graph(movie):
             director_refs=person_refs_by_role['directors'],
             producer_refs=person_refs_by_role['producers'],
             actor_refs=person_refs_by_role['actors'],
+            contributor_refs=contributor_refs,
             review_refs=[{'@id': node['@id']} for node in review_nodes],
             screening_refs=[{'@id': node['@id']} for node in screening_nodes],
             offer_refs=movie_offer_refs,
