@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -134,6 +135,10 @@ def rewrite_css_for_static_export(css_text: str) -> str:
     return css_text
 
 
+def normalize_doctype_case(html_text: str) -> str:
+    return re.sub(r'<!doctype\s+html>', '<!doctype html>', html_text, flags=re.IGNORECASE)
+
+
 def build_flask_app():
     sys.path.insert(0, str(WEBSITE_DIR))
     from movie_site import create_app
@@ -251,6 +256,8 @@ def render_routes(app, dist_dir: Path) -> list[Path]:
             if response.status_code == 200:
                 validate_json_ld(soup, route)
                 html = rewrite_html_for_static_export(html)
+
+            html = normalize_doctype_case(html)
 
             write_text_file(destination, html)
             generated_files.append(destination)
