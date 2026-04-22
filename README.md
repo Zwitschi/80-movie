@@ -44,3 +44,13 @@ A stupid web game lol
 
 Something that says all the content you get from patreon like the main movie, the texas podcast, the just driving footage and music cut, and more. Maybe podcasts recorded on discord or something.
 ```
+
+## Static Export
+
+Generate a deployable static bundle in `dist/` from the Flask app templates and data:
+
+```powershell
+f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe generate_static_site.py
+```
+
+This command renders the public routes into HTML files, copies static assets into `dist/static/`, validates HTML structure, and validates JSON-LD blocks as JSON with a schema.org envelope check.
