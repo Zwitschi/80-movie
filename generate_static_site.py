@@ -14,7 +14,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 WEBSITE_DIR = ROOT_DIR / 'website'
 DIST_DIR = ROOT_DIR / 'dist'
 STATIC_SOURCE_DIR = WEBSITE_DIR / 'static'
-STATIC_DEST_DIR = DIST_DIR / 'static'
+FLAT_STATIC_DIRS = ('css', 'images', 'js', 'video')
 
 # Explicit route mapping keeps static export predictable and avoids accidental admin/debug routes.
 ROUTE_OUTPUTS = {
@@ -64,6 +64,58 @@ class StaticGenerationError(RuntimeError):
     pass
 
 
+def route_href_to_output(href: str) -> str:
+    if not href or not href.startswith('/'):
+        return href
+
+    if href.startswith('/static/'):
+        return href.removeprefix('/static/')
+
+    path, fragment = href.split('#', 1) if '#' in href else (href, '')
+
+    if path in ROUTE_OUTPUTS:
+        output = ROUTE_OUTPUTS[path]
+        return f'{output}#{fragment}' if fragment else output
+
+    if path == '/':
+        return f'index.html#{fragment}' if fragment else 'index.html'
+
+    return href
+
+
+def rewrite_html_for_static_export(html_text: str) -> str:
+    soup = BeautifulSoup(html_text, 'html.parser')
+    public_static_prefix = 'https://openmicodyssey.com/static/'
+
+    for tag in soup.find_all(True):
+        for attribute in ('href', 'src', 'poster'):
+            value = tag.get(attribute)
+            if not value:
+                continue
+
+            if not isinstance(value, str):
+                continue
+
+            if value.startswith(public_static_prefix):
+                tag[attribute] = value.removeprefix(public_static_prefix)
+                continue
+
+            if value.startswith('/static/') or value.startswith('/'):
+                tag[attribute] = route_href_to_output(value)
+
+    return str(soup)
+
+
+def rewrite_css_for_static_export(css_text: str) -> str:
+    css_text = css_text.replace('url("/static/images/', 'url("../images/')
+    css_text = css_text.replace("url('/static/images/", "url('../images/")
+    css_text = css_text.replace('url(/static/images/', 'url(../images/')
+    css_text = css_text.replace('url("/static/video/', 'url("../video/')
+    css_text = css_text.replace("url('/static/video/", "url('../video/")
+    css_text = css_text.replace('url(/static/video/', 'url(../video/')
+    return css_text
+
+
 def build_flask_app():
     sys.path.insert(0, str(WEBSITE_DIR))
     from movie_site import create_app
@@ -82,7 +134,8 @@ def output_path_for(route: str) -> Path:
 
 
 def build_redirect_html(location: str) -> str:
-    escaped_location = location.replace('"', '&quot;')
+    static_location = route_href_to_output(location)
+    escaped_location = static_location.replace('"', '&quot;')
     return f"""<!doctype html>
 <html lang=\"en\">
   <head>
@@ -173,6 +226,7 @@ def render_routes(app, dist_dir: Path) -> list[Path]:
             soup = validate_html_structure(html, route)
             if response.status_code == 200:
                 validate_json_ld(soup, route)
+                html = rewrite_html_for_static_export(html)
 
             write_text_file(destination, html)
             generated_files.append(destination)
@@ -185,10 +239,26 @@ def copy_static_assets() -> None:
         raise StaticGenerationError(
             f'Static source directory not found: {STATIC_SOURCE_DIR}')
 
-    if STATIC_DEST_DIR.exists():
-        shutil.rmtree(STATIC_DEST_DIR)
+    for directory_name in FLAT_STATIC_DIRS:
+        source_path = STATIC_SOURCE_DIR / directory_name
+        destination_path = DIST_DIR / directory_name
 
-    shutil.copytree(STATIC_SOURCE_DIR, STATIC_DEST_DIR)
+        if not source_path.exists():
+            continue
+
+        if destination_path.exists():
+            shutil.rmtree(destination_path)
+
+        shutil.copytree(source_path, destination_path)
+
+        if directory_name == 'css':
+            for css_file in destination_path.rglob('*.css'):
+                css_file.write_text(
+                    rewrite_css_for_static_export(
+                        css_file.read_text(encoding='utf-8')
+                    ),
+                    encoding='utf-8',
+                )
 
 
 def generate_static_site(clean: bool = True) -> list[Path]:
@@ -220,7 +290,10 @@ def main() -> int:
     print(f'Generated {len(generated_files)} HTML files in {DIST_DIR}')
     for file_path in generated_files:
         print(f' - {file_path.relative_to(ROOT_DIR)}')
-    print(f' - {STATIC_DEST_DIR.relative_to(ROOT_DIR)} (static assets)')
+    for directory_name in FLAT_STATIC_DIRS:
+        destination_path = DIST_DIR / directory_name
+        if destination_path.exists():
+            print(f' - {destination_path.relative_to(ROOT_DIR)} (static assets)')
 
     return 0
 

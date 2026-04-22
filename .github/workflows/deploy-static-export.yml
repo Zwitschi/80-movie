@@ -68,12 +68,15 @@ jobs:
                   PR_BRANCH="static-export/${GITHUB_RUN_ID}-${GITHUB_SHA::7}"
                   REPO_URL="https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEPLOY_REPO}.git"
                   WORKDIR="$(mktemp -d)"
+                  TARGET_DIR="${WORKDIR}/build"
 
                   git clone --depth 1 --branch "${TARGET_BRANCH}" "${REPO_URL}" "${WORKDIR}"
 
+                  mkdir -p "${TARGET_DIR}"
+
                   rsync -av --delete \
                     --exclude '.git' \
-                    dist/ "${WORKDIR}/"
+                    dist/ "${TARGET_DIR}/"
 
                   cd "${WORKDIR}"
 
