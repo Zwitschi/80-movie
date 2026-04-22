@@ -5,6 +5,12 @@ on:
         branches:
             - main
     workflow_dispatch:
+        inputs:
+            allow_indexing:
+                description: Allow search engines to crawl the published static site
+                required: false
+                default: false
+                type: boolean
 
 jobs:
     export-and-deploy:
@@ -30,7 +36,12 @@ jobs:
                   python -m pip install --upgrade pip
                   python -m pip install -r requirements.txt
 
-            - name: Export static site
+            - name: Export static site with indexing allowed
+              if: github.event_name == 'workflow_dispatch' && inputs.allow_indexing == true
+              run: python export_static.py --allow-indexing
+
+            - name: Export static site with indexing blocked
+              if: github.event_name != 'workflow_dispatch' || inputs.allow_indexing != true
               run: python export_static.py
 
             - name: Validate deployment target configuration
@@ -55,7 +66,7 @@ jobs:
                   echo "Deploy repository: ${WEBSITE_DEPLOY_REPOSITORY}"
                   echo "Deploy branch: ${WEBSITE_DEPLOY_BRANCH:-build}"
 
-            - name: Push deployment branch and open pull request
+            - name: Push deployment branch
               shell: bash
               env:
                   GH_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
@@ -65,7 +76,6 @@ jobs:
 
                   DEPLOY_REPO="${WEBSITE_DEPLOY_REPOSITORY}"
                   TARGET_BRANCH="${WEBSITE_DEPLOY_BRANCH}"
-                  PR_BRANCH="static-export/${GITHUB_RUN_ID}-${GITHUB_SHA::7}"
                   REPO_URL="https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEPLOY_REPO}.git"
                   WORKDIR="$(mktemp -d)"
                   TARGET_DIR="${WORKDIR}/build"
@@ -82,8 +92,6 @@ jobs:
 
                   git config user.name "github-actions[bot]"
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-                  git checkout -b "${PR_BRANCH}"
                   git add -A
 
                   if git diff --cached --quiet; then
@@ -92,11 +100,4 @@ jobs:
                   fi
 
                   git commit -m "deploy: static export from ${GITHUB_SHA}"
-                  git push origin "${PR_BRANCH}"
-
-                  gh pr create \
-                    --repo "${DEPLOY_REPO}" \
-                    --base "${TARGET_BRANCH}" \
-                    --head "${PR_BRANCH}" \
-                    --title "Deploy static export from ${GITHUB_SHA::7}" \
-                    --body "Automated static export deployment PR created from ${GITHUB_REPOSITORY}@${GITHUB_SHA}."
+                  git push origin "${TARGET_BRANCH}"

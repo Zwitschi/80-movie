@@ -57,6 +57,15 @@ This command renders the public routes into HTML files, copies static assets int
 
 The repository also keeps `generate_static_site.py` as the implementation module behind this command. `export_static.py` is the stable entrypoint for local use and CI.
 
+The export also writes `dist/robots.txt`. By default it blocks all crawlers:
+
+```text
+User-agent: *
+Disallow: /
+```
+
+To allow indexing later, set `STATIC_EXPORT_ALLOW_INDEXING=true` in the environment or run `python export_static.py --allow-indexing`.
+
 ## Static Export Deployment
 
 GitHub Actions can export and deploy the static bundle to the dedicated Pages repository.
@@ -66,8 +75,11 @@ Workflow:
 - `.github/workflows/deploy-static-export.yml`
 - triggers on push to `main` and on manual dispatch
 - runs `python export_static.py`
-- stages the generated `dist/` contents into the destination repository folder `build/` in a new branch in `WEBSITE_DEPLOY_REPOSITORY`
-- opens a pull request targeting `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
+- keeps indexing blocked by default on push deployments and when manually dispatched without overrides
+- can enable indexing on manual dispatch by setting the `allow_indexing` input to `true`
+- writes `build/robots.txt` as part of the generated bundle and blocks crawlers by default
+- stages the generated `dist/` contents into the destination repository folder `build/` in `WEBSITE_DEPLOY_REPOSITORY`
+- pushes directly to `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
 
 Required GitHub configuration in this source repository:
 
@@ -77,3 +89,8 @@ Required GitHub configuration in this source repository:
   destination repository in `owner/name` format, for example `Zwitschi/openmicodyssey-website`
 - Optional variable: `WEBSITE_DEPLOY_BRANCH`
   destination branch; defaults to `build`
+
+Manual publication override:
+
+- Workflow dispatch input: `allow_indexing`
+  when set to `true`, the generated `build/robots.txt` will allow crawling instead of blocking all access for that run

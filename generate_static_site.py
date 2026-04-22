@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -15,6 +16,8 @@ WEBSITE_DIR = ROOT_DIR / 'website'
 DIST_DIR = ROOT_DIR / 'dist'
 STATIC_SOURCE_DIR = WEBSITE_DIR / 'static'
 FLAT_STATIC_DIRS = ('css', 'images', 'js', 'video')
+DEFAULT_DISALLOW_ALL_ROBOTS = 'User-agent: *\nDisallow: /\n'
+DEFAULT_ALLOW_ALL_ROBOTS = 'User-agent: *\nAllow: /\n'
 
 # Explicit route mapping keeps static export predictable and avoids accidental admin/debug routes.
 ROUTE_OUTPUTS = {
@@ -62,6 +65,21 @@ JSON_LD_ENVELOPE_SCHEMA = {
 
 class StaticGenerationError(RuntimeError):
     pass
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def build_robots_txt(allow_indexing: bool) -> str:
+    if allow_indexing:
+        return DEFAULT_ALLOW_ALL_ROBOTS
+
+    return DEFAULT_DISALLOW_ALL_ROBOTS
 
 
 def route_href_to_output(href: str) -> str:
@@ -126,6 +144,12 @@ def build_flask_app():
 def write_text_file(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding='utf-8')
+
+
+def write_robots_txt(dist_dir: Path, allow_indexing: bool) -> Path:
+    robots_path = dist_dir / 'robots.txt'
+    write_text_file(robots_path, build_robots_txt(allow_indexing))
+    return robots_path
 
 
 def output_path_for(route: str) -> Path:
@@ -261,17 +285,20 @@ def copy_static_assets() -> None:
                 )
 
 
-def generate_static_site(clean: bool = True) -> list[Path]:
+def generate_static_site(clean: bool = True, allow_indexing: bool = False) -> list[Path]:
     if clean and DIST_DIR.exists():
         shutil.rmtree(DIST_DIR)
 
     app = build_flask_app()
     generated_files = render_routes(app, DIST_DIR)
     copy_static_assets()
+    generated_files.append(write_robots_txt(DIST_DIR, allow_indexing))
     return generated_files
 
 
 def parse_args() -> argparse.Namespace:
+    default_allow_indexing = env_flag(
+        'STATIC_EXPORT_ALLOW_INDEXING', default=False)
     parser = argparse.ArgumentParser(
         description='Render Flask routes as a deployable static site bundle in dist/.'
     )
@@ -280,12 +307,28 @@ def parse_args() -> argparse.Namespace:
         action='store_true',
         help='Do not remove dist/ before generating files.',
     )
+    parser.add_argument(
+        '--allow-indexing',
+        action='store_true',
+        dest='allow_indexing',
+        default=default_allow_indexing,
+        help='Generate robots.txt that allows crawlers. Defaults to the STATIC_EXPORT_ALLOW_INDEXING environment variable or false.',
+    )
+    parser.add_argument(
+        '--disallow-indexing',
+        action='store_false',
+        dest='allow_indexing',
+        help='Generate robots.txt that blocks crawlers. This is the default when no override is provided.',
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    generated_files = generate_static_site(clean=not args.no_clean)
+    generated_files = generate_static_site(
+        clean=not args.no_clean,
+        allow_indexing=args.allow_indexing,
+    )
 
     print(f'Generated {len(generated_files)} HTML files in {DIST_DIR}')
     for file_path in generated_files:
