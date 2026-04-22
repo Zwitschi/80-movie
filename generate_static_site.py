@@ -169,6 +169,27 @@ def normalize_doctype_case(html_text: str) -> str:
     return re.sub(r'<!doctype\s+html>', '<!doctype html>', html_text, flags=re.IGNORECASE)
 
 
+def clean_html_whitespace(html_text: str) -> str:
+    cleaned_lines = []
+    previous_was_blank = False
+
+    for line in html_text.splitlines():
+        normalized_line = line.rstrip()
+        if not normalized_line.strip():
+            if previous_was_blank:
+                continue
+            previous_was_blank = True
+            continue
+
+        previous_was_blank = False
+        cleaned_lines.append(normalized_line)
+
+    cleaned_text = '\n'.join(cleaned_lines).strip()
+    cleaned_text = re.sub(r'\n[\s\ufeff]*\n+', '\n', cleaned_text)
+    cleaned_text = re.sub(r'(?i)<!doctype html>\s*<html', '<!doctype html>\n<html', cleaned_text)
+    return cleaned_text + '\n'
+
+
 def build_flask_app():
     sys.path.insert(0, str(WEBSITE_DIR))
     from movie_site import create_app
@@ -294,6 +315,7 @@ def render_routes(app, dist_dir: Path) -> list[Path]:
                 html = rewrite_html_for_static_export(html)
 
             html = normalize_doctype_case(html)
+            html = clean_html_whitespace(html)
 
             write_text_file(destination, html)
             generated_files.append(destination)
