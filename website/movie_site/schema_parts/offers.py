@@ -1,7 +1,7 @@
 from . import render_schema_template
 
 
-def build_movie_offer_nodes_and_refs(movie, base_url, movie_id, organization_id):
+def build_offer_nodes_and_refs(movie, base_url, movie_id, organization_id):
     movie_offer_nodes = []
     movie_offer_refs = []
 

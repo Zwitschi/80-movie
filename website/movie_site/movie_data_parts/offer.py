@@ -1,4 +1,4 @@
-def build_movie_offer_data():
+def build_offer_data():
     return {
         'offers': [
             {

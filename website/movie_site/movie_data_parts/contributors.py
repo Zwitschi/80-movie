@@ -1,4 +1,4 @@
-def build_movie_contributor_data():
+def build_contributor_data():
     return {
         'contributors': {
             'directors': [

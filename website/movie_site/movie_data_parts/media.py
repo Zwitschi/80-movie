@@ -1,4 +1,4 @@
-def build_movie_media_data():
+def build_media_data():
     return {
         'date_published': None,
         'in_language': 'en',

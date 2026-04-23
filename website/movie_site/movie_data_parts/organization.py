@@ -1,4 +1,4 @@
-def build_movie_production_company_data():
+def build_production_company_data():
     return {
         'production_company': {
             'name': 'Open Mic Odyssey Productions',

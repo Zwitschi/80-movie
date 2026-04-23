@@ -1,4 +1,4 @@
-def build_movie_credits_people_data():
+def build_credits_people_data():
     return {
         'credits_people': [
             {

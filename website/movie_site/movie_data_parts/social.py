@@ -1,4 +1,4 @@
-def build_movie_social_links_data():
+def build_social_links_data():
     return {
         'social_links': [
             {

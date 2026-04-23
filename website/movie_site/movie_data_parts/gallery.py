@@ -1,4 +1,4 @@
-def build_movie_gallery_items_data():
+def build_gallery_items_data():
     return {
         'gallery_items': [
             {

@@ -3,7 +3,7 @@ from flask import current_app
 from .events import build_screening_nodes_and_offer_nodes
 from .media import build_trailer_node
 from .movie import build_faq_node, build_movie_node
-from .offers import build_movie_offer_nodes_and_refs
+from .offers import build_offer_nodes_and_refs
 from .organization import build_organization_node
 from .people import build_person_nodes_and_refs
 from .reviews import build_aggregate_rating_node, build_review_nodes
@@ -34,7 +34,7 @@ def build_movie_schema_graph(movie):
         movie_id,
         organization_id,
     )
-    movie_offer_nodes, movie_offer_refs = build_movie_offer_nodes_and_refs(
+    movie_offer_nodes, movie_offer_refs = build_offer_nodes_and_refs(
         movie,
         base_url,
         movie_id,

@@ -1,4 +1,4 @@
-def build_movie_screening_data():
+def build_screening_data():
     return {
         'screenings': [
             {

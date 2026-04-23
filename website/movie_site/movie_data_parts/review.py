@@ -1,4 +1,4 @@
-def build_movie_review_data():
+def build_review_data():
     return {
         'aggregate_rating': {
             'rating_value': 4.8,

@@ -1,4 +1,4 @@
-def build_movie_faq_data():
+def build_faq_data():
     return {
         'faq_items': [
             {

@@ -1,4 +1,4 @@
-def build_movie_support_links_data():
+def build_support_links_data():
     return {
         'support_links': {
             'campaigns': [
@@ -39,7 +39,7 @@ def build_movie_support_links_data():
     }
 
 
-def build_movie_supporter_page_data():
+def build_supporter_page_data():
     return {
         'supporter_page': {
             'title': 'Patreon & Supporter Access',
