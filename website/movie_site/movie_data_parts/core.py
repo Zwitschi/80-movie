@@ -1,0 +1,26 @@
+def build_movie_core_data():
+    return {
+        'title': 'Open Mic Odyssey',
+        'tagline': 'Good Morning, I\'m Sorry',
+        'description': 'Three best friends embark on an outrageous adventure.',
+        'genre': 'Documentary',
+        'keywords': [
+            'documentary',
+            'stand-up comedy',
+            'road trip',
+            'friendship',
+            'tesla',
+            'self driving car',
+            'comedy film',
+            'independent film',
+            'comedy documentary',
+            'open mic comedy',
+            'comedy tour documentary',
+            'comedy road trip',
+            'comedy film',
+            'documentary film',
+        ],
+        'runtime': '124 min',
+        'duration_iso': 'PT124M',
+        'release_date': 'Post-Production',
+    }

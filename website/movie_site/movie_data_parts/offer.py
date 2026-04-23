@@ -1,0 +1,15 @@
+def build_movie_offer_data():
+    return {
+        'offers': [
+            {
+                'name': 'Digital release waitlist',
+                'url': 'https://openmicodyssey.com/connect',
+                'category': 'Streaming access',
+                'availability': 'https://schema.org/PreOrder',
+                'price': 0,
+                'price_currency': 'USD',
+                'valid_from': '2026-04-07',
+                'description': 'Join the list for streaming and digital purchase updates.',
+            }
+        ],
+    }
