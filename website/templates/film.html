@@ -1,0 +1,147 @@
+{% extends '_base.html' %} {% block title %}{{ meta_title }}{% endblock %} {%
+block page_content %}
+<main id="main-content" tabindex="-1">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Feature Documentary</span>
+        <h1>{{ movie_title }}</h1>
+        <p class="hero-lede">{{ movie_description }}</p>
+
+        <div class="hero-actions">
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >Support The Film</a
+          >
+          <a
+            href="{{ url_for('main.index') }}#trailer"
+            class="btn btn-secondary"
+            >Watch Trailer</a
+          >
+        </div>
+
+        <div class="hero-meta">
+          <span class="meta-pill">{{ movie_genre }}</span>
+          <span class="meta-pill">{{ movie_runtime }}</span>
+          <span class="meta-pill">{{ release_date }}</span>
+        </div>
+      </div>
+
+      <aside class="content-card side-panel">
+        <span class="eyebrow eyebrow-small">Release Status</span>
+        <h2>{{ release_status.label }}</h2>
+        <p>{{ release_status.detail }}</p>
+      </aside>
+    </div>
+  </section>
+
+  <div class="container">
+    <section id="synopsis">
+      <div class="section-header">
+        <h2>Synopsis</h2>
+      </div>
+      <div class="section-split section-split-wide">
+        <div class="content-card story-panel">
+          <p class="story-intro">{{ movie_description }}</p>
+          <p>
+            This documentary film synopsis frames Open Mic Odyssey as an
+            independent road trip documentary rooted in live stand-up sets and
+            long-distance friendship.
+          </p>
+          <p>
+            The documentary follows three best friends through hotel suites,
+            late sets, long drives, and the strange optimism it takes to keep
+            betting on yourself.
+          </p>
+          <p>
+            It is a character-first road film: funny, uncertain, and emotionally
+            grounded instead of over-explained.
+          </p>
+        </div>
+
+        <div class="stack-panel">
+          <div class="content-card side-panel">
+            <span class="eyebrow eyebrow-small">Themes</span>
+            <ul class="bullet-list">
+              <li>Creative ambition</li>
+              <li>Friendship under stress</li>
+              <li>The comedy grind as lived experience</li>
+            </ul>
+          </div>
+          <div class="content-card side-panel">
+            <span class="eyebrow eyebrow-small">Audience</span>
+            <p>
+              Best positioned for viewers interested in independent documentary,
+              performance culture, and road stories with personality.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="credits">
+      <div class="section-header">
+        <h2>Credits</h2>
+        <p>
+          Independent documentary credits and comedy documentary cast details
+          are listed below for press and audience reference.
+        </p>
+      </div>
+      <div class="grid-4 credits-grid">
+        <article class="feature feature-credit">
+          <h3>Production Company</h3>
+          <p>{{ movie.production_company.name }}</p>
+          <a href="{{ movie.production_company.url }}" class="text-link"
+            >Official site</a
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Director</h3>
+          <p>{{ movie.contributors.directors[0].name }}</p>
+          <span class="credit-role"
+            >{{ movie.contributors.directors[0].job_title }}</span
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Producer</h3>
+          <p>{{ movie.contributors.producers[0].name }}</p>
+          <span class="credit-role"
+            >{{ movie.contributors.producers[0].job_title }}</span
+          >
+        </article>
+        <article class="feature feature-credit">
+          <h3>Official Links</h3>
+          <p>Audience follow-through</p>
+          <a href="{{ url_for('main.connect') }}" class="text-link"
+            >Open Connect Hub</a
+          >
+        </article>
+      </div>
+    </section>
+
+    <section id="cast">
+      <div class="section-header">
+        <h2>Cast</h2>
+      </div>
+      <div class="grid-3 credits-grid">
+        {% for person in movie.credits_people %}
+        <article class="feature feature-credit">
+          <h3>{{ person.name }}</h3>
+          <p>{{ person.roles | join(', ') }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="tickets">
+      <div class="content-card side-panel">
+        <span class="eyebrow eyebrow-small">Digital Release</span>
+        <h2>{{ movie.offers[0].name }}</h2>
+        <p>{{ movie.offers[0].description }}</p>
+        <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
+          >Join The Waitlist</a
+        >
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

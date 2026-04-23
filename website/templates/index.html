@@ -1,147 +1,138 @@
 {% extends '_base.html' %} {% block title %}{{ meta_title }}{% endblock %} {%
 block page_content %}
 <main id="main-content" tabindex="-1">
-  <section class="hero">
-    <div class="container hero-grid">
-      <div class="hero-copy">
+  <section id="trailer" class="overview-trailer-section">
+    <div class="container overview-trailer-shell">
+      <div class="section-header overview-trailer-header">
         <span class="eyebrow">Feature Documentary</span>
-        <h1>{{ movie_title }}</h1>
+        <h1 class="overview-page-title">{{ movie_title }}</h1>
         <p class="hero-lede">{{ movie_description }}</p>
-
-        <div class="hero-actions">
-          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-            >Support The Film</a
-          >
-          <a
-            href="{{ url_for('main.index') }}#trailer"
-            class="btn btn-secondary"
-            >Watch Trailer</a
-          >
-        </div>
-
-        <div class="hero-meta">
+        <p>
+          This independent documentary trailer introduces the comedy road trip
+          documentary journey at the center of Open Mic Odyssey.
+        </p>
+        <p>
+          Subscribe to our channels for updates, news, and upcoming preview
+          screenings.
+        </p>
+        <p>
+          Start with the trailer, then move into the film page, media, or
+          connect hub depending on what you want next.
+        </p>
+        <div class="hero-meta overview-meta">
           <span class="meta-pill">{{ movie_genre }}</span>
           <span class="meta-pill">{{ movie_runtime }}</span>
           <span class="meta-pill">{{ release_date }}</span>
         </div>
       </div>
 
-      <aside class="content-card side-panel">
-        <span class="eyebrow eyebrow-small">Release Status</span>
-        <h2>{{ release_status.label }}</h2>
-        <p>{{ release_status.detail }}</p>
-      </aside>
+      <div class="content-card overview-trailer-card">
+        <div class="overview-trailer-copy">
+          <span class="eyebrow eyebrow-small">Now Streaming</span>
+          <h2>{{ movie.trailer.name }}</h2>
+          <p>{{ movie.trailer.description }}</p>
+          <div class="hero-actions overview-actions overview-trailer-actions">
+            <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+              >Support The Film</a
+            >
+            <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+              >Read more</a
+            >
+          </div>
+        </div>
+
+        <div class="video-shell overview-video-shell">
+          <iframe
+            class="video-embed"
+            src="{{ movie.trailer.embed_url | replace('https://www.youtube.com/embed/', 'https://www.youtube-nocookie.com/embed/') }}"
+            title="YouTube video player"
+            loading="lazy"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
     </div>
   </section>
 
-  <div class="container">
-    <section id="synopsis">
+  <section class="overview-next-step-section">
+    <div class="container">
       <div class="section-header">
-        <h2>Synopsis</h2>
+        <h2>Choose Your Next Step</h2>
       </div>
-      <div class="section-split section-split-wide">
-        <div class="content-card story-panel">
-          <p class="story-intro">{{ movie_description }}</p>
-          <p>
-            This documentary film synopsis frames Open Mic Odyssey as an
-            independent road trip documentary rooted in live stand-up sets and
-            long-distance friendship.
-          </p>
-          <p>
-            The documentary follows three best friends through hotel suites,
-            late sets, long drives, and the strange optimism it takes to keep
-            betting on yourself.
-          </p>
-          <p>
-            It is a character-first road film: funny, uncertain, and emotionally
-            grounded instead of over-explained.
-          </p>
-        </div>
 
-        <div class="stack-panel">
-          <div class="content-card side-panel">
-            <span class="eyebrow eyebrow-small">Themes</span>
-            <ul class="bullet-list">
-              <li>Creative ambition</li>
-              <li>Friendship under stress</li>
-              <li>The comedy grind as lived experience</li>
-            </ul>
-          </div>
-          <div class="content-card side-panel">
-            <span class="eyebrow eyebrow-small">Audience</span>
-            <p>
-              Best positioned for viewers interested in independent documentary,
-              performance culture, and road stories with personality.
-            </p>
-          </div>
-        </div>
+      <div class="overview-cta-grid">
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Learn More</span>
+          <h3>Film Page</h3>
+          <p>
+            Read the fuller synopsis, review the credits, and see screening and
+            access information in one place.
+          </p>
+          <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
+            >Open Film Page</a
+          >
+        </article>
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Primary Action</span>
+          <h3>Support The Film</h3>
+          <p>
+            Move straight into the membership offer if you already want to back
+            the project and unlock supporter updates.
+          </p>
+          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
+            >Support The Film</a
+          >
+        </article>
+        <article class="feature feature-highlight overview-cta-card">
+          <span class="eyebrow eyebrow-small">Visuals</span>
+          <h3>Browse The Media</h3>
+          <p>
+            See poster concepts, stills, and behind-the-scenes imagery in a
+            dedicated media view.
+          </p>
+          <a href="{{ url_for('main.media') }}" class="btn btn-secondary"
+            >Open Media</a
+          >
+        </article>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="credits">
+  <section class="overview-synopsis-section">
+    <div class="container overview-synopsis-shell">
       <div class="section-header">
-        <h2>Credits</h2>
+        <h2>Quick Story Teaser</h2>
+      </div>
+
+      <div class="content-card overview-synopsis-card">
+        <p class="story-intro">{{ movie_description }}</p>
         <p>
-          Independent documentary credits and comedy documentary cast details
-          are listed below for press and audience reference.
+          A documentary road story about stand-up stages, hotel suites, long
+          drives, and the emotional math of trying to make a creative life real.
         </p>
-      </div>
-      <div class="grid-4 credits-grid">
-        <article class="feature feature-credit">
-          <h3>Production Company</h3>
-          <p>{{ movie.production_company.name }}</p>
-          <a href="{{ movie.production_company.url }}" class="text-link"
-            >Official site</a
+        <p>
+          Follow documentary film updates here as our stand-up comedy film moves
+          from trailer release toward wider screenings.
+        </p>
+        <div class="hero-actions overview-actions overview-synopsis-actions">
+          <a
+            href="{{ url_for('main.film') }}#synopsis"
+            class="btn btn-secondary"
+            >Read The Full Film Page</a
           >
-        </article>
-        <article class="feature feature-credit">
-          <h3>Director</h3>
-          <p>{{ movie.contributors.directors[0].name }}</p>
-          <span class="credit-role"
-            >{{ movie.contributors.directors[0].job_title }}</span
-          >
-        </article>
-        <article class="feature feature-credit">
-          <h3>Producer</h3>
-          <p>{{ movie.contributors.producers[0].name }}</p>
-          <span class="credit-role"
-            >{{ movie.contributors.producers[0].job_title }}</span
-          >
-        </article>
-        <article class="feature feature-credit">
-          <h3>Official Links</h3>
-          <p>Audience follow-through</p>
-          <a href="{{ url_for('main.connect') }}" class="text-link"
-            >Open Connect Hub</a
-          >
-        </article>
+        </div>
       </div>
-    </section>
-
-    <section id="cast">
-      <div class="section-header">
-        <h2>Cast</h2>
-      </div>
-      <div class="grid-3 credits-grid">
-        {% for person in movie.credits_people %}
-        <article class="feature feature-credit">
-          <h3>{{ person.name }}</h3>
-          <p>{{ person.roles | join(', ') }}</p>
-        </article>
-        {% endfor %}
-      </div>
-    </section>
-
-    <section id="tickets">
-      <div class="content-card side-panel">
-        <span class="eyebrow eyebrow-small">Digital Release</span>
-        <h2>{{ movie.offers[0].name }}</h2>
-        <p>{{ movie.offers[0].description }}</p>
-        <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
-          >Join The Waitlist</a
-        >
-      </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </main>
 {% endblock %}

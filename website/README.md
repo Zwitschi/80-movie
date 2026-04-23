@@ -10,8 +10,8 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `movie_site/movie_data.py`: editable movie content used by the page and schema graph.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
 - `templates/_base.html`: shared layout, stylesheet link, and JSON-LD script injection.
-- `templates/overview.html`: overview page shown at `/`.
-- `templates/index.html`: detailed film page shown at `/film`.
+- `templates/index.html`: overview page shown at `/`.
+- `templates/film.html`: detailed film page shown at `/film`.
 - `templates/media.html`: seeded media page shown at `/media`.
 - `templates/connect.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/connect`.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
@@ -166,7 +166,7 @@ Use `templates/_base.html` for shared layout concerns:
 - Global stylesheet link
 - JSON-LD script injection
 
-Use `templates/index.html` for page-specific content blocks.
+Use `templates/film.html` for page-specific content blocks.
 
 If you add more pages later, extend `_base.html` rather than duplicating the shell.
 

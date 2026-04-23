@@ -92,7 +92,7 @@ def build_page_context(page_key='index'):
 @main_blueprint.get('/')
 def index():
     return render_template(
-        'overview.html',
+        'index.html',
         **build_page_context('index'),
     )
 
@@ -100,7 +100,7 @@ def index():
 @main_blueprint.get('/film')
 def film():
     return render_template(
-        'index.html',
+        'film.html',
         **build_page_context('film'),
     )
 
