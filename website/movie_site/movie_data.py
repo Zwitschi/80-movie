@@ -57,7 +57,7 @@ def get_movie_data():
             ],
             'people': [
                 {
-                    'name': 'Corey Pelizzi',
+                    'name': 'Corey Pellizzi',
                     'job_title': 'Director, Producer',
                     'url': 'https://instagram.com/owlmovement',
                     'same_as': ['https://instagram.com/owlmovement'],
@@ -116,7 +116,7 @@ def get_movie_data():
                     'credit_note': 'One of the three best friends at the heart of the documentary, a comedian chasing stage time and a bigger creative dream.',
                 },
                 {
-                    'name': 'Corey Pelizzi',
+                    'name': 'Corey Pellizzi',
                     'job_title': 'Self',
                     'url': 'https://instagram.com/owlmovement',
                     'same_as': ['https://instagram.com/owlmovement'],
@@ -146,7 +146,7 @@ def get_movie_data():
                 ],
             },
             {
-                'name': 'Corey Pelizzi',
+                'name': 'Corey Pellizzi',
                 'roles': ['Comedian', 'Director', 'Producer', 'Security'],
                 'primary_url': 'https://instagram.com/owlmovement',
                 'same_as': ['https://instagram.com/owlmovement'],
