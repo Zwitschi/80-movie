@@ -58,6 +58,3 @@ infra/terraform.tfvars
 
 # local scripts
 cleanup.ps1
-
-# video assets
-website/static/video/*
