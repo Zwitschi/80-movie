@@ -1,103 +1,106 @@
 name: Deploy Static Export
 
 on:
-    push:
-        branches:
-            - main
-    workflow_dispatch:
-        inputs:
-            allow_indexing:
-                description: Allow search engines to crawl the published static site
-                required: false
-                default: false
-                type: boolean
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      allow_indexing:
+        description: Allow search engines to crawl the published static site
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-    export-and-deploy:
-        name: Export and deploy static site
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
+  export-and-deploy:
+    name: Export and deploy static site
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      WEBSITE_DEPLOY_REPOSITORY: ${{ vars.WEBSITE_DEPLOY_REPOSITORY }}
+      WEBSITE_DEPLOY_BRANCH: ${{ vars.WEBSITE_DEPLOY_BRANCH }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -x
+
+      - name: Export static site with indexing allowed
+        if: github.event_name == 'workflow_dispatch' && inputs.allow_indexing == true
+        run: python export_static.py --allow-indexing
+
+      - name: Export static site with indexing blocked
+        if: github.event_name != 'workflow_dispatch' || inputs.allow_indexing != true
+        run: python export_static.py
+
+      - name: Validate deployment target configuration
+        shell: bash
+        run: |
+          if [ -z "${WEBSITE_DEPLOY_REPOSITORY}" ]; then
+            echo "WEBSITE_DEPLOY_REPOSITORY is not set."
+            exit 1
+          fi
+
+          if [[ "${WEBSITE_DEPLOY_REPOSITORY}" != */* ]]; then
+            WEBSITE_DEPLOY_REPOSITORY="${GITHUB_REPOSITORY_OWNER}/${WEBSITE_DEPLOY_REPOSITORY}"
+            echo "Normalized deploy repository to ${WEBSITE_DEPLOY_REPOSITORY}."
+            echo "WEBSITE_DEPLOY_REPOSITORY=${WEBSITE_DEPLOY_REPOSITORY}" >> "$GITHUB_ENV"
+          fi
+
+          if [ -z "${WEBSITE_DEPLOY_BRANCH}" ]; then
+            echo "WEBSITE_DEPLOY_BRANCH not set; defaulting to build."
+            echo "WEBSITE_DEPLOY_BRANCH=build" >> "$GITHUB_ENV"
+          fi
+
+          echo "Deploy repository: ${WEBSITE_DEPLOY_REPOSITORY}"
+          echo "Deploy branch: ${WEBSITE_DEPLOY_BRANCH:-build}"
+
+      - name: Push deployment branch
+        shell: bash
         env:
-            WEBSITE_DEPLOY_REPOSITORY: ${{ vars.WEBSITE_DEPLOY_REPOSITORY }}
-            WEBSITE_DEPLOY_BRANCH: ${{ vars.WEBSITE_DEPLOY_BRANCH }}
+          GH_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+          DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+        run: |
+          set -euo pipefail
 
-        steps:
-            - name: Checkout source
-              uses: actions/checkout@v4
+          DEPLOY_REPO="${WEBSITE_DEPLOY_REPOSITORY}"
+          TARGET_BRANCH="${WEBSITE_DEPLOY_BRANCH}"
+          REPO_URL="https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEPLOY_REPO}.git"
+          WORKDIR="$(mktemp -d)"
+          TARGET_DIR="${WORKDIR}/build"
 
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.13"
+          git clone --depth 1 --branch "${TARGET_BRANCH}" "${REPO_URL}" "${WORKDIR}"
 
-            - name: Install dependencies
-              run: |
-                  python -m pip install --upgrade pip
-                  python -m pip install -r requirements.txt
+          mkdir -p "${TARGET_DIR}"
 
-            - name: Export static site with indexing allowed
-              if: github.event_name == 'workflow_dispatch' && inputs.allow_indexing == true
-              run: python export_static.py --allow-indexing
+          rsync -av --delete \
+            --exclude '.git' \
+            dist/ "${TARGET_DIR}/"
 
-            - name: Export static site with indexing blocked
-              if: github.event_name != 'workflow_dispatch' || inputs.allow_indexing != true
-              run: python export_static.py
+          cd "${WORKDIR}"
 
-            - name: Validate deployment target configuration
-              shell: bash
-              run: |
-                  if [ -z "${WEBSITE_DEPLOY_REPOSITORY}" ]; then
-                    echo "WEBSITE_DEPLOY_REPOSITORY is not set."
-                    exit 1
-                  fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
 
-                  if [[ "${WEBSITE_DEPLOY_REPOSITORY}" != */* ]]; then
-                    WEBSITE_DEPLOY_REPOSITORY="${GITHUB_REPOSITORY_OWNER}/${WEBSITE_DEPLOY_REPOSITORY}"
-                    echo "Normalized deploy repository to ${WEBSITE_DEPLOY_REPOSITORY}."
-                    echo "WEBSITE_DEPLOY_REPOSITORY=${WEBSITE_DEPLOY_REPOSITORY}" >> "$GITHUB_ENV"
-                  fi
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
 
-                  if [ -z "${WEBSITE_DEPLOY_BRANCH}" ]; then
-                    echo "WEBSITE_DEPLOY_BRANCH not set; defaulting to build."
-                    echo "WEBSITE_DEPLOY_BRANCH=build" >> "$GITHUB_ENV"
-                  fi
-
-                  echo "Deploy repository: ${WEBSITE_DEPLOY_REPOSITORY}"
-                  echo "Deploy branch: ${WEBSITE_DEPLOY_BRANCH:-build}"
-
-            - name: Push deployment branch
-              shell: bash
-              env:
-                  GH_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
-                  DEPLOY_TOKEN: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
-              run: |
-                  set -euo pipefail
-
-                  DEPLOY_REPO="${WEBSITE_DEPLOY_REPOSITORY}"
-                  TARGET_BRANCH="${WEBSITE_DEPLOY_BRANCH}"
-                  REPO_URL="https://x-access-token:${DEPLOY_TOKEN}@github.com/${DEPLOY_REPO}.git"
-                  WORKDIR="$(mktemp -d)"
-                  TARGET_DIR="${WORKDIR}/build"
-
-                  git clone --depth 1 --branch "${TARGET_BRANCH}" "${REPO_URL}" "${WORKDIR}"
-
-                  mkdir -p "${TARGET_DIR}"
-
-                  rsync -av --delete \
-                    --exclude '.git' \
-                    dist/ "${TARGET_DIR}/"
-
-                  cd "${WORKDIR}"
-
-                  git config user.name "github-actions[bot]"
-                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                  git add -A
-
-                  if git diff --cached --quiet; then
-                    echo "No changes to deploy."
-                    exit 0
-                  fi
-
-                  git commit -m "deploy: static export from ${GITHUB_SHA}"
-                  git push origin "${TARGET_BRANCH}"
+          git commit -m "deploy: static export from ${GITHUB_SHA}"
+          git push origin "${TARGET_BRANCH}"
