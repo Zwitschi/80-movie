@@ -3,7 +3,7 @@ block page_content %}
 <main id="main-content" tabindex="-1">
   <section class="hero hero-compact">
     <div class="container hero-grid">
-      <div class="hero-copy">
+      <div class="hero-copy stack-md">
         <span class="eyebrow">Supporters</span>
         <h1>
           {{ movie.supporter_page.title }}
@@ -22,7 +22,7 @@ block page_content %}
         </div>
       </div>
 
-      <aside class="content-card side-panel">
+      <aside class="content-card side-panel panel-card stack-md">
         <span class="eyebrow eyebrow-small">Why It Exists</span>
         <ul class="bullet-list">
           <li>Road footage, podcasts, and alternate cuts</li>
@@ -33,7 +33,7 @@ block page_content %}
     </div>
   </section>
 
-  <div class="container patreon-page">
+  <div class="container patreon-page stack-lg">
     <section>
       <div class="section-header">
         <h2>What Supporters Get</h2>
@@ -44,7 +44,9 @@ block page_content %}
       </div>
       <div class="grid-3 patreon-benefits-grid">
         {% for benefit in movie.supporter_page.benefits %}
-        <article class="feature feature-highlight patreon-card">
+        <article
+          class="feature feature-highlight patreon-card card-lite stack-sm"
+        >
           <h3>{{ benefit.title }}</h3>
           <p>{{ benefit.description }}</p>
         </article>
@@ -62,7 +64,7 @@ block page_content %}
       </div>
       <div class="grid-3 patreon-tiers-grid">
         {% for tier in movie.supporter_page.tiers %}
-        <article class="content-card patreon-tier-card">
+        <article class="content-card patreon-tier-card stack-sm">
           <span class="eyebrow eyebrow-small">{{ tier.price }}</span>
           <h3>{{ tier.name }}</h3>
           <p>{{ tier.description }}</p>

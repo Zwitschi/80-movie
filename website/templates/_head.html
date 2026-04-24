@@ -1,0 +1,40 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>
+  {% block title %}{{ meta_title|default(movie_title) }}{% endblock %}
+</title>
+<meta
+  name="description"
+  content="{{ meta_description|default(movie_description) }}"
+/>
+<meta
+  name="keywords"
+  content="{{ meta_keywords|default(movie.keywords|join(', ')) }}"
+/>
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="{{ movie_title }}" />
+<meta property="og:title" content="{{ meta_title|default(movie_title) }}" />
+<meta
+  property="og:description"
+  content="{{ meta_description|default(movie_description) }}"
+/>
+<meta
+  property="og:image"
+  content="{{ meta_image|default(movie.poster_image) }}"
+/>
+<meta property="og:url" content="{{ meta_url|default(request.url) }}" />
+{% if movie_schema_json %}
+<script type="application/ld+json">
+  {{ movie_schema_json | safe }}
+</script>
+{% endif %} {% if organization_social_schema_json %}
+<script type="application/ld+json">
+  {{ organization_social_schema_json | safe }}
+</script>
+{% endif %}
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{{ url_for('static', filename='css/site.css') }}"
+/>
+{% block extra_head %}{% endblock %}

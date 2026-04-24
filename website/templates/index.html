@@ -26,8 +26,8 @@ block page_content %}
         </div>
       </div>
 
-      <div class="content-card overview-trailer-card">
-        <div class="overview-trailer-copy">
+      <div class="content-card overview-trailer-card panel-card">
+        <div class="overview-trailer-copy stack-md">
           <span class="eyebrow eyebrow-small">Now Streaming</span>
           <h2>{{ movie.trailer.name }}</h2>
           <p>{{ movie.trailer.description }}</p>
@@ -71,7 +71,9 @@ block page_content %}
       </div>
 
       <div class="overview-cta-grid">
-        <article class="feature feature-highlight overview-cta-card">
+        <article
+          class="feature feature-highlight overview-cta-card card-lite stack-sm"
+        >
           <span class="eyebrow eyebrow-small">Learn More</span>
           <h3>Film Page</h3>
           <p>
@@ -82,7 +84,9 @@ block page_content %}
             >Open Film Page</a
           >
         </article>
-        <article class="feature feature-highlight overview-cta-card">
+        <article
+          class="feature feature-highlight overview-cta-card card-lite stack-sm"
+        >
           <span class="eyebrow eyebrow-small">Primary Action</span>
           <h3>Support The Film</h3>
           <p>
@@ -93,7 +97,9 @@ block page_content %}
             >Support The Film</a
           >
         </article>
-        <article class="feature feature-highlight overview-cta-card">
+        <article
+          class="feature feature-highlight overview-cta-card card-lite stack-sm"
+        >
           <span class="eyebrow eyebrow-small">Visuals</span>
           <h3>Browse The Media</h3>
           <p>
@@ -114,7 +120,7 @@ block page_content %}
         <h2>Quick Story Teaser</h2>
       </div>
 
-      <div class="content-card overview-synopsis-card">
+      <div class="content-card overview-synopsis-card panel-card stack-md">
         <p class="story-intro">{{ movie_description }}</p>
         <p>
           A documentary road story about stand-up stages, hotel suites, long

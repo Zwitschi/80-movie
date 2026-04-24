@@ -3,7 +3,7 @@ block page_content %}
 <main id="main-content" tabindex="-1">
   <section class="hero">
     <div class="container hero-grid">
-      <div class="hero-copy">
+      <div class="hero-copy stack-md">
         <span class="eyebrow">Feature Documentary</span>
         <h1>{{ movie_title }}</h1>
         <p class="hero-lede">{{ movie_description }}</p>
@@ -26,7 +26,7 @@ block page_content %}
         </div>
       </div>
 
-      <aside class="content-card side-panel">
+      <aside class="content-card side-panel panel-card stack-md">
         <span class="eyebrow eyebrow-small">Release Status</span>
         <h2>{{ release_status.label }}</h2>
         <p>{{ release_status.detail }}</p>
@@ -40,7 +40,7 @@ block page_content %}
         <h2>Synopsis</h2>
       </div>
       <div class="section-split section-split-wide">
-        <div class="content-card story-panel">
+        <div class="content-card story-panel stack-md">
           <p class="story-intro">{{ movie_description }}</p>
           <p>
             This documentary film synopsis frames Open Mic Odyssey as an
@@ -58,8 +58,8 @@ block page_content %}
           </p>
         </div>
 
-        <div class="stack-panel">
-          <div class="content-card side-panel">
+        <div class="stack-panel stack-lg">
+          <div class="content-card side-panel panel-card stack-md">
             <span class="eyebrow eyebrow-small">Themes</span>
             <ul class="bullet-list">
               <li>Creative ambition</li>
@@ -67,7 +67,7 @@ block page_content %}
               <li>The comedy grind as lived experience</li>
             </ul>
           </div>
-          <div class="content-card side-panel">
+          <div class="content-card side-panel panel-card stack-md">
             <span class="eyebrow eyebrow-small">Audience</span>
             <p>
               Best positioned for viewers interested in independent documentary,
@@ -87,28 +87,28 @@ block page_content %}
         </p>
       </div>
       <div class="grid-4 credits-grid">
-        <article class="feature feature-credit">
+        <article class="feature feature-credit card-lite stack-sm">
           <h3>Production Company</h3>
           <p>{{ movie.production_company.name }}</p>
           <a href="{{ movie.production_company.url }}" class="text-link"
             >Official site</a
           >
         </article>
-        <article class="feature feature-credit">
+        <article class="feature feature-credit card-lite stack-sm">
           <h3>Director</h3>
           <p>{{ movie.contributors.directors[0].name }}</p>
           <span class="credit-role"
             >{{ movie.contributors.directors[0].job_title }}</span
           >
         </article>
-        <article class="feature feature-credit">
+        <article class="feature feature-credit card-lite stack-sm">
           <h3>Producer</h3>
           <p>{{ movie.contributors.producers[0].name }}</p>
           <span class="credit-role"
             >{{ movie.contributors.producers[0].job_title }}</span
           >
         </article>
-        <article class="feature feature-credit">
+        <article class="feature feature-credit card-lite stack-sm">
           <h3>Official Links</h3>
           <p>Audience follow-through</p>
           <a href="{{ url_for('main.connect') }}" class="text-link"
@@ -124,7 +124,7 @@ block page_content %}
       </div>
       <div class="grid-3 credits-grid">
         {% for person in movie.credits_people %}
-        <article class="feature feature-credit">
+        <article class="feature feature-credit card-lite stack-sm">
           <h3>{{ person.name }}</h3>
           <p>{{ person.roles | join(', ') }}</p>
         </article>
@@ -133,7 +133,7 @@ block page_content %}
     </section>
 
     <section id="tickets">
-      <div class="content-card side-panel">
+      <div class="content-card side-panel panel-card stack-md">
         <span class="eyebrow eyebrow-small">Digital Release</span>
         <h2>{{ movie.offers[0].name }}</h2>
         <p>{{ movie.offers[0].description }}</p>

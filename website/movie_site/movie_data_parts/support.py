@@ -1,0 +1,92 @@
+def build_support_links_data():
+    return {
+        'support_links': {
+            'campaigns': [
+                {
+                    'label': 'Official Website Updates',
+                    'url': 'https://openmicodyssey.com',
+                    'status': 'Primary',
+                    'description': 'The main site will be the primary public path for release news and updates while plans are finalized.',
+                },
+                {
+                    'label': 'Trailer & Release Updates',
+                    'url': 'https://openmicodyssey.com/',
+                    'status': 'Live',
+                    'description': 'The trailer section and the main site remain the current public path while release plans are finalized.',
+                },
+            ],
+            'supporters': [
+                {
+                    'label': 'Patreon',
+                    'url': 'https://www.patreon.com/openmicodyssey',
+                    'status': 'Support',
+                    'description': 'Bonus material, closer updates, a community space, and a direct way to back the film financially. Join the journey on Patreon for exclusive content and early access to updates.',
+                },
+                {
+                    'label': 'YouTube Channel',
+                    'url': 'https://www.youtube.com/@openmicodyssey',
+                    'status': 'Subscribe',
+                    'description': 'Trailer drops, feature clips, and longer-form video updates. Subscribe to the YouTube channel to catch all the video content as soon as it is released.',
+                },
+                {
+                    'label': 'Instagram',
+                    'url': 'https://www.instagram.com/openmicodyssey',
+                    'status': 'Follow',
+                    'description': 'Short-form updates, stills, and behind-the-scenes moments from the film. Follow on Instagram for a more casual, visual look at the film journey and moments that do not make it into the trailers.',
+                },
+            ],
+        },
+    }
+
+
+def build_supporter_page_data():
+    return {
+        'supporter_page': {
+            'title': 'Patreon & Supporter Access',
+            'intro': 'Bonus material, closer updates, a community space, and a direct way to back the film financially. Join the journey on Patreon for exclusive content and early access to updates.',
+            'membership_pitch': 'Road footage, podcasts, and alternate cuts for a smaller audience that wants more personal updates and a direct way to back the film financially.',
+            'primary_link': {
+                'label': 'Join On Patreon',
+                'url': 'https://www.patreon.com/openmicodyssey',
+            },
+            'secondary_link': {
+                'label': 'Start With The Connect Hub',
+                'url': 'https://openmicodyssey.com/connect',
+            },
+            'benefits': [
+                {
+                    'title': 'Main Movie Access',
+                    'description': 'A dedicated place to announce supporter-first access windows and early digital updates.',
+                },
+                {
+                    'title': 'Texas Podcast Material',
+                    'description': 'A home for road-trip conversations and long-form audio that expands the documentary world.',
+                },
+                {
+                    'title': 'Driving Footage & Music Cuts',
+                    'description': 'Extended driving sequences, alternate edits, and atmospheric material for fans.',
+                },
+                {
+                    'title': 'Discord Or Bonus Conversations',
+                    'description': 'Flexible space for extra recordings, live chats, or community-driven add-ons.',
+                },
+            ],
+            'tiers': [
+                {
+                    'name': 'Roadside Supporter',
+                    'price': '$5 / month',
+                    'description': 'Best for followers who want release updates, bonus posts, and a simple way to back the project.',
+                },
+                {
+                    'name': 'Tour Van Member',
+                    'price': '$12 / month',
+                    'description': 'Adds deeper bonus material, behind-the-scenes drops, and more of the in-progress documentary world.',
+                },
+                {
+                    'name': 'Producer Circle',
+                    'price': '$25 / month',
+                    'description': 'Reserved for the most engaged backers who want fuller access to updates and extended extras.',
+                },
+            ],
+        },
+    }

@@ -1,46 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      {% block title %}{{ meta_title|default(movie_title) }}{% endblock %}
-    </title>
-    <meta
-      name="description"
-      content="{{ meta_description|default(movie_description) }}"
-    />
-    <meta
-      name="keywords"
-      content="{{ meta_keywords|default(movie.keywords|join(', ')) }}"
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="{{ movie_title }}" />
-    <meta property="og:title" content="{{ meta_title|default(movie_title) }}" />
-    <meta
-      property="og:description"
-      content="{{ meta_description|default(movie_description) }}"
-    />
-    <meta
-      property="og:image"
-      content="{{ meta_image|default(movie.poster_image) }}"
-    />
-    <meta property="og:url" content="{{ meta_url|default(request.url) }}" />
-    {% if movie_schema_json %}
-    <script type="application/ld+json">
-      {{ movie_schema_json | safe }}
-    </script>
-    {% endif %} {% if organization_social_schema_json %}
-    <script type="application/ld+json">
-      {{ organization_social_schema_json | safe }}
-    </script>
-    {% endif %}
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/site.css') }}"
-    />
-    {% block extra_head %}{% endblock %}
+    {% include '_head.html' %}
   </head>
   <body
     data-page="{% if request.endpoint == 'main.index' %}overview{% elif request.endpoint == 'main.film' %}film{% elif request.endpoint == 'main.media' %}gallery{% elif request.endpoint == 'main.connect' %}support{% elif request.endpoint == 'main.patreon' %}patreon{% endif %}"
@@ -67,62 +28,9 @@
       </video>
       <div class="site-background-overlay"></div>
     </div>
-
-    <header class="site-header">
-      <div class="container">
-        <nav class="nav" aria-label="Main navigation">
-          <a href="{{ url_for('main.index') }}" class="brand">
-            <span class="brand-mark" aria-hidden="true"></span>
-            <span class="brand-title">{{ movie_title }}</span>
-          </a>
-
-          <button
-            class="nav-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="nav-links"
-            aria-label="Open navigation menu"
-          >
-            Menu
-          </button>
-
-          <div class="nav-links" id="nav-links">
-            <a href="{{ url_for('main.index') }}" data-nav="overview"
-              >Overview</a
-            >
-            <a href="{{ url_for('main.film') }}" data-nav="film">Film</a>
-            <a href="{{ url_for('main.media') }}" data-nav="gallery">Media</a>
-            <a href="{{ url_for('main.connect') }}" data-nav="support"
-              >Connect</a
-            >
-            <a href="{{ url_for('main.patreon') }}" data-nav="patreon"
-              >Patreon</a
-            >
-            <a href="{{ url_for('main.film') }}#tickets" data-nav="showtimes"
-              >Showtimes</a
-            >
-          </div>
-        </nav>
-      </div>
-    </header>
-
+    <header class="site-header">{% include '_nav.html' %}</header>
     {% block page_content %}{% endblock %}
-
-    <footer class="site-footer">
-      <div class="container">
-        <p>
-          &copy; <span data-current-year>{{ current_year|default(2026) }}</span>
-          {{ movie_title }}. All rights reserved.
-        </p>
-        <p>
-          Contact:
-          <a href="mailto:{{ movie.contact_email }}"
-            >{{ movie.contact_email }}</a
-          >
-        </p>
-      </div>
-    </footer>
-
+    <footer class="site-footer">{% include '_footer.html' %}</footer>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
   </body>

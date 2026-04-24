@@ -3,7 +3,7 @@ block page_content %}
 <main id="main-content" tabindex="-1">
   <section class="hero hero-compact">
     <div class="container hero-grid">
-      <div class="hero-copy">
+      <div class="hero-copy stack-md">
         <span class="eyebrow">Connect</span>
         <h1>Be a Part of {{ movie_title }}</h1>
         <p class="hero-lede">
@@ -25,7 +25,7 @@ block page_content %}
         </div>
       </div>
 
-      <aside class="content-card side-panel">
+      <aside class="content-card side-panel panel-card stack-md">
         <span class="eyebrow eyebrow-small">Support Channels</span>
         <ul class="bullet-list">
           <li>
@@ -53,7 +53,7 @@ block page_content %}
     </div>
   </section>
 
-  <div class="container support-page">
+  <div class="container support-page stack-lg">
     <section>
       <div class="section-header">
         <h2>Official Social Channels</h2>
@@ -68,7 +68,10 @@ block page_content %}
       </div>
       <div class="social-grid support-card-grid">
         {% for link in movie.social_links %}
-        <a href="{{ link.url }}" class="social-card support-card">
+        <a
+          href="{{ link.url }}"
+          class="social-card support-card card-lite stack-sm"
+        >
           <h3>{{ link.label }}</h3>
           <p>{{ link.description }}</p>
         </a>
@@ -86,7 +89,9 @@ block page_content %}
       </div>
       <div class="grid-2 support-grid">
         {% for item in movie.support_links.campaigns %}
-        <article class="feature feature-highlight support-panel-card">
+        <article
+          class="feature feature-highlight support-panel-card card-lite stack-sm"
+        >
           <span class="eyebrow eyebrow-small">{{ item.status }}</span>
           <h3>{{ item.label }}</h3>
           <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
@@ -111,7 +116,9 @@ block page_content %}
       </div>
       <div class="grid-3 support-grid">
         {% for item in movie.support_links.supporters %}
-        <article class="feature feature-highlight support-panel-card">
+        <article
+          class="feature feature-highlight support-panel-card card-lite stack-sm"
+        >
           <span class="eyebrow eyebrow-small">{{ item.status }}</span>
           <h3>{{ item.label }}</h3>
           <p>{{ item.description }}</p>

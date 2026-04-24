@@ -1,0 +1,26 @@
+<div class="container">
+  <nav class="nav" aria-label="Main navigation">
+    <a href="{{ url_for('main.index') }}" class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-title">{{ movie_title }}</span>
+    </a>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="nav-links"
+      aria-label="Open navigation menu"
+    >
+      Menu
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <a href="{{ url_for('main.index') }}" data-nav="overview">Overview</a>
+      <a href="{{ url_for('main.film') }}" data-nav="film">Film</a>
+      <a href="{{ url_for('main.media') }}" data-nav="gallery">Media</a>
+      <a href="{{ url_for('main.connect') }}" data-nav="support">Connect</a>
+      <a href="{{ url_for('main.patreon') }}" data-nav="patreon">Patreon</a>
+    </div>
+  </nav>
+</div>
