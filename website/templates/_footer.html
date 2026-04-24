@@ -1,10 +1,21 @@
-<div class="container">
-  <p>
-    &copy; <span data-current-year>{{ current_year|default(2026) }}</span>
-    {{ movie_title }}. All rights reserved.
+<div class="container footer-container">
+  <p class="footer-text">
+    &copy; <span data-current-year>{{ current_year|default(2026) }}</span> {{
+    movie_title }}. All rights reserved.
   </p>
-  <p>
-    Contact:
-    <a href="mailto:{{ movie.contact_email }}">{{ movie.contact_email }}</a>
+  <p class="footer-text">
+    <span class="footer-credit"
+      >Website by
+      <a href="https://allucanget.biz" target="_blank">All You Can Get</a
+      >.</span
+    >
+  </p>
+  <p class="footer-text">
+    <span class="footer-contact"
+      >Contact:
+      <a href="mailto:{{ movie.contact_email }}"
+        >{{ movie.contact_email }}</a
+      ></span
+    >
   </p>
 </div>
