@@ -5,10 +5,35 @@ This folder contains the Flask website for Open Mic Odyssey.
 ## Structure
 
 - `app.py`: thin entrypoint that exposes the Flask application.
+- `data/`: JSON files containing structured content data for easy editing and maintenance.
+  - `movies.json`: core movie metadata and content.
+  - `people.json`: cast and crew information.
+  - `organizations.json`: production companies and organizations.
+  - `media_assets.json`: images, videos, and media resources.
+  - `events.json`: screening events and showings.
+  - `reviews.json`: critical reviews and ratings.
+  - `offers.json`: distribution and viewing options.
+  - `faq.json`: frequently asked questions.
+  - `gallery.json`: photo gallery content.
+  - `social.json`: social media links.
+  - `support.json`: campaign and supporter information.
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
+- `movie_site/config.py`: Flask application configuration settings.
 - `movie_site/views.py`: route handlers and page context assembly.
-- `movie_site/movie_data.py`: editable movie content used by the page and schema graph.
+- `movie_site/movie_data.py`: legacy movie content file (being phased out).
+- `movie_site/movie_data_parts/__init__.py`: minimal JSON loader that assembles the page data model from `data/*.json`.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
+- `movie_site/schema_parts/`: modular schema generation components.
+  - `__init__.py`: schema utilities and helpers.
+  - `events.py`: screening event schema generation.
+  - `graph.py`: main schema graph building logic.
+  - `media.py`: media asset schema generation.
+  - `movie.py`: movie entity schema generation.
+  - `offers.py`: offer schema generation.
+  - `organization.py`: organization schema generation.
+  - `people.py`: person schema generation.
+  - `reviews.py`: review schema generation.
+  - `social.py`: social media schema generation.
 - `templates/_base.html`: shared layout, stylesheet link, and JSON-LD script injection.
 - `templates/index.html`: overview page shown at `/`.
 - `templates/film.html`: detailed film page shown at `/film`.
@@ -17,7 +42,9 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
-- `static/images/cinema-bg.svg`: full-page background art.
+- `static/js/scripts.js`: client-side JavaScript functionality.
+- `static/images/`: image assets including background art and media files.
+- `static/video/`: video assets and media files.
 
 ## Run Locally
 
@@ -114,10 +141,11 @@ The structured data is generated in code, not hardcoded into the page.
 
 Flow:
 
-1. `movie_site/views.py` builds the page context.
-2. `movie_site/schema.py` converts the movie data into a schema.org JSON-LD graph.
-3. `render_schema_template()` renders the Jinja schema node templates from `templates/schema/`.
-4. The graph is serialized to JSON and injected into `_base.html` inside a `<script type="application/ld+json">` block.
+1. `movie_site/movie_data_parts/__init__.py` loads content data from JSON files in the `data/` folder.
+2. `movie_site/views.py` builds the page context using the loaded data.
+3. `movie_site/schema_parts/graph.py` converts the movie data into a schema.org JSON-LD graph.
+4. Schema generation modules in `movie_site/schema_parts/` render individual node types using Jinja templates from `templates/schema/`.
+5. The graph is serialized to JSON and injected into `_base.html` inside a `<script type="application/ld+json">` block.
 
 Current graph coverage includes:
 
@@ -133,22 +161,28 @@ Current graph coverage includes:
 
 To add a new schema node type:
 
-1. Add or update the supporting content in `movie_site/movie_data.py`.
+1. Add or update the supporting content in the appropriate JSON file within the `data/` folder.
 2. Create a new Jinja template in `templates/schema/` if the type needs its own node shape.
-3. Update `movie_site/schema.py` to render the new node and add it to the `@graph`.
-4. Verify the resulting JSON-LD by loading the page locally and checking the generated script block.
+3. Add schema generation logic to the appropriate module in `movie_site/schema_parts/`.
+4. Update `movie_site/schema_parts/graph.py` to include the new node in the main graph.
+5. Verify the resulting JSON-LD by loading the page locally and checking the generated script block.
 
 ## Updating Movie Content
 
-Most content edits start in `movie_site/movie_data.py`.
+Most content edits now start in the JSON files within the `data/` folder for easy editing without touching Python code.
 
 Common updates:
 
-- Title, tagline, synopsis, genre, runtime, and release messaging.
-- Trailer URLs, thumbnail, duration, and upload date.
-- Production company and contributor records.
-- Screenings and ticket offers.
-- Reviews, aggregate rating, and FAQ entries.
+- `movies.json`: Title, tagline, synopsis, genre, runtime, and release messaging.
+- `media_assets.json`: Trailer URLs, thumbnail, duration, and upload date.
+- `organizations.json`: Production company information.
+- `people.json`: Contributor and cast records.
+- `events.json`: Screenings and ticket offers.
+- `reviews.json`: Reviews, aggregate rating.
+- `faq.json`: FAQ entries.
+- `gallery.json`: Photo gallery content.
+- `social.json`: Social media links.
+- `support.json`: Campaign and supporter information.
 
 Guidelines:
 
@@ -156,6 +190,7 @@ Guidelines:
 - Use real ISO dates and ISO 8601 durations where schema.org expects them.
 - Leave fields as `None` rather than inserting placeholder values into date-specific schema properties.
 - Prefer full absolute URLs for schema assets and canonical references.
+- The `movie_site/movie_data.py` file is legacy and being phased out in favor of the JSON-based data structure.
 
 ## Template Customization
 
