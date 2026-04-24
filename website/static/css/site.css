@@ -63,8 +63,7 @@ iframe:focus-visible {
   overflow: hidden;
   pointer-events: none;
   background:
-    url("/static/images/jplenio-desert-2340326.jpg") center center / cover
-      no-repeat,
+    url("/static/images/P1044615.JPG") center center / cover no-repeat,
     linear-gradient(135deg, rgba(12, 10, 9, 1), rgba(64, 29, 20, 0.94));
 }
 
