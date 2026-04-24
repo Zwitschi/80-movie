@@ -1,3 +1,6 @@
+from .people import get_person_data
+
+
 def build_production_company_data():
     return {
         'production_company': {
@@ -11,22 +14,15 @@ def build_production_company_data():
                 'https://www.patreon.com/openmicodyssey',
             ],
             'people': [
-                {
-                    'name': 'Corey Pellizzi',
-                    'job_title': 'Director, Producer',
-                    'url': 'https://instagram.com/owlmovement',
-                    'same_as': ['https://instagram.com/owlmovement'],
-                },
-                {
-                    'name': 'Georg Sinn',
-                    'job_title': 'Producer',
-                    'url': 'https://allucanget.biz',
-                    'same_as': [
-                        'https://zwitschi.net',
-                        'https://allucanget.biz',
-                        'https://www.instagram.com/allucanget',
-                    ],
-                }
+                get_person_data(
+                    'Corey Pellizzi',
+                    job_title='Director, Producer',
+                ),
+                get_person_data(
+                    'Georg Sinn',
+                    job_title='Producer',
+                    url='https://allucanget.biz',
+                ),
             ],
         }
     }

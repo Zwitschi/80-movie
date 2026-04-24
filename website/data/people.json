@@ -1,0 +1,50 @@
+{
+  "people": {
+    "Bobby Ludlam": {
+      "name": "Bobby Ludlam",
+      "url": "https://www.bobbyludlam.com",
+      "same_as": [
+        "https://www.bobbyludlam.com",
+        "https://www.instagram.com/bobbyludlam/"
+      ],
+      "roles": ["Comedian", "Security", "Self"],
+      "job_title": "Self",
+      "credit_note": "One of the three best friends at the heart of the documentary, a comedian chasing stage time and a bigger creative dream."
+    },
+    "Corey Pellizzi": {
+      "name": "Corey Pellizzi",
+      "url": "https://instagram.com/owlmovement",
+      "same_as": ["https://instagram.com/owlmovement"],
+      "roles": ["Comedian", "Director", "Producer", "Security", "Self"],
+      "job_title": "Director, Producer",
+      "credit_note": "Directing, filming, and drawn to places of his childhood, creativity and freedom."
+    },
+    "Georg Sinn": {
+      "name": "Georg Sinn",
+      "url": "https://zwitschi.net",
+      "same_as": [
+        "https://zwitschi.net",
+        "https://allucanget.biz",
+        "https://www.instagram.com/allucanget"
+      ],
+      "roles": [
+        "Manager",
+        "Driver",
+        "Traveler",
+        "Security",
+        "Self",
+        "Producer"
+      ],
+      "job_title": "Producer",
+      "credit_note": "From far away, driving across America and keeping the crew rolling toward the next place to film, perform, and connect with the comedy world. Infrastructure, logistics, IT, development, finance."
+    },
+    "Open Mic Odyssey Team": {
+      "name": "Open Mic Odyssey Team",
+      "url": "https://openmicodyssey.com",
+      "same_as": ["https://openmicodyssey.com"],
+      "roles": ["Director", "Producer"],
+      "job_title": "Director",
+      "credit_note": "Shapes the documentary point of view and guides the on-the-road narrative structure. Coordinates production, release planning, and how the film reaches audiences."
+    }
+  }
+}
