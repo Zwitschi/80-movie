@@ -32,6 +32,22 @@
     {% block page_content %}{% endblock %}
     <footer class="site-footer">{% include '_footer.html' %}</footer>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+      var _paq = (window._paq = window._paq || []);
+      _paq.push(["trackPageView"]);
+      _paq.push(["enableLinkTracking"]);
+      (function () {
+        var u = "//s.allucanget.biz/";
+        _paq.push(["setTrackerUrl", u + "matomo.php"]);
+        _paq.push(["setSiteId", "1"]);
+        var d = document,
+          g = d.createElement("script"),
+          s = d.getElementsByTagName("script")[0];
+        g.async = true;
+        g.src = u + "matomo.js";
+        s.parentNode.insertBefore(g, s);
+      })();
+    </script>
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>
