@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Folio Std Bold Condensed";
+  src: url("/static/fonts/Folio-Std-Bold-Condensed.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --black: #120d0a;
   --deep-burgundy: #231611;
@@ -23,7 +31,13 @@ html {
 }
 
 body {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   background-color: var(--black);
   color: var(--text-main);
   min-height: 100vh;
@@ -146,6 +160,7 @@ img {
 }
 
 .brand-title {
+  font-family: "Folio Std Bold Condensed", "Arial Narrow", Arial, sans-serif;
   font-size: clamp(1.1rem, 2vw, 1.3rem);
   font-weight: 700;
   letter-spacing: 0.08em;
