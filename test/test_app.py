@@ -125,3 +125,37 @@ class TestFlaskApp:
         """Test 404 error handling."""
         response = client.get('/nonexistent')
         assert response.status_code == 404
+
+    def test_robots_txt_allows_indexing(self, client):
+        """Test robots.txt allows indexing."""
+        response = client.get('/robots.txt')
+        assert response.status_code == 200
+        assert response.mimetype == 'text/plain'
+        assert b'User-agent: *' in response.data
+        assert b'Allow: /' in response.data
+
+    def test_sitemap_xml_includes_pages_and_media_assets(self, app):
+        """Test sitemap.xml includes static pages and media assets with SITE_URL base."""
+        app.config['SITE_URL'] = 'https://example.com/'
+        client = app.test_client()
+
+        response = client.get('/sitemap.xml')
+        assert response.status_code == 200
+        assert response.mimetype == 'application/xml'
+
+        body = response.get_data(as_text=True)
+        assert '<?xml version="1.0" encoding="UTF-8"?>' in body
+        assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' in body
+
+        # Static pages
+        assert '<loc>https://example.com/</loc>' in body
+        assert '<loc>https://example.com/film</loc>' in body
+        assert '<loc>https://example.com/media</loc>' in body
+        assert '<loc>https://example.com/connect</loc>' in body
+        assert '<loc>https://example.com/patreon</loc>' in body
+        assert '<loc>https://example.com/watch</loc>' in body
+        assert '<loc>https://example.com/credits</loc>' in body
+
+        # Media assets
+        assert '<loc>https://example.com/static/images/poster.jpg</loc>' in body
+        assert '<loc>https://example.com/static/images/trailer_thumbnail.png</loc>' in body

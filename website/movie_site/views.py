@@ -1,10 +1,16 @@
+from urllib.parse import urlparse
+from xml.sax.saxutils import escape
+
 from flask import Blueprint, current_app, redirect, render_template, url_for
 
-from .movie_data import get_movie_page_context
+from .movie_data import get_movie_data, get_movie_page_context
 from .schema import build_movie_schema_json, build_org_social_schema_json
 
 
 main_blueprint = Blueprint('main', __name__)
+ROBOTS_ALLOW = 'User-agent: *\nAllow: /\n'
+SITEMAP_PAGE_PATHS = ('/', '/film', '/media', '/connect',
+                      '/patreon', '/watch', '/credits')
 
 
 PAGE_METADATA = {
@@ -79,7 +85,8 @@ def build_page_context(page_key='index'):
 
     page_context['meta_title'] = f"{metadata['title']} | {movie['title']}"
     page_context['meta_description'] = metadata['description'] or movie['description']
-    page_context['meta_keywords'] = ', '.join(metadata.get('keywords', movie.get('keywords', [])))
+    page_context['meta_keywords'] = ', '.join(
+        metadata.get('keywords', movie.get('keywords', [])))
     page_context['meta_image'] = movie['poster_image']
     page_context['meta_url'] = f"{site_url}{metadata['path']}"
     page_context['organization_social_schema_json'] = build_org_social_schema_json(
@@ -87,6 +94,47 @@ def build_page_context(page_key='index'):
     page_context['movie_schema_json'] = build_movie_schema_json(movie)
 
     return page_context
+
+
+def iter_static_asset_paths(value):
+    if isinstance(value, dict):
+        for nested_value in value.values():
+            yield from iter_static_asset_paths(nested_value)
+        return
+
+    if isinstance(value, list):
+        for nested_value in value:
+            yield from iter_static_asset_paths(nested_value)
+        return
+
+    if not isinstance(value, str):
+        return
+
+    parsed = urlparse(value)
+    if parsed.path.startswith('/static/'):
+        yield parsed.path
+    elif value.startswith('/static/'):
+        yield value
+
+
+def build_sitemap_xml() -> str:
+    site_url = current_app.config['SITE_URL'].rstrip('/')
+    movie_data = get_movie_data()
+
+    locations = [f'{site_url}{path}' for path in SITEMAP_PAGE_PATHS]
+    static_asset_paths = sorted(set(iter_static_asset_paths(movie_data)))
+    locations.extend(f'{site_url}{path}' for path in static_asset_paths)
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for location in locations:
+        lines.append('  <url>')
+        lines.append(f'    <loc>{escape(location)}</loc>')
+        lines.append('  </url>')
+    lines.append('</urlset>')
+    return '\n'.join(lines) + '\n'
 
 
 @main_blueprint.get('/')
@@ -147,3 +195,19 @@ def patreon():
 @main_blueprint.get('/credits')
 def credits():
     return redirect(url_for('main.film', _anchor='credits'))
+
+
+@main_blueprint.get('/robots.txt')
+def robots_txt():
+    return current_app.response_class(
+        ROBOTS_ALLOW,
+        mimetype='text/plain',
+    )
+
+
+@main_blueprint.get('/sitemap.xml')
+def sitemap_xml():
+    return current_app.response_class(
+        build_sitemap_xml(),
+        mimetype='application/xml',
+    )

@@ -47,24 +47,22 @@ Something that says all the content you get from patreon like the main movie, th
 
 ## Static Export
 
-Generate a deployable static bundle in `dist/` from the Flask app templates and data:
+Generate a deployable static bundle in `website/dist/` from the Flask app templates and data:
 
 ```powershell
-f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe export_static.py
+f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe website\export_static.py
 ```
 
-This command renders the public routes into HTML files, copies static assets into flat root-level directories under `dist/` such as `dist/css/`, `dist/images/`, `dist/js/`, and `dist/video/`, rewrites Flask-style asset and route links for static hosting, validates HTML structure, and validates JSON-LD blocks as JSON with a schema.org envelope check.
+This command renders the public routes into HTML files, copies static assets into flat root-level directories under `website/dist/` such as `website/dist/css/`, `website/dist/images/`, `website/dist/js/`, and `website/dist/video/`, rewrites Flask-style asset and route links for static hosting, validates HTML structure, and validates JSON-LD blocks as JSON with a schema.org envelope check.
 
-The repository also keeps `generate_static_site.py` as the implementation module behind this command. `export_static.py` is the stable entrypoint for local use and CI.
+The repository keeps `website/generate_static_site.py` as the implementation module behind this command. `website/export_static.py` is the stable entrypoint for local use and CI.
 
-The export also writes `dist/robots.txt`. By default it blocks all crawlers:
+The export also writes `website/dist/robots.txt` with crawler access enabled:
 
 ```text
 User-agent: *
-Disallow: /
+Allow: /
 ```
-
-To allow indexing later, set `STATIC_EXPORT_ALLOW_INDEXING=true` in the environment or run `python export_static.py --allow-indexing`.
 
 ## Static Export Deployment
 
@@ -74,11 +72,9 @@ Workflow:
 
 - `.github/workflows/deploy-static-export.yml`
 - triggers on push to `main` and on manual dispatch
-- runs `python export_static.py`
-- keeps indexing blocked by default on push deployments and when manually dispatched without overrides
-- can enable indexing on manual dispatch by setting the `allow_indexing` input to `true`
-- writes `build/robots.txt` as part of the generated bundle and blocks crawlers by default
-- stages the generated `dist/` contents into the destination repository folder `build/` in `WEBSITE_DEPLOY_REPOSITORY`
+- runs `python website/export_static.py`
+- writes `build/robots.txt` as part of the generated bundle and allows crawlers by default
+- stages the generated `website/dist/` contents into the destination repository folder `build/` in `WEBSITE_DEPLOY_REPOSITORY`
 - pushes directly to `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
 
 Required GitHub configuration in this source repository:
@@ -89,8 +85,3 @@ Required GitHub configuration in this source repository:
   destination repository in `owner/name` format, for example `Zwitschi/openmicodyssey-website`
 - Optional variable: `WEBSITE_DEPLOY_BRANCH`
   destination branch; defaults to `build`
-
-Manual publication override:
-
-- Workflow dispatch input: `allow_indexing`
-  when set to `true`, the generated `build/robots.txt` will allow crawling instead of blocking all access for that run

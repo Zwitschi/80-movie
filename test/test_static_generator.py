@@ -1,19 +1,5 @@
-import json
-import os
-import shutil
-import tempfile
-from pathlib import Path
-import pytest
-from bs4 import BeautifulSoup
-
-# Import the static generator functions
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from generate_static_site import (
+from website.generate_static_site import (
     generate_static_site,
-    build_robots_txt,
-    build_sitemap_xml,
     route_href_to_output,
     rewrite_html_for_static_export,
     rewrite_css_for_static_export,
@@ -24,6 +10,16 @@ from generate_static_site import (
     JSON_LD_ENVELOPE_SCHEMA,
     StaticGenerationError,
 )
+import json
+import shutil
+import tempfile
+from pathlib import Path
+import pytest
+from bs4 import BeautifulSoup
+
+# Import the static generator functions
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestStaticGenerator:
@@ -35,33 +31,18 @@ class TestStaticGenerator:
         dist_dir = tmp_path / "dist"
         dist_dir.mkdir()
         # Override the global DIST_DIR for testing
-        import generate_static_site
+        import website.generate_static_site as generate_static_site
         original_dist = generate_static_site.DIST_DIR
         generate_static_site.DIST_DIR = dist_dir
         yield dist_dir
         generate_static_site.DIST_DIR = original_dist
 
-    def test_build_robots_txt_allow(self):
-        """Test robots.txt generation when allowing indexing."""
-        robots = build_robots_txt(allow_indexing=True)
-        assert "Allow: /" in robots
-        assert "User-agent: *" in robots
-
-    def test_build_robots_txt_disallow(self):
-        """Test robots.txt generation when disallowing indexing."""
-        robots = build_robots_txt(allow_indexing=False)
-        assert "Disallow: /" in robots
-        assert "User-agent: *" in robots
-
-    def test_build_sitemap_xml(self):
-        """Test sitemap.xml generation."""
-        site_url = "https://example.com"
-        sitemap = build_sitemap_xml(site_url)
-
-        assert '<?xml version="1.0" encoding="UTF-8"?>' in sitemap
-        assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' in sitemap
-        assert 'https://example.com/' in sitemap
-        assert 'https://example.com/film' in sitemap
+    def test_build_robots_txt(self):
+        """Test metadata files are exported through app-generated routes."""
+        generated_files = generate_static_site(clean=True)
+        generated_paths = {path.name for path in generated_files}
+        assert 'robots.txt' in generated_paths
+        assert 'sitemap.xml' in generated_paths
 
     def test_route_href_to_output(self):
         """Test route href conversion for static export."""
@@ -78,7 +59,8 @@ class TestStaticGenerator:
         assert route_href_to_output('/film#trailer') == 'film.html#trailer'
 
         # Test non-route hrefs
-        assert route_href_to_output('https://external.com') == 'https://external.com'
+        assert route_href_to_output(
+            'https://external.com') == 'https://external.com'
 
     def test_rewrite_html_for_static_export(self):
         """Test HTML rewriting for static export."""
@@ -201,7 +183,8 @@ class TestStaticGenerator:
         # This test requires the Flask app to be properly configured
         # We'll test that the function runs without errors
         try:
-            generated_files = generate_static_site(clean=True, allow_indexing=False)
+            generated_files = generate_static_site(
+                clean=True)
 
             # Check that files were generated
             assert len(generated_files) > 0
@@ -209,7 +192,8 @@ class TestStaticGenerator:
             # Check that expected HTML files exist
             for route, output_file in ROUTE_OUTPUTS.items():
                 output_path = temp_dist_dir / output_file
-                assert output_path.exists(), f"Missing output file: {output_file}"
+                assert output_path.exists(
+                ), f"Missing output file: {output_file}"
 
                 # Check that file has content
                 content = output_path.read_text()
@@ -221,7 +205,7 @@ class TestStaticGenerator:
             assert robots_path.exists()
             robots_content = robots_path.read_text()
             assert 'User-agent: *' in robots_content
-            assert 'Disallow: /' in robots_content
+            assert 'Allow: /' in robots_content
 
             # Check sitemap.xml
             sitemap_path = temp_dist_dir / 'sitemap.xml'
@@ -246,12 +230,12 @@ class TestStaticGenerator:
         css_file.write_text('body { color: red; }')
 
         # Override STATIC_SOURCE_DIR for testing
-        import generate_static_site
+        import website.generate_static_site as generate_static_site
         original_static = generate_static_site.STATIC_SOURCE_DIR
         generate_static_site.STATIC_SOURCE_DIR = static_dir
 
         try:
-            from generate_static_site import copy_static_assets
+            from website.generate_static_site import copy_static_assets
             copy_static_assets()
 
             # Check that CSS file was copied

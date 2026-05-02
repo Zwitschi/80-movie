@@ -78,10 +78,34 @@ The main routes are:
 
 ## Deployment
 
-Deployment is documented only through this two-step model:
+Current deployment workflows documented in this repository:
 
-1. GitHub Actions mirrors `website/` content to `zwitschi/openmicodyssey-website`.
-2. Terraform provisions and updates OCI infrastructure that runs that mirrored repository.
+1. GitHub Actions mirror workflow for publishing `website/` content to `zwitschi/openmicodyssey-website`.
+2. Static export workflow for generating and publishing `website/dist/`.
+
+## Static Export
+
+The static export tooling now lives entirely inside this folder so `website/` can be zipped or mirrored as a self-contained deployment bundle.
+
+From the repository root:
+
+```powershell
+f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe website\export_static.py
+```
+
+This writes the generated static site to `website/dist/` and keeps the implementation in `website/generate_static_site.py`.
+
+## Pella Zip Export
+
+To package the deployable contents of `website/` into a zip file for Pella hosting, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File website\export_pella_zip.ps1 -Force
+```
+
+By default this writes `website/build/website-pella.zip` and places the website contents at the root of the archive.
+
+The packaging step excludes local-only artifacts such as `.env`, `dist/`, `build/`, `__pycache__/`, and existing zip files.
 
 ## GitHub Mirror Workflow
 
@@ -112,28 +136,6 @@ Trigger behavior:
 Runtime entrypoint in mirrored repository:
 
 - `gunicorn app:app --bind 0.0.0.0:8000`
-
-## Terraform Deployment (OCI)
-
-Terraform is the only documented infrastructure path for OCI.
-
-Scope:
-
-- provision VCN, subnet, NSG, and routing
-- provision Compute instance(s)
-- provision Load Balancer, TLS, and health checks
-- provision DNS, Object Storage, and monitoring alarms
-- apply bootstrap/runtime configuration for Nginx + Gunicorn
-
-Implementation files are tracked under `infra/` as they are added.
-
-Usage model:
-
-1. Run mirror workflow so the latest `website/` bundle is in `zwitschi/openmicodyssey-website`.
-2. Run `terraform init`, `terraform plan`, and `terraform apply` from `infra/`.
-3. Validate primary routes and alarms after apply.
-
-For detailed OCI build order and validation checklists, use the root deployment guide in `DEPLOYMENT.md`.
 
 ## Schema Generation
 

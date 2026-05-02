@@ -29,6 +29,7 @@ htmlcov/
 # Build and packaging
 build/
 dist/
+website/dist/
 *.egg-info/
 .eggs/
 pip-wheel-metadata/
