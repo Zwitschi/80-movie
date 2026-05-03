@@ -126,7 +126,9 @@ block page_content %}
         >
           <span class="eyebrow eyebrow-small">{{ item.status }}</span>
           <h3>{{ item.label }}</h3>
-          <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
+          <a href="{{ item.url }}" class="text-link"
+            >Visit {{ item.label }} for Open Mic Odyssey</a
+          >
         </article>
         {% endfor %}
       </div>
@@ -156,14 +158,20 @@ block page_content %}
           <p>{{ item.description }}</p>
           {% if item.label == 'Patreon' %}
           <a href="{{ url_for('main.patreon') }}" class="text-link"
-            >Open Patreon Page</a
+            >View Patreon Membership</a
           >
           {% elif item.label == 'YouTube Channel' %}
-          <a href="{{ item.url }}" class="text-link">Visit YouTube</a>
+          <a href="{{ item.url }}" class="text-link"
+            >Visit the Open Mic Odyssey YouTube channel</a
+          >
           {% elif item.label == 'Instagram' %}
-          <a href="{{ item.url }}" class="text-link">Visit Instagram</a>
+          <a href="{{ item.url }}" class="text-link"
+            >Follow Open Mic Odyssey on Instagram</a
+          >
           {% else %}
-          <a href="{{ item.url }}" class="text-link">{{ item.url }}</a>
+          <a href="{{ item.url }}" class="text-link"
+            >Connect with Open Mic Odyssey on {{ item.label }}</a
+          >
           {% endif %}
         </article>
         {% endfor %}

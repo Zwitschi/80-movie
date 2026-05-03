@@ -5,19 +5,41 @@ block page_content %}
     <div class="container overview-trailer-shell">
       <div class="section-header overview-trailer-header">
         <span class="eyebrow">Feature Documentary</span>
-        <h1 class="overview-page-title">{{ movie_title }}</h1>
+        <h1 class="overview-page-title">Open Mic Odyssey: The Movie</h1>
         <p class="hero-lede">{{ movie_description }}</p>
         <p>
           This independent documentary trailer introduces the comedy road trip
-          documentary journey at the center of Open Mic Odyssey.
+          documentary journey at the center of Open Mic Odyssey. Follow a group
+          of friends as they embark on an outrageous adventure.
+        </p>
+        <p>
+          The film follows aspiring stand-up comedians as they hit the road for
+          a cross-country tour in a self-driving Tesla, performing at various
+          open mic nights and long drives in between. This documentary explores
+          the dedication, the heartbreak, the camaraderie, and the undeniable
+          passion required to chase a dream that most people consider crazy, and
+          gives an intimate look at the world of stand-up comedy and three
+          friends supporting each other on their journey to make a creative life
+          real. The road to success is paved with bad jokes, tough crowds, and
+          endless miles.
         </p>
         <p>
           Subscribe to our channels for updates, news, and upcoming preview
-          screenings.
+          screenings. Be the first to know when or where screenings will take
+          place. We will be updating our community with exclusive content,
+          including extended interviews, behind-the-scenes footage, and early
+          access to new cuts of the film. Don't miss out on your chance to be a
+          part of the Open Mic Odyssey community.
         </p>
         <p>
           Start with the trailer, then move into the film page, media, or
-          connect hub depending on what you want next.
+          connect hub depending on what you want next. Explore our gallery to
+          see high-resolution production stills and behind-the-scenes photos.
+          Connect with our community on social media, Discord and Patreon to
+          find out how you can support the film and get access to exclusive
+          perks, such as your name in the credits, early access to new cuts, and
+          special merchandise. Connect with us on social media to join the
+          conversation and share your own open mic stories.
         </p>
         <div class="hero-meta overview-meta">
           <span class="meta-pill">{{ movie_genre }}</span>
@@ -33,10 +55,10 @@ block page_content %}
           <p>{{ movie.trailer.description }}</p>
           <div class="hero-actions overview-actions overview-trailer-actions">
             <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-              >Support The Film</a
+              >Support Open Mic Odyssey</a
             >
             <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
-              >Read more</a
+              >Read more about the film</a
             >
           </div>
         </div>
@@ -81,7 +103,7 @@ block page_content %}
             access information in one place.
           </p>
           <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
-            >Open Film Page</a
+            >Read the Full Synopsis</a
           >
         </article>
         <article
@@ -94,7 +116,7 @@ block page_content %}
             the project and unlock supporter updates.
           </p>
           <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-            >Support The Film</a
+            >View Membership Tiers</a
           >
         </article>
         <article
@@ -107,7 +129,7 @@ block page_content %}
             dedicated media view.
           </p>
           <a href="{{ url_for('main.media') }}" class="btn btn-secondary"
-            >Open Media</a
+            >Browse the Media Gallery</a
           >
         </article>
       </div>
