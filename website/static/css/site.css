@@ -197,6 +197,34 @@ img {
   outline: none;
 }
 
+.nav-links .nav-social {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.nav-social a {
+  text-decoration: none;
+  margin-top: 0;
+}
+.nav-social a:hover,
+.nav-social a:focus-visible {
+  text-decoration: none;
+  outline: none;
+}
+
+.nav-social img {
+  width: 1.2rem;
+  height: 1.2rem;
+  filter: grayscale(100%) brightness(120%);
+  transition: filter 160ms ease;
+  margin: 0;
+}
+.nav-social a:hover img,
+.nav-social a:focus-visible img {
+  filter: grayscale(0%) brightness(120%);
+}
+
 .nav-toggle {
   display: none;
   border: 1px solid var(--border);
@@ -356,6 +384,7 @@ img {
 }
 
 .overview-page-title {
+  font-family: "Folio Std Bold Condensed", "Arial Narrow", Arial, sans-serif;
   font-size: clamp(2.8rem, 6vw, 5rem);
   line-height: 0.95;
   margin: 0.75rem 0 1rem;
@@ -640,6 +669,7 @@ img {
 }
 
 .hero h1 {
+  font-family: "Folio Std Bold Condensed", "Arial Narrow", Arial, sans-serif;
   font-size: clamp(2.6rem, 5vw, 4.8rem);
   line-height: 1.1;
   margin-bottom: 0;
@@ -648,6 +678,7 @@ img {
 }
 
 .hero-compact h1 {
+  font-family: "Folio Std Bold Condensed", "Arial Narrow", Arial, sans-serif;
   font-size: clamp(2.2rem, 4vw, 3.5rem);
 }
 
@@ -879,6 +910,7 @@ section {
 }
 
 .section-header h2 {
+  font-family: "Folio Std Bold Condensed", "Arial Narrow", Arial, sans-serif;
   font-size: clamp(1.6rem, 3vw, 2.3rem);
   margin-bottom: 0.35rem;
   color: var(--golden-amber);
@@ -1056,9 +1088,9 @@ section {
   margin-top: 0.85rem;
 }
 
-.grid-3 {
+.grid-4 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
 }
 

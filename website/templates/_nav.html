@@ -21,6 +21,39 @@
       <a href="{{ url_for('main.media') }}" data-nav="gallery">Media</a>
       <a href="{{ url_for('main.connect') }}" data-nav="support">Connect</a>
       <a href="{{ url_for('main.patreon') }}" data-nav="patreon">Patreon</a>
+
+      <div class="nav-social" aria-label="Social media links">
+        <a
+          href="https://www.instagram.com/openmicodyssey"
+          target="_blank"
+          class="text-link"
+          ><img
+            class="social-icon"
+            src="{{ url_for('static', filename='images/icon_instagram.png') }}"
+            alt="Instagram"
+            height="32"
+        /></a>
+        <a
+          href="https://www.tiktok.com/@openmicodyssey"
+          target="_blank"
+          class="text-link"
+          ><img
+            class="social-icon"
+            src="{{ url_for('static', filename='images/icon_tiktok.png') }}"
+            alt="TikTok"
+            height="32"
+        /></a>
+        <a
+          href="https://www.youtube.com/@openmicodyssey"
+          target="_blank"
+          class="text-link"
+          ><img
+            class="social-icon"
+            src="{{ url_for('static', filename='images/icon_youtube.png') }}"
+            alt="YouTube"
+            height="32"
+        /></a>
+      </div>
     </div>
   </nav>
 </div>
