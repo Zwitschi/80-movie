@@ -891,6 +891,10 @@ section {
   max-width: 60ch;
 }
 
+.section-header p.hero-sublede {
+  max-width: none;
+}
+
 .content-card {
   padding: 1.5rem;
 }
