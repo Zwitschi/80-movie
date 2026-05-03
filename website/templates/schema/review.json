@@ -1,9 +1,6 @@
 {
   "@type": "Review",
   "@id": {{ review_id|tojson }},
-  "itemReviewed": {
-    "@id": {{ movie_id|tojson }}
-  },
   "author": {
     "@type": "Organization",
     "name": {{ review.author_name|tojson }},
