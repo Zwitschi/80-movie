@@ -209,7 +209,7 @@ def validate_html_structure(html_text: str, route: str) -> BeautifulSoup:
 def validate_json_ld(soup: BeautifulSoup, route: str) -> None:
     json_ld_scripts = soup.find_all(
         'script', attrs={'type': 'application/ld+json'})
-    if not json_ld_scripts:
+    if not json_ld_scripts and not route.startswith('/map'):
         raise StaticGenerationError(
             f'No JSON-LD script block found for route: {route}')
 
