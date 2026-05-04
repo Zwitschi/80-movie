@@ -72,7 +72,7 @@ class TestStaticGenerator:
         </head>
         <body>
             <a href="/film">Film</a>
-            <img src="https://openmicodyssey.com/static/images/poster.jpg" alt="poster">
+            <img src="https://www.openmicodyssey.com/static/images/poster.jpg" alt="poster">
         </body>
         </html>
         '''

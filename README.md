@@ -11,7 +11,7 @@ website/
 
 ## Website
 
-The public site is [openmicodyssey.com](https://openmicodyssey.com).
+The public site is [openmicodyssey.com](https://www.openmicodyssey.com).
 
 The web application lives in [website/README.md](website/README.md), which documents:
 

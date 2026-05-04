@@ -9,7 +9,7 @@
       "event_attendance_mode": "https://schema.org/OfflineEventAttendanceMode",
       "location": {
         "name": "Digital Debris Video Gallery",
-        "url": "https://openmicodyssey.com/screenings",
+        "url": "https://www.openmicodyssey.com/screenings",
         "address": {
           "street_address": "2646 N Figueroa St",
           "address_locality": "Los Angeles",
@@ -23,7 +23,7 @@
       "offers": [
         {
           "name": "Preview screening ticket",
-          "url": "https://openmicodyssey.com/tickets",
+          "url": "https://www.openmicodyssey.com/tickets",
           "price": 15,
           "price_currency": "USD",
           "availability": "https://schema.org/InStock",

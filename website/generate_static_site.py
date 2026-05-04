@@ -99,7 +99,7 @@ def route_href_to_output(href: str) -> str:
 
 def rewrite_html_for_static_export(html_text: str) -> str:
     soup = BeautifulSoup(html_text, 'html.parser')
-    public_static_prefix = 'https://openmicodyssey.com/static/'
+    public_static_prefix = 'https://www.openmicodyssey.com/static/'
 
     for tag in soup.find_all(True):
         for attribute in ('href', 'src', 'poster'):

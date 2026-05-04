@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 class DefaultConfig:
     SITE_NAME = 'Open Mic Odyssey'
-    SITE_URL = os.getenv('SITE_URL', 'https://openmicodyssey.com')
+    SITE_URL = os.getenv('SITE_URL', 'https://www.openmicodyssey.com')
     CURRENT_YEAR = int(
         os.getenv('CURRENT_YEAR', str(datetime.now(timezone.utc).year)))
     MAPBOX_ACCESS_TOKEN = os.getenv('MAPBOX_ACCESS_TOKEN', '')

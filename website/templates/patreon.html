@@ -6,15 +6,15 @@ block page_content %}
       <div class="hero-copy stack-md">
         <span class="eyebrow">Supporters</span>
         <h1>
-          {{ movie.supporter_page.title }}
+          {{ movie.connect_page.title }}
           <span>{{ movie_title }}</span>
         </h1>
-        <p class="hero-lede">{{ movie.supporter_page.intro }}</p>
+        <p class="hero-lede">{{ movie.connect_page.intro }}</p>
         <div class="hero-actions">
           <a
-            href="{{ movie.supporter_page.primary_link.url }}"
+            href="{{ movie.connect_page.primary_link.url }}"
             class="btn btn-primary"
-            >{{ movie.supporter_page.primary_link.label }}</a
+            >{{ movie.connect_page.primary_link.label }}</a
           >
           <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"
             >Back To Connect Hub</a
@@ -43,7 +43,7 @@ block page_content %}
         </p>
       </div>
       <div class="grid-3 patreon-benefits-grid">
-        {% for benefit in movie.supporter_page.benefits %}
+        {% for benefit in movie.connect_page.benefits %}
         <article
           class="feature feature-highlight patreon-card card-lite stack-sm"
         >
@@ -63,7 +63,7 @@ block page_content %}
         </p>
       </div>
       <div class="grid-3 patreon-tiers-grid">
-        {% for tier in movie.supporter_page.tiers %}
+        {% for tier in movie.connect_page.tiers %}
         <article class="content-card patreon-tier-card stack-sm">
           <span class="eyebrow eyebrow-small">{{ tier.price }}</span>
           <h3>{{ tier.name }}</h3>
