@@ -22,7 +22,8 @@ def get_movie_data():
     faq_data = load_json_file('faq.json')
     gallery_data = load_json_file('gallery.json')
     social_data = load_json_file('social.json')
-    support_data = load_json_file('support.json')
+    connect_data = load_json_file('connect.json')
+    content_data = load_json_file('content.json')
 
     organizations = organizations_data['organizations']
 
@@ -40,8 +41,9 @@ def get_movie_data():
         'faq_items': faq_data['faq'],
         'gallery_items': gallery_data['gallery'],
         'social_links': social_data['social'],
-        'support_links': support_data['support']['links'],
-        'supporter_page': support_data['support']['page'],
+        'connect_links': connect_data['connect']['links'],
+        'connect_page': connect_data['connect']['page'],
+        'page_metadata': content_data['pages'],
     }
 
 

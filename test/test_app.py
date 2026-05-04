@@ -50,7 +50,7 @@ class TestMovieData:
             'movies.json', 'people.json', 'organizations.json',
             'media_assets.json', 'events.json', 'reviews.json',
             'offers.json', 'faq.json', 'gallery.json', 'social.json',
-            'support.json'
+            'connect.json'
         ]
 
         for json_file in json_files:

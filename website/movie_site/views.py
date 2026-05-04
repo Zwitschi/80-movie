@@ -13,75 +13,15 @@ SITEMAP_PAGE_PATHS = ('/', '/film', '/media', '/connect',
                       '/patreon', '/watch', '/credits')
 
 
-PAGE_METADATA = {
-    'index': {
-        'title': 'Overview',
-        'description': 'Watch the trailer and follow the latest release updates for Open Mic Odyssey.',
-        'keywords': [
-            'open mic odyssey documentary',
-            'comedy road trip documentary',
-            'independent documentary trailer',
-            'stand-up comedy film',
-            'documentary film updates',
-        ],
-        'path': '/',
-    },
-    'film': {
-        'title': 'Film',
-        'description': 'Read the synopsis, credits, and screening access details for Open Mic Odyssey.',
-        'keywords': [
-            'documentary film synopsis',
-            'independent documentary credits',
-            'comedy documentary cast',
-            'open mic odyssey screenings',
-            'road trip documentary story',
-        ],
-        'path': '/film',
-    },
-    'media': {
-        'title': 'Media',
-        'description': 'Browse stills, poster art, and behind-the-scenes images from Open Mic Odyssey.',
-        'keywords': [
-            'documentary behind the scenes photos',
-            'film stills and poster art',
-            'open mic odyssey media kit',
-            'independent film gallery',
-            'comedy documentary images',
-        ],
-        'path': '/media',
-    },
-    'connect': {
-        'title': 'Connect',
-        'description': 'Follow Open Mic Odyssey across official channels and support updates.',
-        'keywords': [
-            'follow open mic odyssey',
-            'documentary social channels',
-            'film release updates',
-            'independent film community',
-            'comedy documentary news',
-        ],
-        'path': '/connect',
-    },
-    'patreon': {
-        'title': 'Supporters',
-        'description': 'Explore supporter benefits, membership tiers, and Patreon access for Open Mic Odyssey.',
-        'keywords': [
-            'patreon documentary support',
-            'support independent documentary',
-            'film membership tiers',
-            'bonus documentary content',
-            'open mic odyssey patreon',
-        ],
-        'path': '/patreon',
-    },
-}
+PAGE_METADATA = None  # Page metadata loaded from website/data/content.json via movie data
 
 
 def build_page_context(page_key='index'):
     page_context = get_movie_page_context(current_app.config['CURRENT_YEAR'])
     movie = page_context['movie']
     site_url = current_app.config['SITE_URL'].rstrip('/')
-    metadata = PAGE_METADATA.get(page_key, PAGE_METADATA['index'])
+    page_metadata = movie.get('page_metadata', {})
+    metadata = page_metadata.get(page_key, page_metadata.get('index', {}))
 
     page_context['meta_title'] = f"{metadata['title']} | {movie['title']}"
     page_context['meta_description'] = metadata['description'] or movie['description']

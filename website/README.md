@@ -16,7 +16,7 @@ This folder contains the Flask website for Open Mic Odyssey.
   - `faq.json`: frequently asked questions.
   - `gallery.json`: photo gallery content.
   - `social.json`: social media links.
-  - `support.json`: campaign and supporter information.
+  - `connect.json`: campaign and supporter information.
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
 - `movie_site/config.py`: Flask application configuration settings.
 - `movie_site/views.py`: route handlers and page context assembly.
@@ -184,7 +184,7 @@ Common updates:
 - `faq.json`: FAQ entries.
 - `gallery.json`: Photo gallery content.
 - `social.json`: Social media links.
-- `support.json`: Campaign and supporter information.
+- `connect.json`: Campaign and supporter information.
 
 Guidelines:
 

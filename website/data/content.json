@@ -1,0 +1,64 @@
+{
+  "pages": {
+    "index": {
+      "title": "Overview",
+      "description": "Watch the trailer and follow the latest release updates for Open Mic Odyssey.",
+      "keywords": [
+        "open mic odyssey documentary",
+        "comedy road trip documentary",
+        "independent documentary trailer",
+        "stand-up comedy film",
+        "documentary film updates"
+      ],
+      "path": "/"
+    },
+    "film": {
+      "title": "Film",
+      "description": "Read the synopsis, credits, and screening access details for Open Mic Odyssey.",
+      "keywords": [
+        "documentary film synopsis",
+        "independent documentary credits",
+        "comedy documentary cast",
+        "open mic odyssey screenings",
+        "road trip documentary story"
+      ],
+      "path": "/film"
+    },
+    "media": {
+      "title": "Media",
+      "description": "Browse stills, poster art, and behind-the-scenes images from Open Mic Odyssey.",
+      "keywords": [
+        "documentary behind the scenes photos",
+        "film stills and poster art",
+        "open mic odyssey media kit",
+        "independent film gallery",
+        "comedy documentary images"
+      ],
+      "path": "/media"
+    },
+    "connect": {
+      "title": "Connect",
+      "description": "Follow Open Mic Odyssey across official channels and support updates.",
+      "keywords": [
+        "follow open mic odyssey",
+        "documentary social channels",
+        "film release updates",
+        "independent film community",
+        "comedy documentary news"
+      ],
+      "path": "/connect"
+    },
+    "patreon": {
+      "title": "Supporters",
+      "description": "Explore supporter benefits, membership tiers, and Patreon access for Open Mic Odyssey.",
+      "keywords": [
+        "patreon documentary support",
+        "support independent documentary",
+        "film membership tiers",
+        "bonus documentary content",
+        "open mic odyssey patreon"
+      ],
+      "path": "/patreon"
+    }
+  }
+}
