@@ -17,11 +17,11 @@ This folder contains the Flask website for Open Mic Odyssey.
   - `gallery.json`: photo gallery content.
   - `social.json`: social media links.
   - `connect.json`: campaign and supporter information.
+  - `content.json`: page-level SEO metadata (titles, descriptions, keywords, paths).
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
 - `movie_site/config.py`: Flask application configuration settings.
 - `movie_site/views.py`: route handlers and page context assembly.
-- `movie_site/movie_data.py`: legacy movie content file (being phased out).
-- `movie_site/movie_data_parts/__init__.py`: minimal JSON loader that assembles the page data model from `data/*.json`.
+- `movie_site/movie_data.py`: JSON loader that assembles the page data model from `data/*.json`.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
 - `movie_site/schema_parts/`: modular schema generation components.
   - `__init__.py`: schema utilities and helpers.
@@ -143,7 +143,7 @@ The structured data is generated in code, not hardcoded into the page.
 
 Flow:
 
-1. `movie_site/movie_data_parts/__init__.py` loads content data from JSON files in the `data/` folder.
+1. `movie_site/movie_data.py` loads content data from JSON files in the `data/` folder.
 2. `movie_site/views.py` builds the page context using the loaded data.
 3. `movie_site/schema_parts/graph.py` converts the movie data into a schema.org JSON-LD graph.
 4. Schema generation modules in `movie_site/schema_parts/` render individual node types using Jinja templates from `templates/schema/`.
@@ -185,6 +185,7 @@ Common updates:
 - `gallery.json`: Photo gallery content.
 - `social.json`: Social media links.
 - `connect.json`: Campaign and supporter information.
+- `content.json`: Page-level SEO metadata (titles, descriptions, keywords, paths).
 
 Guidelines:
 
@@ -192,7 +193,7 @@ Guidelines:
 - Use real ISO dates and ISO 8601 durations where schema.org expects them.
 - Leave fields as `None` rather than inserting placeholder values into date-specific schema properties.
 - Prefer full absolute URLs for schema assets and canonical references.
-- The `movie_site/movie_data.py` file is legacy and being phased out in favor of the JSON-based data structure.
+- Edit `data/content.json` to update page-level SEO titles, descriptions, and keywords without touching Python code.
 
 ## Template Customization
 

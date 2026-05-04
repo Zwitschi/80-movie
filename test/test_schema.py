@@ -3,7 +3,7 @@ import pytest
 from website.movie_site.schema import build_movie_schema_json, build_org_social_schema_json
 from website.movie_site.schema_parts.graph import build_movie_schema_graph
 from website.movie_site.schema_parts.social import build_org_social_schema_json as build_org_social_schema_json_for_site
-from website.movie_site.movie_data_parts import get_movie_data
+from website.movie_site.movie_data import get_movie_data
 
 
 class TestSchemaBuilder:

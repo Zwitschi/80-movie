@@ -1,7 +1,7 @@
 import pytest
 import json
 from website.app import create_app
-from website.movie_site.movie_data_parts import get_movie_data, get_movie_page_context
+from website.movie_site.movie_data import get_movie_data, get_movie_page_context
 
 
 class TestMovieData:

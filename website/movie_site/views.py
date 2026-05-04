@@ -137,6 +137,13 @@ def credits():
     return redirect(url_for('main.film', _anchor='credits'))
 
 
+@main_blueprint.get('/map')
+def map_page():
+    # Easteregg route: route map (hidden from sitemap)
+    page_context = get_movie_page_context(current_app.config['CURRENT_YEAR'])
+    return render_template('map.html', **page_context)
+
+
 @main_blueprint.get('/robots.txt')
 def robots_txt():
     return current_app.response_class(
