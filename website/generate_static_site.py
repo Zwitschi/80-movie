@@ -80,13 +80,25 @@ class StaticGenerationError(RuntimeError):
 
 
 def route_href_to_output(href: str) -> str:
-    if not href or not href.startswith('/'):
+    if not href:
         return href
 
-    if href.startswith('/static/'):
-        return href.removeprefix('/static/')
-
     path, fragment = href.split('#', 1) if '#' in href else (href, '')
+
+    if path.startswith('/static/'):
+        output = path.removeprefix('/static/')
+        return f'{output}#{fragment}' if fragment else output
+
+    if path.startswith('static/'):
+        output = path.removeprefix('static/')
+        return f'{output}#{fragment}' if fragment else output
+
+    if path.startswith('./static/'):
+        output = path.removeprefix('./static/')
+        return f'{output}#{fragment}' if fragment else output
+
+    if not path.startswith('/'):
+        return href
 
     if path in ROUTE_OUTPUTS:
         output = ROUTE_OUTPUTS[path]
@@ -115,7 +127,12 @@ def rewrite_html_for_static_export(html_text: str) -> str:
                 tag[attribute] = value.removeprefix(public_static_prefix)
                 continue
 
-            if value.startswith('/static/') or value.startswith('/'):
+            if (
+                value.startswith('/static/')
+                or value.startswith('static/')
+                or value.startswith('./static/')
+                or value.startswith('/')
+            ):
                 tag[attribute] = route_href_to_output(value)
 
     return str(soup)

@@ -54,6 +54,11 @@ class TestStaticGenerator:
 
         # Test static files
         assert route_href_to_output('/static/css/site.css') == 'css/site.css'
+        assert route_href_to_output(
+            '/static/data/map_data.json') == 'data/map_data.json'
+        assert route_href_to_output('static/js/map.js') == 'js/map.js'
+        assert route_href_to_output(
+            './static/data/map_data.json#points') == 'data/map_data.json#points'
 
         # Test with fragments
         assert route_href_to_output('/film#trailer') == 'film.html#trailer'
@@ -68,10 +73,11 @@ class TestStaticGenerator:
         <html>
         <head>
             <link href="/static/css/site.css" rel="stylesheet">
-            <script src="/static/js/scripts.js"></script>
+            <script src="./static/js/scripts.js"></script>
         </head>
         <body>
             <a href="/film">Film</a>
+            <a href="static/data/map_data.json#route">Route data</a>
             <img src="https://www.openmicodyssey.com/static/images/poster.jpg" alt="poster">
         </body>
         </html>
@@ -81,6 +87,8 @@ class TestStaticGenerator:
 
         # Check that internal routes are converted
         assert 'href="film.html"' in rewritten
+        assert 'src="js/scripts.js"' in rewritten
+        assert 'href="data/map_data.json#route"' in rewritten
         assert 'src="images/poster.jpg"' in rewritten
         assert '/static/css/site.css' not in rewritten
 
@@ -214,6 +222,11 @@ class TestStaticGenerator:
             assert '<?xml' in sitemap_content
             assert '<urlset' in sitemap_content
 
+            # Check data assets are exported
+            data_dir = temp_dist_dir / 'data'
+            assert data_dir.exists()
+            assert any(data_dir.rglob('*.json'))
+
         except Exception as e:
             # If the test fails due to missing dependencies or config,
             # we'll mark it as skipped rather than failed
@@ -229,6 +242,12 @@ class TestStaticGenerator:
         css_file = css_dir / "test.css"
         css_file.write_text('body { color: red; }')
 
+        data_dir = static_dir / "data"
+        data_dir.mkdir()
+        json_payload = '{"route": [1, 2, 3]}'
+        data_file = data_dir / "test_data.json"
+        data_file.write_text(json_payload)
+
         # Override STATIC_SOURCE_DIR for testing
         import website.generate_static_site as generate_static_site
         original_static = generate_static_site.STATIC_SOURCE_DIR
@@ -242,6 +261,11 @@ class TestStaticGenerator:
             copied_css = temp_dist_dir / "css" / "test.css"
             assert copied_css.exists()
             assert copied_css.read_text() == 'body { color: red; }'
+
+            # Check that JSON data file was copied unchanged
+            copied_json = temp_dist_dir / "data" / "test_data.json"
+            assert copied_json.exists()
+            assert copied_json.read_text() == json_payload
 
         finally:
             generate_static_site.STATIC_SOURCE_DIR = original_static
