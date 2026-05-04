@@ -15,6 +15,7 @@ jobs:
     env:
       WEBSITE_DEPLOY_REPOSITORY: ${{ vars.WEBSITE_DEPLOY_REPOSITORY }}
       WEBSITE_DEPLOY_BRANCH: ${{ vars.WEBSITE_DEPLOY_BRANCH }}
+      MAPBOX_ACCESS_TOKEN: ${{ secrets.MAPBOX_ACCESS_TOKEN }}
 
     steps:
       - name: Checkout source

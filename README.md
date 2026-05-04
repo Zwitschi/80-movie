@@ -85,3 +85,26 @@ Required GitHub configuration in this source repository:
   destination repository in `owner/name` format, for example `Zwitschi/openmicodyssey-website`
 - Optional variable: `WEBSITE_DEPLOY_BRANCH`
   destination branch; defaults to `build`
+
+## Map Easter Egg
+
+A hidden /map page displays a Mapbox GL JS route visualization of the film's road trip, built from TeslaCam GPS data.
+
+### Access
+
+The map is not listed in the site navigation. A hidden "Route Map" link in the footer becomes visible on hover.
+
+### Configuration
+
+The map requires a Mapbox public access token:
+
+1. Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
+2. Add it to website/.env:
+   ```
+   MAPBOX_ACCESS_TOKEN=pk.your_token_here
+   ```
+3. For the static export deployment, add a MAPBOX_ACCESS_TOKEN secret to the GitHub repository.
+
+### Route data
+
+Route points are stored in website/static/data/map_data.json (649 GPS coordinates). The Mapbox GL JS logic lives in website/static/js/map.js.
