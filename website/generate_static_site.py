@@ -135,6 +135,18 @@ def rewrite_html_for_static_export(html_text: str) -> str:
             ):
                 tag[attribute] = route_href_to_output(value)
 
+    # Rewrite /static/ paths inside inline <script> bodies (JS string literals).
+    for script_tag in soup.find_all('script'):
+        if script_tag.get('type') == 'application/ld+json':
+            continue
+        if script_tag.string:
+            rewritten = re.sub(
+                r'(["\'])(/static/)([^"\']*)\1',
+                lambda m: m.group(1) + m.group(3) + m.group(1),
+                script_tag.string,
+            )
+            script_tag.string.replace_with(rewritten)
+
     return str(soup)
 
 

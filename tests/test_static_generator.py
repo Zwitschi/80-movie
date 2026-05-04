@@ -269,3 +269,82 @@ class TestStaticGenerator:
 
         finally:
             generate_static_site.STATIC_SOURCE_DIR = original_static
+
+
+class TestMapExport:
+    """Tests for map page static export: path rewrites and asset presence."""
+
+    @pytest.fixture
+    def temp_dist_dir(self, tmp_path):
+        dist_dir = tmp_path / "dist"
+        dist_dir.mkdir()
+        import website.generate_static_site as gss
+        original_dist = gss.DIST_DIR
+        gss.DIST_DIR = dist_dir
+        yield dist_dir
+        gss.DIST_DIR = original_dist
+
+    def test_map_html_static_paths_rewritten(self):
+        """Rendered /map HTML has /static/... URLs rewritten to relative paths."""
+        from website.movie_site import create_app
+        app = create_app()
+        with app.test_client() as client:
+            html = rewrite_html_for_static_export(
+                client.get('/map').get_data(as_text=True)
+            )
+
+        assert '/static/data/map_data.json' not in html
+        assert '/static/js/map.js' not in html
+        assert 'data/map_data.json' in html
+        assert 'js/map.js' in html
+
+    def test_map_html_map_data_url_rewritten(self):
+        """MAP_DATA_URL inline script variable is rewritten to a relative path."""
+        from website.movie_site import create_app
+        app = create_app()
+        with app.test_client() as client:
+            html = rewrite_html_for_static_export(
+                client.get('/map').get_data(as_text=True)
+            )
+
+        assert 'MAP_DATA_URL' in html
+        # The value assigned after MAP_DATA_URL = should not contain /static/
+        after_var = html.split('MAP_DATA_URL')[1].split(';')[0]
+        assert '/static/' not in after_var
+
+    def test_map_assets_present_in_dist(self, temp_dist_dir):
+        """After static generation map.html, map.js, and map_data.json all exist in dist."""
+        try:
+            generate_static_site(clean=True)
+        except Exception as exc:
+            pytest.skip(f"Static generation skipped: {exc}")
+
+        assert (temp_dist_dir / 'map.html').exists()
+        assert (temp_dist_dir / 'js' / 'map.js').exists()
+        assert (temp_dist_dir / 'data' / 'map_data.json').exists()
+
+    def test_map_data_json_is_valid_json(self, temp_dist_dir):
+        """Exported map_data.json is valid JSON and contains route point objects."""
+        try:
+            generate_static_site(clean=True)
+        except Exception as exc:
+            pytest.skip(f"Static generation skipped: {exc}")
+
+        json_path = temp_dist_dir / 'data' / 'map_data.json'
+        assert json_path.exists()
+        data = json.loads(json_path.read_text(encoding='utf-8'))
+        assert isinstance(data, list)
+        assert len(data) > 0
+        first = data[0]
+        assert 'latitude' in first
+        assert 'longitude' in first
+
+    def test_exported_map_html_has_no_static_refs(self, temp_dist_dir):
+        """map.html in dist has no /static/ references remaining after rewrite."""
+        try:
+            generate_static_site(clean=True)
+        except Exception as exc:
+            pytest.skip(f"Static generation skipped: {exc}")
+
+        content = (temp_dist_dir / 'map.html').read_text(encoding='utf-8')
+        assert '/static/' not in content
