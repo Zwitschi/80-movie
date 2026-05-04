@@ -21,11 +21,11 @@ def run_tests(test_type="all", verbose=False, coverage=False):
     elif test_type == "integration":
         cmd.extend(["-m", "integration"])
     elif test_type == "app":
-        cmd.extend(["test/test_app.py"])
+        cmd.extend(["tests/test_app.py"])
     elif test_type == "static":
-        cmd.extend(["test/test_static_generator.py"])
+        cmd.extend(["tests/test_static_generator.py"])
     elif test_type == "schema":
-        cmd.extend(["test/test_schema.py"])
+        cmd.extend(["tests/test_schema.py"])
 
     if verbose:
         cmd.append("-v")
@@ -49,7 +49,8 @@ def main():
     """Main entry point for the test runner."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Run tests for Open Mic Odyssey")
+    parser = argparse.ArgumentParser(
+        description="Run tests for Open Mic Odyssey")
     parser.add_argument(
         "test_type",
         choices=["all", "unit", "integration", "app", "static", "schema"],

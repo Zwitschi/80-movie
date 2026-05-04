@@ -1228,3 +1228,21 @@ section {
     opacity: 1;
   }
 }
+
+/* Easteregg: TeslaCam map link (hidden until hover) */
+.easteregg {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 0.8rem;
+}
+.easteregg:hover,
+.site-footer:hover .easteregg {
+  opacity: 0.6;
+}
+.easteregg-link {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.easteregg-link:hover {
+  text-decoration: underline;
+}

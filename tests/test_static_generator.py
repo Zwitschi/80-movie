@@ -108,7 +108,7 @@ class TestStaticGenerator:
         </html>
         '''
 
-        soup = validate_html_structure(html, '/test')
+        soup = validate_html_structure(html, '/tests')
         assert soup.html is not None
         assert soup.head is not None
         assert soup.body is not None
@@ -118,7 +118,7 @@ class TestStaticGenerator:
         html = '<head><title>Test</title></head><body><p>Hello</p></body>'
 
         with pytest.raises(StaticGenerationError, match="Missing <html> root element"):
-            validate_html_structure(html, '/test')
+            validate_html_structure(html, '/tests')
 
     def test_validate_json_ld_valid(self):
         """Test JSON-LD validation with valid schema.org data."""
@@ -139,7 +139,7 @@ class TestStaticGenerator:
 
         soup = BeautifulSoup(html, 'html.parser')
         # Should not raise an exception
-        validate_json_ld(soup, '/test')
+        validate_json_ld(soup, '/tests')
 
     def test_validate_json_ld_invalid_json(self):
         """Test JSON-LD validation with invalid JSON."""
@@ -156,7 +156,7 @@ class TestStaticGenerator:
 
         soup = BeautifulSoup(html, 'html.parser')
         with pytest.raises(StaticGenerationError, match="Invalid JSON-LD JSON"):
-            validate_json_ld(soup, '/test')
+            validate_json_ld(soup, '/tests')
 
     def test_validate_json_ld_missing_context(self):
         """Test JSON-LD validation with missing @context."""
@@ -176,7 +176,7 @@ class TestStaticGenerator:
 
         soup = BeautifulSoup(html, 'html.parser')
         with pytest.raises(StaticGenerationError, match="JSON-LD schema envelope validation failed"):
-            validate_json_ld(soup, '/test')
+            validate_json_ld(soup, '/tests')
 
     def test_generate_static_site_integration(self, temp_dist_dir):
         """Integration test for static site generation."""

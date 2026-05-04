@@ -14,7 +14,7 @@ from jsonschema import ValidationError, validate
 APP_DIR = Path(__file__).resolve().parent
 DIST_DIR = APP_DIR / 'dist'
 STATIC_SOURCE_DIR = APP_DIR / 'static'
-FLAT_STATIC_DIRS = ('css', 'images', 'js', 'video')
+FLAT_STATIC_DIRS = ('css', 'data', 'fonts', 'images', 'js', 'video')
 
 # Explicit route mapping keeps static export predictable and avoids accidental admin/debug routes.
 ROUTE_OUTPUTS = {
@@ -25,6 +25,7 @@ ROUTE_OUTPUTS = {
     '/patreon': 'patreon.html',
     '/watch': 'watch.html',
     '/credits': 'credits.html',
+    '/map': 'map.html',
 }
 
 JSON_LD_ENVELOPE_SCHEMA = {
