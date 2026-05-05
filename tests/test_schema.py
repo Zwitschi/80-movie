@@ -53,7 +53,6 @@ class TestSchemaBuilder:
         assert len(movie_nodes) == 1
 
         movie = movie_nodes[0]
-        assert movie['name'] == 'Open Mic Odyssey'
         assert 'director' in movie
         assert 'producer' in movie
         assert 'actor' in movie
@@ -109,7 +108,6 @@ class TestSchemaBuilder:
         # Check data types
         assert isinstance(movie_node['name'], str)
         assert isinstance(movie_node['description'], str)
-        assert movie_node['name'] == 'Open Mic Odyssey'
 
     def test_organization_entity_properties(self, sample_movie_data, app_context):
         """Test that Organization entity has required properties."""

@@ -5,8 +5,20 @@ This project contains materials and code for the "Open Mic Odyssey" movie projec
 ## Repository Structure
 
 ```text
-README.md
-website/
+.github/           # GitHub-specific files (workflows, issue templates, etc.)
+tests/             # Test suite for the project
+website/           # Flask web application for the movie website
+  static/          # Static assets (CSS, JS, images)
+  templates/       # Jinja2 templates for rendering HTML pages
+  data/            # JSON files containing content data for the site
+  movie_site/      # Flask app modules (views, models, admin, etc.)
+  README.md        # Documentation for the website module
+.gitignore         # Git ignore rules
+pytest.ini         # Pytest configuration
+README.md          # Root-level documentation for the overall project
+requirements.txt   # Python dependencies for the project
+run_tests.py       # Script to run the test suite
+runtime.txt        # Python runtime specification for hosting environments
 ```
 
 ## Website
@@ -17,6 +29,7 @@ The web application lives in [website/README.md](website/README.md), which docum
 
 - the modular Flask app structure
 - local development and deployment notes
+- secure admin dashboard and content management
 - JSON-LD schema generation
 - content, template, CSS, and background customization
 
@@ -44,6 +57,18 @@ A stupid web game lol
 
 Something that says all the content you get from patreon like the main movie, the texas podcast, the just driving footage and music cut, and more. Maybe podcasts recorded on discord or something.
 ```
+
+## Pella Zip Export
+
+To package the deployable contents of `website/` into a zip file for Pella hosting, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File website\export_pella_zip.ps1 -Force
+```
+
+By default this writes `website/build/website-pella.zip` and places the website contents at the root of the archive.
+
+The packaging step excludes local-only artifacts such as `.env`, `dist/`, `build/`, `__pycache__/`, and existing zip files.
 
 ## Static Export
 

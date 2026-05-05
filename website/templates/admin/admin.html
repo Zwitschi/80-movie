@@ -1,0 +1,57 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Dashboard{%
+endblock %} {% block admin_content %}
+<p>Welcome to the admin dashboard. Select a section to manage site content.</p>
+
+<div class="admin-card-grid">
+  <a href="{{ url_for('admin.edit_film') }}" class="admin-card">
+    <h2>Film Details</h2>
+    <p>Title, tagline, description, genre, runtime, release date and status.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.manage_media') }}" class="admin-card">
+    <h2>Media Gallery</h2>
+    <p>Add and remove gallery images with captions and categories.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_media_assets') }}" class="admin-card">
+    <h2>Media Assets</h2>
+    <p>
+      Poster image, trailer embed URL, thumbnail, content rating, and publish
+      dates.
+    </p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_content') }}" class="admin-card">
+    <h2>Metadata &amp; Copy</h2>
+    <p>Per-page SEO title, description, keywords, and canonical path.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_events') }}" class="admin-card">
+    <h2>Events &amp; Offers</h2>
+    <p>Screening events with venue details, dates, and global ticket offers.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_faq') }}" class="admin-card">
+    <h2>FAQ</h2>
+    <p>Add, remove, and reorder FAQ question &amp; answer pairs.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_people') }}" class="admin-card">
+    <h2>People &amp; Orgs</h2>
+    <p>People, contributors, credits, and linked organizations.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_connect') }}" class="admin-card">
+    <h2>Social &amp; Connect</h2>
+    <p>
+      Social links, campaign links, supporter tiers, benefits, and page copy.
+    </p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_reviews') }}" class="admin-card">
+    <h2>Reviews</h2>
+    <p>Individual reviews and aggregate rating fields.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+</div>
+{% endblock %}

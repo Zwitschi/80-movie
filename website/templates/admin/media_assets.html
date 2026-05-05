@@ -1,0 +1,108 @@
+{% extends 'admin/_admin_base.html' %}
+
+{% block admin_title %}Media Assets &amp; Trailer{% endblock %}
+
+{% block admin_content %}
+        {% if save_success %}
+          <p class="alert alert-success">Saved successfully.</p>
+        {% endif %}
+        {% if save_error %}
+          <p class="alert alert-error">Error: {{ save_error }}</p>
+        {% endif %}
+
+        {# ── General media fields ───────────────────────────────────── #}
+        <section>
+          <h2>General</h2>
+          <form method="post" action="{{ url_for('admin.edit_media_assets') }}">
+            <input type="hidden" name="action" value="save_media" />
+
+            <label for="poster_image">Poster image URL</label>
+            <input id="poster_image" name="poster_image" type="url"
+              value="{{ media.get('poster_image', '') or '' }}" />
+            {% if media.get('poster_image') %}
+              <p>
+                <a href="{{ media.poster_image }}" target="_blank" rel="noopener">Preview poster</a>
+              </p>
+            {% endif %}
+
+            <label for="content_rating">Content rating</label>
+            <input id="content_rating" name="content_rating" type="text"
+              value="{{ media.get('content_rating', '') }}" />
+
+            <label for="in_language">Language (BCP-47)</label>
+            <input id="in_language" name="in_language" type="text"
+              value="{{ media.get('in_language', '') }}" placeholder="en" />
+
+            <label for="contact_email">Contact email</label>
+            <input id="contact_email" name="contact_email" type="email"
+              value="{{ media.get('contact_email', '') }}" />
+
+            <label for="date_published">Date published (ISO 8601)</label>
+            <input id="date_published" name="date_published" type="text"
+              value="{{ media.get('date_published', '') or '' }}"
+              placeholder="2026-09-01" />
+
+            <button type="submit">Save General Fields</button>
+          </form>
+        </section>
+
+        {# ── Trailer fields ─────────────────────────────────────────── #}
+        <section>
+          <h2>Trailer</h2>
+          {% if trailer.get('embed_url') %}
+            <p>
+              <a href="{{ trailer.embed_url }}" target="_blank" rel="noopener">Preview trailer embed</a>
+            </p>
+          {% endif %}
+          {% if trailer.get('thumbnail_url') %}
+            <p>
+              <a href="{{ trailer.thumbnail_url }}" target="_blank" rel="noopener">Preview thumbnail</a>
+            </p>
+          {% endif %}
+
+          <form method="post" action="{{ url_for('admin.edit_media_assets') }}">
+            <input type="hidden" name="action" value="save_trailer" />
+
+            <label for="trailer_name">Name</label>
+            <input id="trailer_name" name="trailer_name" type="text"
+              value="{{ trailer.get('name', '') }}" />
+
+            <label for="trailer_description">Description</label>
+            <textarea id="trailer_description" name="trailer_description"
+              rows="3">{{ trailer.get('description', '') }}</textarea>
+
+            <label for="trailer_url">Canonical URL</label>
+            <input id="trailer_url" name="trailer_url" type="url"
+              value="{{ trailer.get('url', '') }}" />
+
+            <label for="trailer_embed_url">Embed URL (YouTube)</label>
+            <input id="trailer_embed_url" name="trailer_embed_url" type="url"
+              value="{{ trailer.get('embed_url', '') or '' }}" />
+
+            <label for="trailer_thumbnail_url">Thumbnail URL</label>
+            <input id="trailer_thumbnail_url" name="trailer_thumbnail_url" type="url"
+              value="{{ trailer.get('thumbnail_url', '') or '' }}" />
+
+            <label for="trailer_upload_date">Upload date (ISO 8601)</label>
+            <input id="trailer_upload_date" name="trailer_upload_date" type="text"
+              value="{{ trailer.get('upload_date', '') or '' }}"
+              placeholder="2026-03-15T12:00:00Z" />
+
+            <label for="trailer_duration_iso">Duration (ISO 8601)</label>
+            <input id="trailer_duration_iso" name="trailer_duration_iso" type="text"
+              value="{{ trailer.get('duration_iso', '') }}" placeholder="PT2M18S" />
+
+            <label for="trailer_encoding_format">Encoding format</label>
+            <input id="trailer_encoding_format" name="trailer_encoding_format" type="text"
+              value="{{ trailer.get('encoding_format', '') }}" placeholder="video/mp4" />
+
+            <label>
+              <input type="checkbox" name="trailer_is_family_friendly" value="1"
+                {% if trailer.get('is_family_friendly') %}checked{% endif %} />
+              Family friendly
+            </label>
+
+            <button type="submit">Save Trailer</button>
+          </form>
+        </section>
+{% endblock %}

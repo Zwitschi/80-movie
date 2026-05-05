@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}Admin | {{ meta_title|default(movie_title) }}{% endblock
+      %}
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/site.css') }}"
+    />
+    {% block extra_head %}{% endblock %}
+    <style>
+      body.admin-login-body {
+        background: #0f0e17;
+        color: #e2e8f0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .admin-login-container {
+        background: #1e1b2e;
+        padding: 2rem;
+        border-radius: 8px;
+        border: 1px solid #2d2a3d;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      }
+      .admin-login-brand {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .admin-login-brand h1 {
+        color: #a78bfa;
+        font-size: 1.5rem;
+        margin: 0;
+      }
+      .admin-login-brand h1 strong {
+        color: #fff;
+      }
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #a78bfa;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        background: #0f0e17;
+        border: 1px solid #2d2a3d;
+        color: #e2e8f0;
+        border-radius: 4px;
+        font-size: 1rem;
+        box-sizing: border-box;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: #a78bfa;
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 0.75rem;
+        background: #8b5cf6;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-primary:hover {
+        background: #7c3aed;
+      }
+      .alert {
+        padding: 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        font-size: 0.875rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body class="admin-login-body">
+    <div class="admin-login-container">
+      <div class="admin-login-brand">
+        <h1>Admin <strong>Login</strong></h1>
+      </div>
+
+      {% if error %}
+      <div class="alert">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            required
+            autofocus
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            required
+          />
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+    </div>
+  </body>
+</html>

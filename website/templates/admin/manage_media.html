@@ -1,0 +1,100 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Media Gallery{%
+endblock %} {% block admin_content %}
+<p>
+  Manage gallery entries stored in
+  <code>website/data/gallery.json</code>. &mdash;
+  <a href="{{ url_for('admin.edit_media_assets') }}"
+    >Edit Media Assets &amp; Trailer</a
+  >
+</p>
+
+{% if save_success %}
+<p>
+  <strong>Saved.</strong> Gallery changes were written to
+  <code>gallery.json</code>.
+</p>
+{% endif %} {% if save_error %}
+<p><strong>Error:</strong> {{ save_error }}</p>
+{% endif %}
+
+<section class="stack-md">
+  <h2>Current Gallery Items</h2>
+  {% if gallery_items %}
+  <ul class="stack-md">
+    {% for item in gallery_items %}
+    <li>
+      <article class="stack-sm">
+        <h3>{{ item.get('title', 'Untitled') }}</h3>
+        <p><strong>Category:</strong> {{ item.get('category', '') }}</p>
+        <p><strong>Image URL:</strong> {{ item.get('image_url', '') }}</p>
+        <p><strong>Alt:</strong> {{ item.get('alt', '') }}</p>
+        <p>{{ item.get('description', '') }}</p>
+        <form method="post" action="{{ url_for('admin.manage_media') }}">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="index" value="{{ loop.index0 }}" />
+          <button type="submit" class="btn btn-secondary">Remove Item</button>
+        </form>
+      </article>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No gallery items found.</p>
+  {% endif %}
+</section>
+
+<section class="stack-md">
+  <h2>Add Gallery Item</h2>
+  <form
+    method="post"
+    action="{{ url_for('admin.manage_media') }}"
+    class="stack-md"
+  >
+    <input type="hidden" name="action" value="add" />
+
+    <label>
+      Title
+      <input
+        type="text"
+        name="title"
+        value="{{ form_data.get('title', '') }}"
+        required
+      />
+    </label>
+
+    <label>
+      Category
+      <input
+        type="text"
+        name="category"
+        value="{{ form_data.get('category', '') }}"
+      />
+    </label>
+
+    <label>
+      Image URL
+      <input
+        type="url"
+        name="image_url"
+        value="{{ form_data.get('image_url', '') }}"
+        required
+      />
+    </label>
+
+    <label>
+      Alt text
+      <input type="text" name="alt" value="{{ form_data.get('alt', '') }}" />
+    </label>
+
+    <label>
+      Description
+      <textarea name="description" rows="4">
+{{ form_data.get('description', '') }}</textarea
+      >
+    </label>
+
+    <button type="submit" class="btn btn-primary">Add Gallery Item</button>
+  </form>
+</section>
+
+{% endblock %}

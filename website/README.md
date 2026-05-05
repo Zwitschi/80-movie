@@ -19,7 +19,10 @@ This folder contains the Flask website for Open Mic Odyssey.
   - `connect.json`: campaign and supporter information.
   - `content.json`: page-level SEO metadata (titles, descriptions, keywords, paths).
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
+- `movie_site/admin.py`: admin UI dashboard and CRUD forms.
+- `movie_site/auth.py`: Flask-Login user management and authentication.
 - `movie_site/config.py`: Flask application configuration settings.
+- `movie_site/content_store.py`: secure JSON file read/write operations for admin features.
 - `movie_site/views.py`: route handlers and page context assembly.
 - `movie_site/movie_data.py`: JSON loader that assembles the page data model from `data/*.json`.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
@@ -40,6 +43,7 @@ This folder contains the Flask website for Open Mic Odyssey.
 - `templates/media.html`: seeded media page shown at `/media`.
 - `templates/connect.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/connect`.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
+- `templates/admin/`: CRUD form templates for managing site data.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
 - `static/js/scripts.js`: client-side JavaScript functionality.
@@ -75,6 +79,7 @@ The main routes are:
 - `/patreon`: dedicated supporter-membership conversion page
 - `/film`: detailed film page
 - `/credits`: compatibility redirect to the credits section on `/film`
+- `/admin`: secure content management dashboard (requires login)
 
 ## Deployment
 
@@ -83,29 +88,7 @@ Current deployment workflows documented in this repository:
 1. GitHub Actions mirror workflow for publishing `website/` content to `zwitschi/openmicodyssey-website`.
 2. Static export workflow for generating and publishing `website/dist/`.
 
-## Static Export
-
-The static export tooling now lives entirely inside this folder so `website/` can be zipped or mirrored as a self-contained deployment bundle.
-
-From the repository root:
-
-```powershell
-f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe website\export_static.py
-```
-
-This writes the generated static site to `website/dist/` and keeps the implementation in `website/generate_static_site.py`.
-
-## Pella Zip Export
-
-To package the deployable contents of `website/` into a zip file for Pella hosting, run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File website\export_pella_zip.ps1 -Force
-```
-
-By default this writes `website/build/website-pella.zip` and places the website contents at the root of the archive.
-
-The packaging step excludes local-only artifacts such as `.env`, `dist/`, `build/`, `__pycache__/`, and existing zip files.
+See the root `README.md` for static site export and GitHub deployment instructions.
 
 ## GitHub Mirror Workflow
 

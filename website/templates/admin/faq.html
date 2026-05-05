@@ -1,0 +1,73 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage FAQ{%
+endblock %} {% block admin_content %} {% if save_success %}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %} {% if faq_items %}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Question</th>
+      <th>Answer</th>
+      <th>Order</th>
+      <th>Remove</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in faq_items %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ item.question }}</td>
+      <td>{{ item.answer }}</td>
+      <td>
+        {% if not loop.first %}
+        <form
+          method="post"
+          action="{{ url_for('admin.edit_faq') }}"
+          style="display: inline"
+        >
+          <input type="hidden" name="action" value="move_up" />
+          <input type="hidden" name="index" value="{{ loop.index0 }}" />
+          <button type="submit" aria-label="Move up">&uarr;</button>
+        </form>
+        {% endif %} {% if not loop.last %}
+        <form
+          method="post"
+          action="{{ url_for('admin.edit_faq') }}"
+          style="display: inline"
+        >
+          <input type="hidden" name="action" value="move_down" />
+          <input type="hidden" name="index" value="{{ loop.index0 }}" />
+          <button type="submit" aria-label="Move down">&darr;</button>
+        </form>
+        {% endif %}
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('admin.edit_faq') }}">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="index" value="{{ loop.index0 }}" />
+          <button type="submit">Remove</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No FAQ entries yet.</p>
+{% endif %}
+
+<h2>Add FAQ Entry</h2>
+<form method="post" action="{{ url_for('admin.edit_faq') }}">
+  <input type="hidden" name="action" value="add" />
+
+  <label for="question">Question <span aria-hidden="true">*</span></label>
+  <input id="question" name="question" type="text" required />
+
+  <label for="answer">Answer <span aria-hidden="true">*</span></label>
+  <textarea id="answer" name="answer" rows="4" required></textarea>
+
+  <button type="submit">Add Entry</button>
+</form>
+{% endblock %}

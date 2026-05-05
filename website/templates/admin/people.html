@@ -1,0 +1,269 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage People
+&amp; Organizations{% endblock %} {% block admin_content %} {% if save_success
+%}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %} {# ── People dict ─────────────────────────────────────────────── #}
+<section>
+  <h2>People</h2>
+  {% if people %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Job title</th>
+        <th>Roles</th>
+        <th>URL</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for key, person in people.items() %}
+      <tr>
+        <td>{{ person.name }}</td>
+        <td>{{ person.job_title }}</td>
+        <td>{{ person.roles | join(', ') }}</td>
+        <td>
+          <a href="{{ person.url }}" target="_blank" rel="noopener"
+            >{{ person.url }}</a
+          >
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_people') }}">
+            <input type="hidden" name="action" value="remove_person" />
+            <input type="hidden" name="person_key" value="{{ key }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No people entries.</p>
+  {% endif %}
+
+  <h3>Add Person</h3>
+  <form method="post" action="{{ url_for('admin.edit_people') }}">
+    <input type="hidden" name="action" value="add_person" />
+    <label for="person_name">Name <span aria-hidden="true">*</span></label>
+    <input id="person_name" name="person_name" type="text" required />
+    <label for="person_job_title">Job title</label>
+    <input id="person_job_title" name="person_job_title" type="text" />
+    <label for="person_roles">Roles (comma-separated)</label>
+    <input
+      id="person_roles"
+      name="person_roles"
+      type="text"
+      placeholder="Director, Producer"
+    />
+    <label for="person_url">URL</label>
+    <input id="person_url" name="person_url" type="url" />
+    <label for="person_same_as">same_as URLs (comma-separated)</label>
+    <input id="person_same_as" name="person_same_as" type="text" />
+    <label for="person_credit_note">Credit note</label>
+    <textarea
+      id="person_credit_note"
+      name="person_credit_note"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Person</button>
+  </form>
+</section>
+
+{# ── Contributors ────────────────────────────────────────────── #}
+<section>
+  <h2>Contributors</h2>
+  {% for section in contributor_sections %}
+  <h3>{{ section | capitalize }}</h3>
+  {% set section_list = contributors.get(section, []) %} {% if section_list %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Job title</th>
+        <th>URL</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in section_list %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.job_title }}</td>
+        <td>
+          <a href="{{ item.url }}" target="_blank" rel="noopener"
+            >{{ item.url }}</a
+          >
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_people') }}">
+            <input type="hidden" name="action" value="remove_contributor" />
+            <input
+              type="hidden"
+              name="contributor_section"
+              value="{{ section }}"
+            />
+            <input
+              type="hidden"
+              name="contributor_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No {{ section }} yet.</p>
+  {% endif %} {% endfor %}
+
+  <h3>Add Contributor</h3>
+  <form method="post" action="{{ url_for('admin.edit_people') }}">
+    <input type="hidden" name="action" value="add_contributor" />
+    <label for="contributor_section">Section</label>
+    <select id="contributor_section" name="contributor_section">
+      {% for s in contributor_sections %}
+      <option value="{{ s }}">{{ s | capitalize }}</option>
+      {% endfor %}
+    </select>
+    <label for="contributor_name">Name <span aria-hidden="true">*</span></label>
+    <input id="contributor_name" name="contributor_name" type="text" required />
+    <label for="contributor_job_title">Job title</label>
+    <input
+      id="contributor_job_title"
+      name="contributor_job_title"
+      type="text"
+    />
+    <label for="contributor_url">URL</label>
+    <input id="contributor_url" name="contributor_url" type="url" />
+    <label for="contributor_same_as">same_as URLs (comma-separated)</label>
+    <input id="contributor_same_as" name="contributor_same_as" type="text" />
+    <label for="contributor_credit_note">Credit note</label>
+    <textarea
+      id="contributor_credit_note"
+      name="contributor_credit_note"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Contributor</button>
+  </form>
+</section>
+
+{# ── Credits people ──────────────────────────────────────────── #}
+<section>
+  <h2>Credits</h2>
+  {% if credits_people %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Roles</th>
+        <th>URL</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in credits_people %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.roles | join(', ') }}</td>
+        <td>
+          <a href="{{ item.primary_url }}" target="_blank" rel="noopener"
+            >{{ item.primary_url }}</a
+          >
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_people') }}">
+            <input type="hidden" name="action" value="remove_credit" />
+            <input
+              type="hidden"
+              name="credit_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No credit entries.</p>
+  {% endif %}
+
+  <h3>Add Credit</h3>
+  <form method="post" action="{{ url_for('admin.edit_people') }}">
+    <input type="hidden" name="action" value="add_credit" />
+    <label for="credit_name">Name <span aria-hidden="true">*</span></label>
+    <input id="credit_name" name="credit_name" type="text" required />
+    <label for="credit_roles">Roles (comma-separated)</label>
+    <input
+      id="credit_roles"
+      name="credit_roles"
+      type="text"
+      placeholder="Director, Producer"
+    />
+    <label for="credit_primary_url">Primary URL</label>
+    <input id="credit_primary_url" name="credit_primary_url" type="url" />
+    <label for="credit_same_as">same_as URLs (comma-separated)</label>
+    <input id="credit_same_as" name="credit_same_as" type="text" />
+    <button type="submit">Add Credit</button>
+  </form>
+</section>
+
+{# ── Organizations ───────────────────────────────────────────── #}
+<section>
+  <h2>Organizations</h2>
+  {% if organizations %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>URL</th>
+        <th>People</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for key, org in organizations.items() %}
+      <tr>
+        <td>{{ org.name }}</td>
+        <td>
+          <a href="{{ org.url }}" target="_blank" rel="noopener"
+            >{{ org.url }}</a
+          >
+        </td>
+        <td>{{ org.people | join(', ') }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_people') }}">
+            <input type="hidden" name="action" value="remove_org" />
+            <input type="hidden" name="org_key" value="{{ key }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No organization entries.</p>
+  {% endif %}
+
+  <h3>Add Organization</h3>
+  <form method="post" action="{{ url_for('admin.edit_people') }}">
+    <input type="hidden" name="action" value="add_org" />
+    <label for="org_name">Name <span aria-hidden="true">*</span></label>
+    <input id="org_name" name="org_name" type="text" required />
+    <label for="org_url">URL</label>
+    <input id="org_url" name="org_url" type="url" />
+    <label for="org_same_as">same_as URLs (comma-separated)</label>
+    <input id="org_same_as" name="org_same_as" type="text" />
+    <label for="org_people">People (comma-separated names)</label>
+    <input id="org_people" name="org_people" type="text" />
+    <button type="submit">Add Organization</button>
+  </form>
+</section>
+{% endblock %}
