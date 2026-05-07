@@ -90,8 +90,8 @@
       "path": "/media",
       "content": {
         "hero_eyebrow": "Media",
-        "hero_heading": "Stills, Posters, And",
-        "hero_heading_span": "Behind-The-Scenes Frames",
+        "hero_heading": "Stills, Posters, And Behind-The-Scenes Frames",
+        "hero_heading_span": "",
         "hero_lede": "A media-friendly gallery for first-look visuals, poster art, road stills, and production moments.",
         "scope_eyebrow": "Current Scope",
         "scope_items": [
@@ -100,8 +100,8 @@
           "Behind-the-scenes crew and process imagery"
         ],
         "gallery_heading": "Media Gallery",
-        "gallery_description_1": "The layout is ready for real stills, captions, and press-kit asset swaps.",
-        "gallery_description_2": "Use this independent film gallery as a lightweight media kit with film stills, poster art, and documentary behind-the-scenes photos."
+        "gallery_description_1": "Film stills, poster art, and documentary behind-the-scenes photos.",
+        "gallery_description_2": ""
       }
     },
     "connect": {
