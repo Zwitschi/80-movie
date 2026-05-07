@@ -1,3 +1,4 @@
+import re
 import sys
 from flask import current_app
 from .content_store import ContentReadError, ContentWriteError
@@ -143,5 +144,38 @@ def process_list_action(items: list, action: str, index_str: str, candidate: dic
     return updated
 
 
-print('test', file=sys.stderr)
-print('test utils', file=sys.stderr)
+_ISO_DATETIME_RE = re.compile(
+    r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$')
+_ISO_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+_SCHEMA_ORG_RE = re.compile(r'^https://schema\.org/')
+
+EVENT_STATUSES = [
+    'https://schema.org/EventScheduled',
+    'https://schema.org/EventCancelled',
+    'https://schema.org/EventPostponed',
+    'https://schema.org/EventRescheduled',
+    'https://schema.org/EventMovedOnline',
+]
+EVENT_ATTENDANCE_MODES = [
+    'https://schema.org/OfflineEventAttendanceMode',
+    'https://schema.org/OnlineEventAttendanceMode',
+    'https://schema.org/MixedEventAttendanceMode',
+]
+OFFER_AVAILABILITIES = [
+    'https://schema.org/InStock',
+    'https://schema.org/PreOrder',
+    'https://schema.org/SoldOut',
+    'https://schema.org/Discontinued',
+]
+
+
+def _validate_iso_datetime(value: str) -> bool:
+    return bool(_ISO_DATETIME_RE.match(value.strip()))
+
+
+def _validate_iso_date(value: str) -> bool:
+    return bool(_ISO_DATE_RE.match(value.strip()))
+
+
+def _validate_schema_org_url(value: str) -> bool:
+    return bool(_SCHEMA_ORG_RE.match(value.strip()))

@@ -17,6 +17,12 @@ from .utils import (
     _content_page_form_fields,
     _validate_content_pages,
     _build_content_previews,
+    _validate_iso_datetime,
+    _validate_iso_date,
+    _validate_schema_org_url,
+    EVENT_STATUSES,
+    EVENT_ATTENDANCE_MODES,
+    OFFER_AVAILABILITIES,
 )
 
 
@@ -142,10 +148,6 @@ def manage_media():
         if not action and candidate:
             action = 'add'
 
-        import sys
-        print(
-            f"DEBUG MEDIA: action={action}, candidate={candidate}", file=sys.stderr)
-
         updated_items = process_list_action(
             gallery_items,
             action,
@@ -260,43 +262,6 @@ def edit_content():
         previews=previews,
         **page_context,
     )
-
-
-_ISO_DATETIME_RE = re.compile(
-    r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$')
-_ISO_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
-_SCHEMA_ORG_RE = re.compile(r'^https://schema\.org/')
-
-EVENT_STATUSES = [
-    'https://schema.org/EventScheduled',
-    'https://schema.org/EventCancelled',
-    'https://schema.org/EventPostponed',
-    'https://schema.org/EventRescheduled',
-    'https://schema.org/EventMovedOnline',
-]
-EVENT_ATTENDANCE_MODES = [
-    'https://schema.org/OfflineEventAttendanceMode',
-    'https://schema.org/OnlineEventAttendanceMode',
-    'https://schema.org/MixedEventAttendanceMode',
-]
-OFFER_AVAILABILITIES = [
-    'https://schema.org/InStock',
-    'https://schema.org/PreOrder',
-    'https://schema.org/SoldOut',
-    'https://schema.org/Discontinued',
-]
-
-
-def _validate_iso_datetime(value: str) -> bool:
-    return bool(_ISO_DATETIME_RE.match(value.strip()))
-
-
-def _validate_iso_date(value: str) -> bool:
-    return bool(_ISO_DATE_RE.match(value.strip()))
-
-
-def _validate_schema_org_url(value: str) -> bool:
-    return bool(_SCHEMA_ORG_RE.match(value.strip()))
 
 
 def _event_from_form(form) -> tuple[dict, str | None]:

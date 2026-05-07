@@ -10,7 +10,44 @@
         "stand-up comedy film",
         "documentary film updates"
       ],
-      "path": "/"
+      "path": "/",
+      "content": {
+        "hero_eyebrow": "Feature Documentary",
+        "hero_sublede_1": "Subscribe to our channels for updates, news, and upcoming preview screenings. Be the first to know when or where screenings will take place. We will be updating our community with exclusive content, including extended interviews, behind-the-scenes footage, and early access to new cuts of the film. Don't miss out on your chance to be a part of the Open Mic Odyssey community.",
+        "hero_sublede_2": "Start with the trailer, then move into the film page, media, or connect hub depending on what you want next. Explore our gallery to see high-resolution production stills and behind-the-scenes photos. Connect with our community on social media, Discord and Patreon to find out how you can support the film and get access to exclusive perks, such as your name in the credits, early access to new cuts, and special merchandise. Connect with us on social media to join the conversation and share your own open mic stories.",
+        "trailer_eyebrow": "Now Streaming",
+        "next_step_heading": "Choose Your Next Step",
+        "cta_cards": [
+          {
+            "eyebrow": "Learn More",
+            "title": "Film Page",
+            "description": "Read the fuller synopsis, review the credits, and see screening and access information in one place.",
+            "link_label": "Read the Full Synopsis",
+            "link_route": "main.film",
+            "link_style": "secondary"
+          },
+          {
+            "eyebrow": "Primary Action",
+            "title": "Support The Film",
+            "description": "Move straight into the membership offer if you already want to back the project and unlock supporter updates.",
+            "link_label": "View Membership Tiers",
+            "link_route": "main.patreon",
+            "link_style": "primary"
+          },
+          {
+            "eyebrow": "Visuals",
+            "title": "Browse The Media",
+            "description": "See poster concepts, stills, and behind-the-scenes imagery in a dedicated media view.",
+            "link_label": "Browse the Media Gallery",
+            "link_route": "main.media",
+            "link_style": "secondary"
+          }
+        ],
+        "synopsis_heading": "Quick Story Teaser",
+        "synopsis_body_1": "A documentary road story about stand-up stages, hotel suites, long drives, and the emotional math of trying to make a creative life real.",
+        "synopsis_body_2": "Follow documentary film updates here as our stand-up comedy film moves from trailer release toward wider screenings.",
+        "synopsis_link_label": "Read The Full Film Page"
+      }
     },
     "film": {
       "title": "Film",
@@ -22,7 +59,23 @@
         "open mic odyssey screenings",
         "road trip documentary story"
       ],
-      "path": "/film"
+      "path": "/film",
+      "content": {
+        "hero_eyebrow": "Feature Documentary",
+        "synopsis_body_1": "This documentary film is an independent road trip documentary rooted in live stand-up sets and long-distance friendship. The film follows three best friends and aspiring stand-up comedians as they hit the road for a cross-country tour in a self-driving Tesla, performing at various open mic nights and long drives in between.",
+        "synopsis_body_2": "In this documentary, we explore the dedication, the heartbreak, the camaraderie, and the undeniable passion required to chase a dream that most people consider crazy, and give an intimate look at the world of stand-up comedy and three friends supporting each other on their journey to make a creative life real. The road to success is paved with bad jokes, tough crowds, and endless miles.",
+        "synopsis_body_3": "It is a character-first road film: funny, uncertain, and emotionally grounded instead of over-explained.",
+        "themes_eyebrow": "Themes",
+        "themes": [
+          "Creative ambition",
+          "Friendship under stress",
+          "The comedy grind as lived experience"
+        ],
+        "audience_eyebrow": "Audience",
+        "audience_body": "Best positioned for viewers interested in independent documentary, performance culture, and road stories with personality.",
+        "credits_description": "Independent documentary credits and comedy documentary cast details are listed below for press and audience reference.",
+        "tickets_eyebrow": "Digital Release"
+      }
     },
     "media": {
       "title": "Media",
@@ -34,7 +87,22 @@
         "independent film gallery",
         "comedy documentary images"
       ],
-      "path": "/media"
+      "path": "/media",
+      "content": {
+        "hero_eyebrow": "Media",
+        "hero_heading": "Stills, Posters, And",
+        "hero_heading_span": "Behind-The-Scenes Frames",
+        "hero_lede": "A media-friendly gallery for first-look visuals, poster art, road stills, and production moments.",
+        "scope_eyebrow": "Current Scope",
+        "scope_items": [
+          "Poster art concepts",
+          "Road and performance stills",
+          "Behind-the-scenes crew and process imagery"
+        ],
+        "gallery_heading": "Media Gallery",
+        "gallery_description_1": "The layout is ready for real stills, captions, and press-kit asset swaps.",
+        "gallery_description_2": "Use this independent film gallery as a lightweight media kit with film stills, poster art, and documentary behind-the-scenes photos."
+      }
     },
     "connect": {
       "title": "Connect",
@@ -46,7 +114,22 @@
         "independent film community",
         "comedy documentary news"
       ],
-      "path": "/connect"
+      "path": "/connect",
+      "content": {
+        "hero_eyebrow": "Connect",
+        "hero_body_1": "Follow the film's official channels for updates, trailers, and release news.",
+        "hero_body_2": "Join the journey on Patreon for exclusive content and early access to updates.",
+        "hero_body_3": "\"Producer Circle\" patrons will get their names in the credits.",
+        "support_channels_eyebrow": "Support Channels",
+        "social_heading": "Official Social Channels",
+        "social_description_1": "Follow the film's official channels for updates, trailers, and release news.",
+        "social_description_2": "These documentary social channels are the primary source for comedy documentary news and verified film release updates.",
+        "campaigns_heading": "Campaign & Release Updates",
+        "campaigns_description": "The main site and trailer section will be the primary public paths for release news and updates while plans are finalized.",
+        "supporters_heading": "Follow and Support now!",
+        "supporters_description_1": "Following the film's official channels is the best way to stay in the loop on release news, trailers, and campaign updates. For those who want to go a step further, the Patreon page offers a direct way to support the film and access bonus content.",
+        "supporters_description_2": "Join the independent film community around Open Mic Odyssey and stay connected as screenings and digital release plans are announced."
+      }
     },
     "patreon": {
       "title": "Supporters",
@@ -58,7 +141,20 @@
         "bonus documentary content",
         "open mic odyssey patreon"
       ],
-      "path": "/patreon"
+      "path": "/patreon",
+      "content": {
+        "hero_eyebrow": "Supporters",
+        "why_eyebrow": "Why It Exists",
+        "why_items": [
+          "Road footage, podcasts, and alternate cuts",
+          "A smaller audience for more personal updates",
+          "A direct way to back the film financially"
+        ],
+        "benefits_heading": "What Supporters Get",
+        "benefits_description": "Patreon documentary support helps fund post-production outreach while unlocking bonus documentary content for supporters.",
+        "tiers_heading": "Membership Tiers",
+        "tiers_description": "Choose the film membership tier that fits your level of support for this independent documentary release."
+      }
     }
   }
 }

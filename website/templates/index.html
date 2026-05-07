@@ -4,27 +4,11 @@ block page_content %}
   <section id="trailer" class="overview-trailer-section">
     <div class="container overview-trailer-shell">
       <div class="section-header overview-trailer-header">
-        <span class="eyebrow">Feature Documentary</span>
+        <span class="eyebrow">{{ page_content.hero_eyebrow }}</span>
         <h1 class="overview-page-title">Open Mic Odyssey: The Movie</h1>
         <p class="hero-lede">{{ movie_description }}</p>
-        <p class="hero-sublede">
-          Subscribe to our channels for updates, news, and upcoming preview
-          screenings. Be the first to know when or where screenings will take
-          place. We will be updating our community with exclusive content,
-          including extended interviews, behind-the-scenes footage, and early
-          access to new cuts of the film. Don't miss out on your chance to be a
-          part of the Open Mic Odyssey community.
-        </p>
-        <p class="hero-sublede">
-          Start with the trailer, then move into the film page, media, or
-          connect hub depending on what you want next. Explore our gallery to
-          see high-resolution production stills and behind-the-scenes photos.
-          Connect with our community on social media, Discord and Patreon to
-          find out how you can support the film and get access to exclusive
-          perks, such as your name in the credits, early access to new cuts, and
-          special merchandise. Connect with us on social media to join the
-          conversation and share your own open mic stories.
-        </p>
+        <p class="hero-sublede">{{ page_content.hero_sublede_1 }}</p>
+        <p class="hero-sublede">{{ page_content.hero_sublede_2 }}</p>
         <div class="hero-meta overview-meta">
           <span class="meta-pill">{{ movie_genre }}</span>
           <span class="meta-pill">{{ movie_runtime }}</span>
@@ -34,7 +18,7 @@ block page_content %}
 
       <div class="content-card overview-trailer-card panel-card">
         <div class="overview-trailer-copy stack-md">
-          <span class="eyebrow eyebrow-small">Now Streaming</span>
+          <span class="eyebrow eyebrow-small">{{ page_content.trailer_eyebrow }}</span>
           <h2>{{ movie.trailer.name }}</h2>
           <p>{{ movie.trailer.description }}</p>
           <div class="hero-actions overview-actions overview-trailer-actions">
@@ -73,49 +57,22 @@ block page_content %}
   <section class="overview-next-step-section">
     <div class="container">
       <div class="section-header">
-        <h2>Choose Your Next Step</h2>
+        <h2>{{ page_content.next_step_heading }}</h2>
       </div>
 
       <div class="overview-cta-grid">
+        {% for card in page_content.cta_cards %}
         <article
           class="feature feature-highlight overview-cta-card card-lite stack-sm"
         >
-          <span class="eyebrow eyebrow-small">Learn More</span>
-          <h3>Film Page</h3>
-          <p>
-            Read the fuller synopsis, review the credits, and see screening and
-            access information in one place.
-          </p>
-          <a href="{{ url_for('main.film') }}" class="btn btn-secondary"
-            >Read the Full Synopsis</a
+          <span class="eyebrow eyebrow-small">{{ card.eyebrow }}</span>
+          <h3>{{ card.title }}</h3>
+          <p>{{ card.description }}</p>
+          <a href="{{ url_for(card.link_route) }}" class="btn btn-{{ card.link_style }}"
+            >{{ card.link_label }}</a
           >
         </article>
-        <article
-          class="feature feature-highlight overview-cta-card card-lite stack-sm"
-        >
-          <span class="eyebrow eyebrow-small">Primary Action</span>
-          <h3>Support The Film</h3>
-          <p>
-            Move straight into the membership offer if you already want to back
-            the project and unlock supporter updates.
-          </p>
-          <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
-            >View Membership Tiers</a
-          >
-        </article>
-        <article
-          class="feature feature-highlight overview-cta-card card-lite stack-sm"
-        >
-          <span class="eyebrow eyebrow-small">Visuals</span>
-          <h3>Browse The Media</h3>
-          <p>
-            See poster concepts, stills, and behind-the-scenes imagery in a
-            dedicated media view.
-          </p>
-          <a href="{{ url_for('main.media') }}" class="btn btn-secondary"
-            >Browse the Media Gallery</a
-          >
-        </article>
+        {% endfor %}
       </div>
     </div>
   </section>
@@ -123,24 +80,18 @@ block page_content %}
   <section class="overview-synopsis-section">
     <div class="container overview-synopsis-shell">
       <div class="section-header">
-        <h2>Quick Story Teaser</h2>
+        <h2>{{ page_content.synopsis_heading }}</h2>
       </div>
 
       <div class="content-card overview-synopsis-card panel-card stack-md">
         <p class="story-intro">{{ movie_description }}</p>
-        <p>
-          A documentary road story about stand-up stages, hotel suites, long
-          drives, and the emotional math of trying to make a creative life real.
-        </p>
-        <p>
-          Follow documentary film updates here as our stand-up comedy film moves
-          from trailer release toward wider screenings.
-        </p>
+        <p>{{ page_content.synopsis_body_1 }}</p>
+        <p>{{ page_content.synopsis_body_2 }}</p>
         <div class="hero-actions overview-actions overview-synopsis-actions">
           <a
             href="{{ url_for('main.film') }}#synopsis"
             class="btn btn-secondary"
-            >Read The Full Film Page</a
+            >{{ page_content.synopsis_link_label }}</a
           >
         </div>
       </div>
