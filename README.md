@@ -133,3 +133,44 @@ The map requires a Mapbox public access token:
 ### Route data
 
 Route points are stored in website/static/data/map_data.json (649 GPS coordinates). The Mapbox GL JS logic lives in website/static/js/map.js.
+
+## Coolify Deployment
+
+Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instructions/DEPLOYMENT_COOLIFY.md](.github/instructions/DEPLOYMENT_COOLIFY.md).
+
+### Build settings
+
+| Setting        | Value                                              |
+| -------------- | -------------------------------------------------- |
+| Build pack     | Nixpacks                                           |
+| Base directory | `website` (this repo) or `/` (mirror repo)         |
+| Start command  | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` |
+| Port           | `8000`                                             |
+
+### Required environment variables
+
+| Variable              | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| `SECRET_KEY`          | Long random string — never use the dev default in production |
+| `ADMIN_PASSWORD_HASH` | Werkzeug hash of the admin UI password                       |
+| `SITE_URL`            | Canonical public URL, no trailing slash                      |
+
+### Optional environment variables
+
+| Variable              | Description                                                   |
+| --------------------- | ------------------------------------------------------------- |
+| `ADMIN_USERNAME`      | Admin UI login username (default: `admin`)                    |
+| `MAPBOX_ACCESS_TOKEN` | Required only for the `/map` easter-egg route                 |
+| `CURRENT_YEAR`        | Override footer year; auto-detected from system time if unset |
+
+Generate a `SECRET_KEY`:
+
+```powershell
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Generate an `ADMIN_PASSWORD_HASH`:
+
+```powershell
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('yourpassword'))"
+```
