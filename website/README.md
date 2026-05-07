@@ -17,7 +17,7 @@ This folder contains the Flask website for Open Mic Odyssey.
   - `gallery.json`: photo gallery content.
   - `social.json`: social media links.
   - `connect.json`: campaign and supporter information.
-  - `content.json`: page-level SEO metadata (titles, descriptions, keywords, paths).
+  - `content.json`: page-level SEO metadata (titles, descriptions, keywords, paths) and per-page static content (headings, body copy, bullet lists, CTA card data) exposed to templates via `page_content`.
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
 - `movie_site/admin.py`: admin UI dashboard and CRUD forms.
 - `movie_site/auth.py`: Flask-Login user management and authentication.
@@ -168,7 +168,7 @@ Common updates:
 - `gallery.json`: Photo gallery content.
 - `social.json`: Social media links.
 - `connect.json`: Campaign and supporter information.
-- `content.json`: Page-level SEO metadata (titles, descriptions, keywords, paths).
+- `content.json`: Page-level SEO metadata (titles, descriptions, keywords, paths) and per-page static content (headings, body copy, bullet lists, CTA card data).
 
 Guidelines:
 
@@ -176,7 +176,7 @@ Guidelines:
 - Use real ISO dates and ISO 8601 durations where schema.org expects them.
 - Leave fields as `None` rather than inserting placeholder values into date-specific schema properties.
 - Prefer full absolute URLs for schema assets and canonical references.
-- Edit `data/content.json` to update page-level SEO titles, descriptions, and keywords without touching Python code.
+- Edit `data/content.json` to update page-level SEO titles, descriptions, and keywords, or to change page body copy, headings, bullet lists, and CTA card text, without touching Python code or HTML templates. Each page entry has a `content` object whose keys map directly to `{{ page_content.* }}` variables in the corresponding template.
 
 ## Template Customization
 
