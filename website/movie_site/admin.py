@@ -451,9 +451,9 @@ def edit_faq():
 
         if not save_error:
             updated = process_list_action(
-                faq_items, 
-                action, 
-                request.form.get('index', '').strip(), 
+                faq_items,
+                action,
+                request.form.get('index', '').strip(),
                 candidate
             )
             faq_payload['faq'] = updated
@@ -592,26 +592,32 @@ def edit_people():
                     return redirect(url_for('admin.edit_people', saved='1'))
 
         elif action == 'add_contributor':
-            section = request.form.get('contributor_section', '').strip().lower()
+            section = request.form.get(
+                'contributor_section', '').strip().lower()
             if section not in CONTRIBUTOR_SECTIONS:
                 save_error = f'Invalid contributor section: {section!r}.'
             else:
-                entry, err = _contributor_from_form(request.form, prefix='contributor_')
+                entry, err = _contributor_from_form(
+                    request.form, prefix='contributor_')
                 if err:
                     save_error = err
                 else:
                     contributors = dict(contributors)
-                    contributors[section] = process_list_action(contributors.get(section, []), 'add', '', entry)
+                    contributors[section] = process_list_action(
+                        contributors.get(section, []), 'add', '', entry)
                     people_payload['contributors'] = contributors
-                    success, save_error = save_json('people.json', people_payload)
+                    success, save_error = save_json(
+                        'people.json', people_payload)
                     if success:
                         return redirect(url_for('admin.edit_people', saved='1'))
 
         elif action == 'remove_contributor':
-            section = request.form.get('contributor_section', '').strip().lower()
+            section = request.form.get(
+                'contributor_section', '').strip().lower()
             idx_str = request.form.get('contributor_index', '')
             contributors = dict(contributors)
-            contributors[section] = process_list_action(contributors.get(section, []), 'remove', idx_str)
+            contributors[section] = process_list_action(
+                contributors.get(section, []), 'remove', idx_str)
             people_payload['contributors'] = contributors
             success, save_error = save_json('people.json', people_payload)
             if success:
@@ -622,14 +628,16 @@ def edit_people():
             if err:
                 save_error = err
             else:
-                credits_people = process_list_action(credits_people, 'add', '', entry)
+                credits_people = process_list_action(
+                    credits_people, 'add', '', entry)
                 people_payload['credits_people'] = credits_people
                 success, save_error = save_json('people.json', people_payload)
                 if success:
                     return redirect(url_for('admin.edit_people', saved='1'))
 
         elif action == 'remove_credit':
-            credits_people = process_list_action(credits_people, 'remove', request.form.get('credit_index', ''))
+            credits_people = process_list_action(
+                credits_people, 'remove', request.form.get('credit_index', ''))
             people_payload['credits_people'] = credits_people
             success, save_error = save_json('people.json', people_payload)
             if success:
@@ -643,7 +651,8 @@ def edit_people():
                 organizations = dict(organizations)
                 organizations[entry['name']] = entry
                 orgs_payload['organizations'] = organizations
-                success, save_error = save_json('organizations.json', orgs_payload)
+                success, save_error = save_json(
+                    'organizations.json', orgs_payload)
                 if success:
                     return redirect(url_for('admin.edit_people', saved='1'))
 
@@ -653,11 +662,13 @@ def edit_people():
                 organizations = dict(organizations)
                 del organizations[key]
                 orgs_payload['organizations'] = organizations
-                success, save_error = save_json('organizations.json', orgs_payload)
+                success, save_error = save_json(
+                    'organizations.json', orgs_payload)
                 if success:
                     return redirect(url_for('admin.edit_people', saved='1'))
 
-    save_success = (save_error is None and request.method == 'POST') or (request.args.get('saved') == '1')
+    save_success = (save_error is None and request.method ==
+                    'POST') or (request.args.get('saved') == '1')
     return render_template(
         'admin/people.html',
         save_error=save_error,
@@ -722,7 +733,7 @@ def edit_connect():
             save_success=False,
             social=[],
             campaigns=[],
-            supporters=[],
+            channels=[],
             page={},
             benefits=[],
             tiers=[],
@@ -738,9 +749,9 @@ def edit_connect():
     campaigns = links.get('campaigns', [])
     if not isinstance(campaigns, list):
         campaigns = []
-    supporters = links.get('supporters', [])
-    if not isinstance(supporters, list):
-        supporters = []
+    channels = links.get('channels', [])
+    if not isinstance(channels, list):
+        channels = []
     page = connect.get('page', {})
     if not isinstance(page, dict):
         page = {}
@@ -815,8 +826,8 @@ def edit_connect():
             if err:
                 save_error = err
             else:
-                updated = list(supporters) + [entry]
-                connect.setdefault('links', {})['supporters'] = updated
+                updated = list(channels) + [entry]
+                connect.setdefault('links', {})['channels'] = updated
                 connect_payload['connect'] = connect
                 try:
                     writer.write('connect.json', connect_payload)
@@ -827,10 +838,10 @@ def edit_connect():
         elif action == 'remove_supporter':
             try:
                 idx = int(request.form.get('supporter_index', ''))
-                updated = list(supporters)
+                updated = list(channels)
                 if 0 <= idx < len(updated):
                     updated.pop(idx)
-                    connect.setdefault('links', {})['supporters'] = updated
+                    connect.setdefault('links', {})['channels'] = updated
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('admin.edit_connect', saved='1'))
@@ -925,7 +936,7 @@ def edit_connect():
         save_success=save_success,
         social=social,
         campaigns=campaigns,
-        supporters=supporters,
+        channels=channels,
         page=page,
         benefits=benefits,
         tiers=tiers,

@@ -1,4 +1,6 @@
-{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Social, Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success %}
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Social,
+Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
+%}
 <p class="alert alert-success">Saved successfully.</p>
 {% endif %} {% if save_error %}
 <p class="alert alert-error">Error: {{ save_error }}</p>
@@ -130,7 +132,7 @@
 {# ── Supporter links ────────────────────────────────────────── #}
 <section>
   <h2>Supporter Links</h2>
-  {% if supporters %}
+  {% if channels %}
   <table>
     <thead>
       <tr>
@@ -141,7 +143,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for item in supporters %}
+      {% for item in channels %}
       <tr>
         <td>{{ item.label }}</td>
         <td>{{ item.status }}</td>

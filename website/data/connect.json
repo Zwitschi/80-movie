@@ -15,7 +15,7 @@
           "description": "The trailer section and the main site remain the current public path while release plans are finalized."
         }
       ],
-      "supporters": [
+      "channels": [
         {
           "label": "Patreon",
           "url": "https://www.patreon.com/openmicodyssey",
