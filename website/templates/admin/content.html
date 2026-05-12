@@ -1,16 +1,17 @@
-{% extends 'admin/_admin_base.html' %} {% block admin_title %}Edit Metadata & Copy{% endblock %} {% block admin_content %}
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Edit Metadata &
+Copy{% endblock %} {% block admin_content %}
 <p>
   Manage per-page SEO content from
   <code>website/data/content.json</code>.
 </p>
 
 {% if save_success %}
-<p>
+<p class="alert alert-success">
   <strong>Saved.</strong> Content metadata was written to
   <code>content.json</code>.
 </p>
 {% endif %} {% if save_error %}
-<p><strong>Error:</strong> {{ save_error }}</p>
+<p class="alert alert-error"><strong>Error:</strong> {{ save_error }}</p>
 {% endif %}
 
 <section class="stack-md">
