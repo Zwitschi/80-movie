@@ -1,0 +1,360 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Social,
+Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
+%}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %} {# ── Social links ───────────────────────────────────────────── #}
+<section>
+  <h2>Social Links</h2>
+  {% if social %}
+  <table>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>URL</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in social %}
+      <tr>
+        <td>{{ item.label }}</td>
+        <td>
+          <a href="{{ item.url }}" target="_blank" rel="noopener"
+            >{{ item.url }}</a
+          >
+        </td>
+        <td>{{ item.description }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+            <input type="hidden" name="action" value="remove_social" />
+            <input
+              type="hidden"
+              name="social_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No social links.</p>
+  {% endif %}
+
+  <h3>Add Social Link</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="add_social" />
+    <label for="social_label">Label <span aria-hidden="true">*</span></label>
+    <input id="social_label" name="social_label" type="text" required />
+    <label for="social_url">URL</label>
+    <input id="social_url" name="social_url" type="url" />
+    <label for="social_description">Description</label>
+    <textarea
+      id="social_description"
+      name="social_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Social Link</button>
+  </form>
+</section>
+
+{# ── Campaign links ─────────────────────────────────────────── #}
+<section>
+  <h2>Campaign Links</h2>
+  {% if campaigns %}
+  <table>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Status</th>
+        <th>URL</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in campaigns %}
+      <tr>
+        <td>{{ item.label }}</td>
+        <td>{{ item.status }}</td>
+        <td>
+          <a href="{{ item.url }}" target="_blank" rel="noopener"
+            >{{ item.url }}</a
+          >
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+            <input type="hidden" name="action" value="remove_campaign" />
+            <input
+              type="hidden"
+              name="campaign_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No campaign links.</p>
+  {% endif %}
+
+  <h3>Add Campaign Link</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="add_campaign" />
+    <label for="campaign_label">Label <span aria-hidden="true">*</span></label>
+    <input id="campaign_label" name="campaign_label" type="text" required />
+    <label for="campaign_url">URL</label>
+    <input id="campaign_url" name="campaign_url" type="url" />
+    <label for="campaign_status">Status</label>
+    <input
+      id="campaign_status"
+      name="campaign_status"
+      type="text"
+      placeholder="Live"
+    />
+    <label for="campaign_description">Description</label>
+    <textarea
+      id="campaign_description"
+      name="campaign_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Campaign Link</button>
+  </form>
+</section>
+
+{# ── Supporter links ────────────────────────────────────────── #}
+<section>
+  <h2>Supporter Links</h2>
+  {% if channels %}
+  <table>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Status</th>
+        <th>URL</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in channels %}
+      <tr>
+        <td>{{ item.label }}</td>
+        <td>{{ item.status }}</td>
+        <td>
+          <a href="{{ item.url }}" target="_blank" rel="noopener"
+            >{{ item.url }}</a
+          >
+        </td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+            <input type="hidden" name="action" value="remove_supporter" />
+            <input
+              type="hidden"
+              name="supporter_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No supporter links.</p>
+  {% endif %}
+
+  <h3>Add Supporter Link</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="add_supporter" />
+    <label for="supporter_label">Label <span aria-hidden="true">*</span></label>
+    <input id="supporter_label" name="supporter_label" type="text" required />
+    <label for="supporter_url">URL</label>
+    <input id="supporter_url" name="supporter_url" type="url" />
+    <label for="supporter_status">Status</label>
+    <input
+      id="supporter_status"
+      name="supporter_status"
+      type="text"
+      placeholder="Support"
+    />
+    <label for="supporter_description">Description</label>
+    <textarea
+      id="supporter_description"
+      name="supporter_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Supporter Link</button>
+  </form>
+</section>
+
+{# ── Page copy ──────────────────────────────────────────────── #}
+<section>
+  <h2>Page Copy</h2>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="save_page" />
+
+    <label for="page_title">Title</label>
+    <input
+      id="page_title"
+      name="page_title"
+      type="text"
+      value="{{ page.get('title', '') }}"
+    />
+
+    <label for="page_intro">Intro</label>
+    <textarea id="page_intro" name="page_intro" rows="3">
+{{ page.get('intro', '') }}</textarea
+    >
+
+    <label for="page_membership_pitch">Membership pitch</label>
+    <textarea id="page_membership_pitch" name="page_membership_pitch" rows="3">
+{{ page.get('membership_pitch', '') }}</textarea
+    >
+
+    <label for="page_primary_label">Primary link label</label>
+    <input
+      id="page_primary_label"
+      name="page_primary_label"
+      type="text"
+      value="{{ page.get('primary_link', {}).get('label', '') }}"
+    />
+
+    <label for="page_primary_url">Primary link URL</label>
+    <input
+      id="page_primary_url"
+      name="page_primary_url"
+      type="url"
+      value="{{ page.get('primary_link', {}).get('url', '') }}"
+    />
+
+    <label for="page_secondary_label">Secondary link label</label>
+    <input
+      id="page_secondary_label"
+      name="page_secondary_label"
+      type="text"
+      value="{{ page.get('secondary_link', {}).get('label', '') }}"
+    />
+
+    <label for="page_secondary_url">Secondary link URL</label>
+    <input
+      id="page_secondary_url"
+      name="page_secondary_url"
+      type="url"
+      value="{{ page.get('secondary_link', {}).get('url', '') }}"
+    />
+
+    <button type="submit">Save Page Copy</button>
+  </form>
+</section>
+
+{# ── Benefits ───────────────────────────────────────────────── #}
+<section>
+  <h2>Supporter Benefits</h2>
+  {% if benefits %}
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in benefits %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.description }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+            <input type="hidden" name="action" value="remove_benefit" />
+            <input
+              type="hidden"
+              name="benefit_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No benefits.</p>
+  {% endif %}
+
+  <h3>Add Benefit</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="add_benefit" />
+    <label for="benefit_title">Title <span aria-hidden="true">*</span></label>
+    <input id="benefit_title" name="benefit_title" type="text" required />
+    <label for="benefit_description">Description</label>
+    <textarea
+      id="benefit_description"
+      name="benefit_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Benefit</button>
+  </form>
+</section>
+
+{# ── Tiers ──────────────────────────────────────────────────── #}
+<section>
+  <h2>Membership Tiers</h2>
+  {% if tiers %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in tiers %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.price }}</td>
+        <td>{{ item.description }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+            <input type="hidden" name="action" value="remove_tier" />
+            <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No tiers.</p>
+  {% endif %}
+
+  <h3>Add Tier</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+    <input type="hidden" name="action" value="add_tier" />
+    <label for="tier_name">Name <span aria-hidden="true">*</span></label>
+    <input id="tier_name" name="tier_name" type="text" required />
+    <label for="tier_price">Price</label>
+    <input
+      id="tier_price"
+      name="tier_price"
+      type="text"
+      placeholder="$5 / month"
+    />
+    <label for="tier_description">Description</label>
+    <textarea id="tier_description" name="tier_description" rows="2"></textarea>
+    <button type="submit">Add Tier</button>
+  </form>
+</section>
+{% endblock %}

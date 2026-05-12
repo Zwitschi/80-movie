@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}Admin | {{ meta_title|default(movie_title) }}{% endblock
+      %}
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/site.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/admin.css') }}"
+    />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="admin-body">
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <a href="{{ url_for('admin.dashboard') }}" class="admin-brand-link"
+            ><strong>Open Mic Odyssey</strong> Admin</a
+          >
+        </div>
+        <nav class="admin-nav" aria-label="Admin sections">
+          <ul>
+            <li>
+              <a
+                href="{{ url_for('admin.dashboard') }}"
+                class="{{ 'active' if request.endpoint == 'admin.dashboard' else '' }}"
+                >Dashboard</a
+              >
+            </li>
+            <li><span class="nav-section-label">Content</span></li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_film') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_film' else '' }}"
+                >Film Details</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.manage_media') }}"
+                class="{{ 'active' if request.endpoint == 'admin.manage_media' else '' }}"
+                >Media Gallery</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_media_assets') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_media_assets' else '' }}"
+                >Media Assets</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_content') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_content' else '' }}"
+                >Metadata &amp; Copy</a
+              >
+            </li>
+            <li><span class="nav-section-label">Screenings</span></li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_events') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_events' else '' }}"
+                >Events &amp; Offers</a
+              >
+            </li>
+            <li><span class="nav-section-label">People</span></li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_people') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_people' else '' }}"
+                >People &amp; Orgs</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_reviews') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_reviews' else '' }}"
+                >Reviews</a
+              >
+            </li>
+            <li><span class="nav-section-label">Publish</span></li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_faq') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_faq' else '' }}"
+                >FAQ</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_connect') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_connect' else '' }}"
+                >Social &amp; Connect</a
+              >
+            </li>
+            <li><span class="nav-section-label">System</span></li>
+            <li>
+              <a href="{{ url_for('admin.logout') }}">Logout</a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+      <div class="admin-main-wrapper">
+        <header class="admin-topbar">
+          <h1 class="admin-page-title">
+            {% block admin_title %}Admin{% endblock %}
+          </h1>
+        </header>
+        <main id="main-content" class="admin-content" tabindex="-1">
+          {% block admin_content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

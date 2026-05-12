@@ -1,0 +1,96 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Edit Metadata &
+Copy{% endblock %} {% block admin_content %}
+<p>
+  Manage per-page SEO content from
+  <code>website/data/content.json</code>.
+</p>
+
+{% if save_success %}
+<p class="alert alert-success">
+  <strong>Saved.</strong> Content metadata was written to
+  <code>content.json</code>.
+</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error"><strong>Error:</strong> {{ save_error }}</p>
+{% endif %}
+
+<section class="stack-md">
+  <h2>Read-only Preview</h2>
+  {% if previews %}
+  <table>
+    <thead>
+      <tr>
+        <th>Page</th>
+        <th>Generated title</th>
+        <th>Meta description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in previews %}
+      <tr>
+        <td>{{ item.key }}</td>
+        <td>{{ item.generated_title }}</td>
+        <td>{{ item.description }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No page metadata available.</p>
+  {% endif %}
+</section>
+
+<section class="stack-md">
+  <h2>Edit Required Pages</h2>
+  <form
+    method="post"
+    action="{{ url_for('admin.edit_content') }}"
+    class="stack-md"
+  >
+    {% for key, page in form_pages.items() %}
+    <fieldset>
+      <legend>{{ key|capitalize }}</legend>
+
+      <label>
+        Title
+        <input
+          type="text"
+          name="{{ key }}_title"
+          value="{{ page.get('title', '') }}"
+          required
+        />
+      </label>
+
+      <label>
+        Description
+        <textarea name="{{ key }}_description" rows="3" required>
+{{ page.get('description', '') }}</textarea
+        >
+      </label>
+
+      <label>
+        Keywords (comma separated)
+        <input
+          type="text"
+          name="{{ key }}_keywords"
+          value="{{ page.get('keywords', '') }}"
+        />
+      </label>
+
+      <label>
+        Path
+        <input
+          type="text"
+          name="{{ key }}_path"
+          value="{{ page.get('path', '') }}"
+          required
+        />
+      </label>
+    </fieldset>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Save Metadata</button>
+  </form>
+</section>
+
+{% endblock %}

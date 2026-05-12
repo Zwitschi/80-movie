@@ -1,0 +1,128 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Edit Film
+Details{% endblock %} {% block admin_content %}
+<p>
+  Update core film fields stored in
+  <code>website/data/movies.json</code>.
+</p>
+
+{% if save_success %}
+<p class="alert alert-success">
+  <strong>Saved.</strong> Film details were written to <code>movies.json</code>.
+</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error"><strong>Error:</strong> {{ save_error }}</p>
+{% endif %}
+
+<section class="stack-md">
+  <h2>Current Data Summary</h2>
+  <ul>
+    <li><strong>Title:</strong> {{ raw_movie_data.get('title', '') }}</li>
+    <li><strong>Tagline:</strong> {{ raw_movie_data.get('tagline', '') }}</li>
+    <li><strong>Genre:</strong> {{ raw_movie_data.get('genre', '') }}</li>
+    <li><strong>Runtime:</strong> {{ raw_movie_data.get('runtime', '') }}</li>
+    <li>
+      <strong>Duration ISO:</strong> {{ raw_movie_data.get('duration_iso', '')
+      }}
+    </li>
+    <li>
+      <strong>Release Date:</strong> {{ raw_movie_data.get('release_date', '')
+      }}
+    </li>
+  </ul>
+</section>
+
+<form method="post" class="stack-md" action="{{ url_for('admin.edit_film') }}">
+  <label>
+    Title
+    <input
+      type="text"
+      name="title"
+      value="{{ form_data.get('title', '') }}"
+      required
+    />
+  </label>
+
+  <label>
+    Tagline
+    <input
+      type="text"
+      name="tagline"
+      value="{{ form_data.get('tagline', '') }}"
+    />
+  </label>
+
+  <label>
+    Description
+    <textarea name="description" rows="4">
+{{ form_data.get('description', '') }}</textarea
+    >
+  </label>
+
+  <label>
+    Genre
+    <input type="text" name="genre" value="{{ form_data.get('genre', '') }}" />
+  </label>
+
+  <label>
+    Runtime
+    <input
+      type="text"
+      name="runtime"
+      value="{{ form_data.get('runtime', '') }}"
+    />
+  </label>
+
+  <label>
+    Duration ISO
+    <input
+      type="text"
+      name="duration_iso"
+      value="{{ form_data.get('duration_iso', '') }}"
+    />
+  </label>
+
+  <label>
+    Release Date
+    <input
+      type="text"
+      name="release_date"
+      value="{{ form_data.get('release_date', '') }}"
+    />
+  </label>
+
+  <fieldset>
+    <legend>Release Status</legend>
+    <label>
+      Label
+      <input
+        type="text"
+        name="release_status_label"
+        value="{{ form_data.get('release_status_label', '') }}"
+      />
+    </label>
+    <label>
+      Headline
+      <input
+        type="text"
+        name="release_status_headline"
+        value="{{ form_data.get('release_status_headline', '') }}"
+      />
+    </label>
+    <label>
+      Summary
+      <textarea name="release_status_summary" rows="3">
+{{ form_data.get('release_status_summary', '') }}</textarea
+      >
+    </label>
+    <label>
+      Detail
+      <textarea name="release_status_detail" rows="3">
+{{ form_data.get('release_status_detail', '') }}</textarea
+      >
+    </label>
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Save Film Details</button>
+</form>
+
+{% endblock %}

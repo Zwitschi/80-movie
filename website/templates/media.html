@@ -4,15 +4,12 @@ block page_content %}
   <section class="hero hero-compact">
     <div class="container hero-grid">
       <div class="hero-copy stack-md">
-        <span class="eyebrow">Media</span>
+        <span class="eyebrow">{{ page_content.hero_eyebrow }}</span>
         <h1>
-          Stills, Posters, And
-          <span>Behind-The-Scenes Frames</span>
+          {{ page_content.hero_heading }}
+          <span>{{ page_content.hero_heading_span }}</span>
         </h1>
-        <p class="hero-lede">
-          A media-friendly gallery for first-look visuals, poster art, road
-          stills, and production moments.
-        </p>
+        <p class="hero-lede">{{ page_content.hero_lede }}</p>
         <div class="hero-actions">
           <a href="{{ url_for('main.patreon') }}" class="btn btn-primary"
             >Support The Film</a
@@ -24,11 +21,13 @@ block page_content %}
       </div>
 
       <aside class="content-card side-panel panel-card stack-md">
-        <span class="eyebrow eyebrow-small">Current Scope</span>
+        <span class="eyebrow eyebrow-small"
+          >{{ page_content.scope_eyebrow }}</span
+        >
         <ul class="bullet-list">
-          <li>Poster art concepts</li>
-          <li>Road and performance stills</li>
-          <li>Behind-the-scenes crew and process imagery</li>
+          {% for item in page_content.scope_items %}
+          <li>{{ item }}</li>
+          {% endfor %}
         </ul>
       </aside>
     </div>
@@ -37,15 +36,9 @@ block page_content %}
   <div class="container gallery-page stack-lg">
     <section>
       <div class="section-header">
-        <h2>Media Gallery</h2>
-        <p>
-          The layout is ready for real stills, captions, and press-kit asset
-          swaps.
-        </p>
-        <p>
-          Use this independent film gallery as a lightweight media kit with film
-          stills, poster art, and documentary behind-the-scenes photos.
-        </p>
+        <h2>{{ page_content.gallery_heading }}</h2>
+        <p>{{ page_content.gallery_description_1 }}</p>
+        <p>{{ page_content.gallery_description_2 }}</p>
       </div>
       <div class="gallery-grid">
         {% for item in movie.gallery_items %}

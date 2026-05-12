@@ -1,14 +1,11 @@
-import json
-from pathlib import Path
+from .utils import load_json
 
 
-DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 PRODUCTION_COMPANY_NAME = 'Open Mic Odyssey Productions'
 
 
 def load_json_file(filename):
-    with (DATA_DIR / filename).open('r', encoding='utf-8') as file:
-        return json.load(file)
+    return load_json(filename, {})
 
 
 def get_movie_data():

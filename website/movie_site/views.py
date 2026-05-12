@@ -13,9 +13,6 @@ SITEMAP_PAGE_PATHS = ('/', '/film', '/media', '/connect',
                       '/patreon', '/watch', '/credits')
 
 
-PAGE_METADATA = None  # Page metadata loaded from website/data/content.json via movie data
-
-
 def build_page_context(page_key='index'):
     page_context = get_movie_page_context(current_app.config['CURRENT_YEAR'])
     movie = page_context['movie']
@@ -29,6 +26,7 @@ def build_page_context(page_key='index'):
         metadata.get('keywords', movie.get('keywords', [])))
     page_context['meta_image'] = movie['poster_image']
     page_context['meta_url'] = f"{site_url}{metadata['path']}"
+    page_context['page_content'] = metadata.get('content', {})
     page_context['organization_social_schema_json'] = build_org_social_schema_json(
         movie)
     page_context['movie_schema_json'] = build_movie_schema_json(movie)

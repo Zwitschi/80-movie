@@ -4,7 +4,7 @@ block page_content %}
   <section class="hero hero-compact">
     <div class="container hero-grid">
       <div class="hero-copy stack-md">
-        <span class="eyebrow">Supporters</span>
+        <span class="eyebrow">{{ page_content.hero_eyebrow }}</span>
         <h1>
           {{ movie.connect_page.title }}
           <span>{{ movie_title }}</span>
@@ -23,11 +23,13 @@ block page_content %}
       </div>
 
       <aside class="content-card side-panel panel-card stack-md">
-        <span class="eyebrow eyebrow-small">Why It Exists</span>
+        <span class="eyebrow eyebrow-small"
+          >{{ page_content.why_eyebrow }}</span
+        >
         <ul class="bullet-list">
-          <li>Road footage, podcasts, and alternate cuts</li>
-          <li>A smaller audience for more personal updates</li>
-          <li>A direct way to back the film financially</li>
+          {% for item in page_content.why_items %}
+          <li>{{ item }}</li>
+          {% endfor %}
         </ul>
       </aside>
     </div>
@@ -36,11 +38,8 @@ block page_content %}
   <div class="container patreon-page stack-lg">
     <section>
       <div class="section-header">
-        <h2>What Supporters Get</h2>
-        <p>
-          Patreon documentary support helps fund post-production outreach while
-          unlocking bonus documentary content for supporters.
-        </p>
+        <h2>{{ page_content.benefits_heading }}</h2>
+        <p>{{ page_content.benefits_description }}</p>
       </div>
       <div class="grid-3 patreon-benefits-grid">
         {% for benefit in movie.connect_page.benefits %}
@@ -56,11 +55,8 @@ block page_content %}
 
     <section>
       <div class="section-header">
-        <h2>Membership Tiers</h2>
-        <p>
-          Choose the film membership tier that fits your level of support for
-          this independent documentary release.
-        </p>
+        <h2>{{ page_content.tiers_heading }}</h2>
+        <p>{{ page_content.tiers_description }}</p>
       </div>
       <div class="grid-3 patreon-tiers-grid">
         {% for tier in movie.connect_page.tiers %}
