@@ -90,6 +90,137 @@ def _handle_film_request(request):
 def _handle_media_request_post(request, gallery_payload, gallery_items):
     action = request.form.get('action', '').strip().lower()
 
+    # --- Category management ---
+    if action == 'add_category':
+        category_name = request.form.get('category_name', '').strip()
+        if category_name:
+            categories = gallery_payload.get('categories', [])
+            if not isinstance(categories, list):
+                categories = []
+            if category_name not in categories:
+                categories.append(category_name)
+                gallery_payload['categories'] = categories
+                success, save_error = save_json(
+                    'gallery.json', gallery_payload)
+                if success:
+                    return redirect(url_for('admin.manage_media', saved='1'))
+                else:
+                    return render_template(
+                        'admin/manage_media.html',
+                        save_error=save_error,
+                        save_success=False,
+                        gallery_items=gallery_items,
+                        form_data=_gallery_form_fields(),
+                        **_ctx(),
+                    )
+        return redirect(url_for('admin.manage_media'))
+
+    if action == 'remove_category':
+        category_name = request.form.get('category_name', '').strip()
+        categories = gallery_payload.get('categories', [])
+        if not isinstance(categories, list):
+            categories = []
+        if category_name in categories:
+            categories.remove(category_name)
+            gallery_payload['categories'] = categories
+            # Optionally unassign items from this category
+            for item in gallery_items:
+                if item.get('category') == category_name:
+                    item['category'] = ''
+            gallery_payload['gallery'] = gallery_items
+            success, save_error = save_json('gallery.json', gallery_payload)
+            if success:
+                return redirect(url_for('admin.manage_media', saved='1'))
+            else:
+                return render_template(
+                    'admin/manage_media.html',
+                    save_error=save_error,
+                    save_success=False,
+                    gallery_items=gallery_items,
+                    form_data=_gallery_form_fields(),
+                    **_ctx(),
+                )
+        return redirect(url_for('admin.manage_media'))
+
+    if action == 'rename_category':
+        old_name = request.form.get('old_category_name', '').strip()
+        new_name = request.form.get('new_category_name', '').strip()
+        categories = gallery_payload.get('categories', [])
+        if not isinstance(categories, list):
+            categories = []
+        if old_name in categories and new_name and new_name not in categories:
+            categories = [new_name if c == old_name else c for c in categories]
+            gallery_payload['categories'] = categories
+            # Update items with old category name
+            for item in gallery_items:
+                if item.get('category') == old_name:
+                    item['category'] = new_name
+            gallery_payload['gallery'] = gallery_items
+            success, save_error = save_json('gallery.json', gallery_payload)
+            if success:
+                return redirect(url_for('admin.manage_media', saved='1'))
+            else:
+                return render_template(
+                    'admin/manage_media.html',
+                    save_error=save_error,
+                    save_success=False,
+                    gallery_items=gallery_items,
+                    form_data=_gallery_form_fields(),
+                    **_ctx(),
+                )
+        return redirect(url_for('admin.manage_media'))
+
+    # --- Item reorder ---
+    if action == 'reorder':
+        order_str = request.form.get('order', '').strip()
+        if order_str:
+            try:
+                order = [int(x) for x in order_str.split(',') if x.strip()]
+                if len(order) == len(gallery_items):
+                    gallery_items = [gallery_items[i] for i in order]
+                    gallery_payload['gallery'] = gallery_items
+                    success, save_error = save_json(
+                        'gallery.json', gallery_payload)
+                    if success:
+                        return redirect(url_for('admin.manage_media', saved='1'))
+            except (ValueError, IndexError):
+                pass
+        return redirect(url_for('admin.manage_media'))
+
+    # --- Item update ---
+    if action == 'update':
+        idx_str = request.form.get('index', '').strip()
+        try:
+            idx = int(idx_str)
+            if 0 <= idx < len(gallery_items):
+                gallery_items[idx]['title'] = request.form.get(
+                    'title', '').strip()
+                gallery_items[idx]['category'] = request.form.get(
+                    'category', '').strip()
+                gallery_items[idx]['image_url'] = request.form.get(
+                    'image_url', '').strip()
+                gallery_items[idx]['alt'] = request.form.get('alt', '').strip()
+                gallery_items[idx]['description'] = request.form.get(
+                    'description', '').strip()
+                gallery_payload['gallery'] = gallery_items
+                success, save_error = save_json(
+                    'gallery.json', gallery_payload)
+                if success:
+                    return redirect(url_for('admin.manage_media', saved='1'))
+                else:
+                    return render_template(
+                        'admin/manage_media.html',
+                        save_error=save_error,
+                        save_success=False,
+                        gallery_items=gallery_items,
+                        form_data=_gallery_form_fields(),
+                        **_ctx(),
+                    )
+        except ValueError:
+            pass
+        return redirect(url_for('admin.manage_media'))
+
+    # --- Add/Remove (existing) ---
     candidate = None
     if action == 'add' or not action:
         candidate = {
@@ -135,6 +266,9 @@ def _handle_media_request(request):
     gallery_items = gallery_payload.get('gallery', [])
     if not isinstance(gallery_items, list):
         gallery_items = []
+    categories = gallery_payload.get('categories', [])
+    if not isinstance(categories, list):
+        categories = []
 
     if request.method == 'POST':
         return _handle_media_request_post(request, gallery_payload, gallery_items)
@@ -145,6 +279,7 @@ def _handle_media_request(request):
         save_error=save_error,
         save_success=save_success,
         gallery_items=gallery_items,
+        categories=categories,
         form_data=_gallery_form_fields(),
         **_ctx(),
     )

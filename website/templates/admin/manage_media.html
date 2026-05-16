@@ -1,5 +1,6 @@
-{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Media
-Gallery{% endblock %} {% block admin_content %}
+{% extends 'admin/_admin_base.html' %}
+{% block admin_title %}Manage Media Gallery{% endblock %}
+{% block admin_content %}
 <p>
   Manage gallery entries stored in
   <code>website/data/gallery.json</code>. &mdash;
@@ -17,23 +18,87 @@ Gallery{% endblock %} {% block admin_content %}
 <p class="alert alert-error"><strong>Error:</strong> {{ save_error }}</p>
 {% endif %}
 
+<!-- Category Management -->
+<section class="stack-md">
+  <h2>Categories</h2>
+  {% if categories %}
+  <ul class="stack-sm">
+    {% for cat in categories %}
+    <li>
+      <span>{{ cat }}</span>
+      <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+        <input type="hidden" name="action" value="rename_category" />
+        <input type="hidden" name="old_category_name" value="{{ cat }}" />
+        <input type="text" name="new_category_name" placeholder="New name" size="20" />
+        <button type="submit" class="btn btn-secondary btn-sm">Rename</button>
+      </form>
+      <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+        <input type="hidden" name="action" value="remove_category" />
+        <input type="hidden" name="category_name" value="{{ cat }}" />
+        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No categories defined.</p>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('admin.manage_media') }}" class="stack-sm">
+    <input type="hidden" name="action" value="add_category" />
+    <label>
+      Add Category
+      <input type="text" name="category_name" placeholder="Category name" required />
+    </label>
+    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+  </form>
+</section>
+
+<!-- Gallery Items with Drag-and-Drop -->
 <section class="stack-md">
   <h2>Current Gallery Items</h2>
+  <p class="text-muted"><em>Drag items to reorder. Changes saved automatically.</em></p>
   {% if gallery_items %}
-  <ul class="stack-md">
+  <ul id="gallery-sortable" class="stack-md">
     {% for item in gallery_items %}
-    <li>
+    <li data-index="{{ loop.index0 }}" class="gallery-item">
       <article class="stack-sm">
-        <h3>{{ item.get('title', 'Untitled') }}</h3>
-        <p><strong>Category:</strong> {{ item.get('category', '') }}</p>
-        <p><strong>Image URL:</strong> {{ item.get('image_url', '') }}</p>
-        <p><strong>Alt:</strong> {{ item.get('alt', '') }}</p>
-        <p>{{ item.get('description', '') }}</p>
-        <form method="post" action="{{ url_for('admin.manage_media') }}">
-          <input type="hidden" name="action" value="remove" />
-          <input type="hidden" name="index" value="{{ loop.index0 }}" />
-          <button type="submit" class="btn btn-secondary">Remove Item</button>
-        </form>
+        <div class="gallery-preview">
+          {% if item.get('image_url') %}
+          <img src="{{ item.get('image_url') }}" alt="{{ item.get('alt', '') }}" style="max-width:200px;max-height:150px;object-fit:cover;" />
+          {% else %}
+          <div class="no-image" style="width:200px;height:150px;background:#eee;display:flex;align-items:center;justify-content:center;">No Image</div>
+          {% endif %}
+        </div>
+        <div class="gallery-details">
+          <h3>{{ item.get('title', 'Untitled') }}</h3>
+          <p><strong>Category:</strong> {{ item.get('category', '') }}</p>
+          <p><strong>Image URL:</strong> {{ item.get('image_url', '') }}</p>
+
+          <!-- Inline Edit Form -->
+          <form method="post" action="{{ url_for('admin.manage_media') }}" class="inline-edit stack-sm">
+            <input type="hidden" name="action" value="update" />
+            <input type="hidden" name="index" value="{{ loop.index0 }}" />
+
+            <label>
+              Alt Text
+              <input type="text" name="alt" value="{{ item.get('alt', '') }}" />
+            </label>
+
+            <label>
+              Description
+              <textarea name="description" rows="2">{{ item.get('description', '') }}</textarea>
+            </label>
+
+            <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+            <input type="hidden" name="action" value="remove" />
+            <input type="hidden" name="index" value="{{ loop.index0 }}" />
+            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+          </form>
+        </div>
       </article>
     </li>
     {% endfor %}
@@ -43,6 +108,7 @@ Gallery{% endblock %} {% block admin_content %}
   {% endif %}
 </section>
 
+<!-- Add Gallery Item -->
 <section class="stack-md">
   <h2>Add Gallery Item</h2>
   <form
@@ -64,11 +130,12 @@ Gallery{% endblock %} {% block admin_content %}
 
     <label>
       Category
-      <input
-        type="text"
-        name="category"
-        value="{{ form_data.get('category', '') }}"
-      />
+      <select name="category">
+        <option value="">-- Select or type new --</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if form_data.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
     </label>
 
     <label>
@@ -96,5 +163,35 @@ Gallery{% endblock %} {% block admin_content %}
     <button type="submit" class="btn btn-primary">Add Gallery Item</button>
   </form>
 </section>
+
+<!-- SortableJS for drag-and-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('gallery-sortable');
+    if (el) {
+      Sortable.create(el, {
+        animation: 150,
+        handle: '.gallery-item',
+        onEnd: function(evt) {
+          const order = [];
+          el.querySelectorAll('li').forEach(li => {
+            order.push(li.getAttribute('data-index'));
+          });
+          // Submit reorder via hidden form
+          const form = document.createElement('form');
+          form.method = 'post';
+          form.action = '{{ url_for("admin.manage_media") }}';
+          form.innerHTML = `
+            <input type="hidden" name="action" value="reorder" />
+            <input type="hidden" name="order" value="${order.join(',')}" />
+          `;
+          document.body.appendChild(form);
+          form.submit();
+        }
+      });
+    }
+  });
+</script>
 
 {% endblock %}
