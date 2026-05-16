@@ -1,3 +1,5 @@
+from . import content_store_db
+from flask import current_app, has_app_context
 import json
 from pathlib import Path
 
@@ -103,6 +105,7 @@ class ContentWriteError(RuntimeError):
 
 
 class JsonContentReader:
+
     def __init__(self, data_dir: Path = DATA_DIR):
         self.data_dir = data_dir
 
@@ -127,6 +130,7 @@ class JsonContentReader:
 
 
 class JsonContentWriter:
+
     def __init__(self, data_dir: Path = DATA_DIR):
         self.data_dir = data_dir
 
@@ -163,9 +167,13 @@ class JsonContentWriter:
         return file_path
 
 
-def get_content_reader() -> JsonContentReader:
+def get_content_reader():
+    if has_app_context() and current_app.config['DATA_SOURCE'] == 'DB':
+        return content_store_db.get_content_reader()
     return JsonContentReader()
 
 
-def get_content_writer() -> JsonContentWriter:
+def get_content_writer():
+    if has_app_context() and current_app.config['DATA_SOURCE'] == 'DB':
+        return content_store_db.get_content_writer()
     return JsonContentWriter()

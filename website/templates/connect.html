@@ -92,6 +92,7 @@ block page_content %}
         {% for link in movie.social_links %}
         <a
           href="{{ link.url }}"
+          target="_blank"
           class="social-card support-card card-lite stack-sm"
         >
           <h3>{{ link.label }}</h3>
@@ -136,15 +137,18 @@ block page_content %}
           <h3>{{ item.label }}</h3>
           <p>{{ item.description }}</p>
           {% if item.label == 'Patreon' %}
-          <a href="{{ url_for('main.patreon') }}" class="text-link"
+          <a
+            href="{{ url_for('main.patreon') }}"
+            class="text-link"
+            target="_blank"
             >View Patreon Membership</a
           >
           {% elif item.label == 'YouTube Channel' %}
-          <a href="{{ item.url }}" class="text-link"
+          <a href="{{ item.url }}" class="text-link" target="_blank"
             >Visit the Open Mic Odyssey YouTube channel</a
           >
           {% elif item.label == 'Instagram' %}
-          <a href="{{ item.url }}" class="text-link"
+          <a href="{{ item.url }}" class="text-link" target="_blank"
             >Follow Open Mic Odyssey on Instagram</a
           >
           {% else %}

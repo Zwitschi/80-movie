@@ -2,29 +2,26 @@
 
 This folder contains the Flask website for Open Mic Odyssey.
 
+## Architecture
+
+The website is a Flask application that uses a PostgreSQL database as its content store. The database schema is defined in `database/schema.sql`.
+
+The application can be configured to use either the database or the JSON files in the `data/` directory as its content store by setting the `DATA_SOURCE` environment variable.
+
 ## Structure
 
 - `app.py`: thin entrypoint that exposes the Flask application.
+- `database/`: contains the PostgreSQL schema and migration plan.
 - `data/`: JSON files containing structured content data for easy editing and maintenance.
-  - `movies.json`: core movie metadata and content.
-  - `people.json`: cast and crew information.
-  - `organizations.json`: production companies and organizations.
-  - `media_assets.json`: images, videos, and media resources.
-  - `events.json`: screening events and showings.
-  - `reviews.json`: critical reviews and ratings.
-  - `offers.json`: distribution and viewing options.
-  - `faq.json`: frequently asked questions.
-  - `gallery.json`: photo gallery content.
-  - `social.json`: social media links.
-  - `connect.json`: campaign and supporter information.
-  - `content.json`: page-level SEO metadata (titles, descriptions, keywords, paths) and per-page static content (headings, body copy, bullet lists, CTA card data) exposed to templates via `page_content`.
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
 - `movie_site/admin.py`: admin UI dashboard and CRUD forms.
 - `movie_site/auth.py`: Flask-Login user management and authentication.
 - `movie_site/config.py`: Flask application configuration settings.
-- `movie_site/content_store.py`: secure JSON file read/write operations for admin features.
+- `movie_site/content_store.py`: factory for getting the content reader/writer (JSON or DB).
+- `movie_site/content_store_db.py`: database content reader/writer.
+- `movie_site/db.py`: database connection pooling and helpers.
 - `movie_site/views.py`: route handlers and page context assembly.
-- `movie_site/movie_data.py`: JSON loader that assembles the page data model from `data/*.json`.
+- `movie_site/movie_data.py`: assembles the page data model from the content store.
 - `movie_site/schema.py`: JSON-LD graph builder that renders Jinja schema templates and returns valid JSON.
 - `movie_site/schema_parts/`: modular schema generation components.
   - `__init__.py`: schema utilities and helpers.
@@ -83,42 +80,7 @@ The main routes are:
 
 ## Deployment
 
-Current deployment workflows documented in this repository:
-
-1. GitHub Actions mirror workflow for publishing `website/` content to `zwitschi/openmicodyssey-website`.
-2. Static export workflow for generating and publishing `website/dist/`.
-
-See the root `README.md` for static site export and GitHub deployment instructions.
-
-## GitHub Mirror Workflow
-
-This repository includes `.github/workflows/deploy-website-mirror.yml` to publish only website content.
-
-What the workflow does:
-
-- stages a clean bundle from `website/` only
-- removes caches and local artifacts
-- copies `requirements.txt` into the mirrored repository root
-- copies `website/README.md` into the mirrored repository root as `README.md`
-- rewrites entrypoint references from `website.app:app` to `app:app`
-- pushes changes to `https://github.com/zwitschi/openmicodyssey-website`
-
-Required GitHub configuration in this source repository:
-
-- Secret: `WEBSITE_DEPLOY_TOKEN`
-  token with push permission to `zwitschi/openmicodyssey-website`
-- Optional variable: `WEBSITE_DEPLOY_BRANCH`
-  destination branch; defaults to `main`
-
-Trigger behavior:
-
-- runs on pushes to `main` when `website/**`, `requirements.txt`, or workflow files change
-- supports manual run via `workflow_dispatch`
-- skips commit if staged content matches destination branch
-
-Runtime entrypoint in mirrored repository:
-
-- `gunicorn app:app --bind 0.0.0.0:8000`
+Current deployment is done to Coolify via nixpacks.
 
 ## Schema Generation
 
@@ -154,29 +116,9 @@ To add a new schema node type:
 
 ## Updating Movie Content
 
-Most content edits now start in the JSON files within the `data/` folder for easy editing without touching Python code.
+Movie content is stored in a PostgreSQL database. The admin dashboard at `/admin` provides a user interface for managing the content.
 
-Common updates:
-
-- `movies.json`: Title, tagline, synopsis, genre, runtime, and release messaging.
-- `media_assets.json`: Trailer URLs, thumbnail, duration, and upload date.
-- `organizations.json`: Production company information.
-- `people.json`: Contributor and cast records.
-- `events.json`: Screenings and ticket offers.
-- `reviews.json`: Reviews, aggregate rating.
-- `faq.json`: FAQ entries.
-- `gallery.json`: Photo gallery content.
-- `social.json`: Social media links.
-- `connect.json`: Campaign and supporter information.
-- `content.json`: Page-level SEO metadata (titles, descriptions, keywords, paths) and per-page static content (headings, body copy, bullet lists, CTA card data).
-
-Guidelines:
-
-- Keep user-facing page content and schema data consistent.
-- Use real ISO dates and ISO 8601 durations where schema.org expects them.
-- Leave fields as `None` rather than inserting placeholder values into date-specific schema properties.
-- Prefer full absolute URLs for schema assets and canonical references.
-- Edit `data/content.json` to update page-level SEO titles, descriptions, and keywords, or to change page body copy, headings, bullet lists, and CTA card text, without touching Python code or HTML templates. Each page entry has a `content` object whose keys map directly to `{{ page_content.* }}` variables in the corresponding template.
+Alternatively, the application can be configured to use the JSON files in the `data/` directory as its content store by setting the `DATA_SOURCE` environment variable to `JSON`.
 
 ## Template Customization
 
@@ -211,55 +153,3 @@ If you replace the background image, keep these constraints:
 - Use a large asset that still looks good when cropped by `background-size: cover`.
 - Preserve contrast so text remains readable against the hero and content sections.
 - Prefer optimized SVG or compressed raster images to avoid unnecessary page weight.
-
-## Planned Roadmap
-
-The current site now has:
-
-- an overview page
-- a media page
-- a support page
-- a Patreon/supporter page
-- a detailed film page
-- credits folded into the film page, with `/credits` retained only as a compatibility redirect
-
-Based on the stakeholder notes in the repository README, the next recommended phases are:
-
-### Phase 1: Core release and discovery pages
-
-- Trailer and landing page:
-  centralize the trailer embed, teaser copy, and release-status messaging on the overview page and keep `/watch` only as a compatibility redirect.
-- Social and campaign links:
-  now centralized on the support page for Instagram, TikTok, YouTube, official site updates, and Patreon.
-- Press and screening support:
-  expand screening details, press-ready synopsis copy, and contact paths for festivals or media.
-
-### Phase 2: Content-rich supporting pages
-
-- Media page:
-  now added as a dedicated page for seeded stills, posters, and behind-the-scenes assets that can be replaced with approved media later.
-- Patreon or supporter page:
-  now added as a dedicated page describing supporter access, bonus material, and a starter tier structure.
-- Interactive stops map:
-  if the trip structure is central to the documentary story, add a map page showing locations, dates, photos, and story beats.
-
-### Phase 3: Optional experimental features
-
-- Social embeds:
-  pull curated Instagram, TikTok, and YouTube content into the site only if it improves the page rather than slowing it down.
-- Web game or playful interactive piece:
-  treat this as optional and only after the core release, trailer, credits, and supporter pages are stable.
-
-### Recommended implementation order
-
-1. Interactive map of stops
-2. Experimental web game
-
-### Approval gates
-
-Before implementation, confirm these with stakeholders:
-
-- whether crowdfunding is active and which platform is canonical
-- whether Patreon content is approved and publicly describable
-- whether map data, trip stops, and images are cleared for publication
-- whether the web game is a real production goal or just a low-priority idea

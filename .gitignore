@@ -54,6 +54,10 @@ infra/*.tfstate.backup
 infra/*.tfplan
 infra/terraform.tfvars
 
+# agent files
+.agents/
+skills-lock.json
+
 # instructions
 .github/instructions/*
 

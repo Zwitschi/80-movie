@@ -34,7 +34,9 @@ from .utils import (
 
 
 def _handle_film_request_post(request):
-    payload = load_json('movies.json')
+    writer = get_content_writer()
+    reader = get_content_reader()
+    payload = reader.read('movies.json')
     movie = payload.get('movie', {})
     update = dict(movie)
     update['title'] = request.form.get('title', '').strip()
@@ -53,13 +55,13 @@ def _handle_film_request_post(request):
     update['release_status'] = rs
 
     payload['movie'] = update
-    success, save_error = save_json('movies.json', payload)
-    if success:
+    try:
+        writer.write('movies.json', payload)
         return redirect(url_for('admin.edit_film', saved='1'))
-    else:
+    except ContentWriteError as e:
         return render_template(
             'admin/edit_film.html',
-            save_error=save_error,
+            save_error=str(e),
             form_data=_movie_form_fields(update),
             raw_movie_data=update,
             **_ctx(),
