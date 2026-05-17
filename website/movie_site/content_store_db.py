@@ -270,7 +270,40 @@ class DbContentReader:
                 'status': row.get('status', ''),
                 'description': row.get('description', ''),
             })
-        return {'connect': {'links': {'channels': channels}}}
+        # Read connect page data
+        cursor.execute("SELECT * FROM connect_page LIMIT 1")
+        page_row = cursor.fetchone()
+        page = {}
+        if page_row:
+            page = {
+                'title': page_row.get('title', ''),
+                'intro': page_row.get('intro', ''),
+                'membership_pitch': page_row.get('membership_pitch', ''),
+                'primary_link': {
+                    'label': page_row.get('primary_link_label', ''),
+                    'url': page_row.get('primary_link_url', ''),
+                },
+                'secondary_link': {
+                    'label': page_row.get('secondary_link_label', ''),
+                    'url': page_row.get('secondary_link_url', ''),
+                },
+            }
+            # Read benefits
+            cursor.execute(
+                "SELECT * FROM patreon_benefit ORDER BY sort_order, id")
+            page['benefits'] = [
+                {'title': r['title'], 'description': r.get('description', '')}
+                for r in cursor.fetchall()
+            ]
+            # Read tiers
+            cursor.execute(
+                "SELECT * FROM patreon_tier ORDER BY sort_order, id")
+            page['tiers'] = [
+                {'name': r['name'], 'price': r['price'],
+                    'description': r.get('description', '')}
+                for r in cursor.fetchall()
+            ]
+        return {'connect': {'links': {'channels': channels}, 'page': page}}
 
     def _read_content(self, cursor):
         cursor.execute("SELECT * FROM page ORDER BY route_name")
@@ -631,6 +664,58 @@ class DbContentWriter:
                 (ch.get('label', ''), ch.get('url', ''), ch.get(
                     'status', ''), ch.get('description', ''), idx)
             )
+        # Write connect page data
+        page = payload.get('connect', {}).get('page', {})
+        if page:
+            cursor.execute("SELECT id FROM connect_page LIMIT 1")
+            existing = cursor.fetchone()
+            primary = page.get('primary_link', {})
+            secondary = page.get('secondary_link', {})
+            if existing:
+                cursor.execute(
+                    "UPDATE connect_page SET title=%s, intro=%s, membership_pitch=%s, "
+                    "primary_link_label=%s, primary_link_url=%s, "
+                    "secondary_link_label=%s, secondary_link_url=%s",
+                    (
+                        page.get('title', ''),
+                        page.get('intro', ''),
+                        page.get('membership_pitch', ''),
+                        primary.get('label', ''),
+                        primary.get('url', ''),
+                        secondary.get('label', ''),
+                        secondary.get('url', ''),
+                    )
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO connect_page (title, intro, membership_pitch, "
+                    "primary_link_label, primary_link_url, "
+                    "secondary_link_label, secondary_link_url) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        page.get('title', ''),
+                        page.get('intro', ''),
+                        page.get('membership_pitch', ''),
+                        primary.get('label', ''),
+                        primary.get('url', ''),
+                        secondary.get('label', ''),
+                        secondary.get('url', ''),
+                    )
+                )
+            # Write benefits
+            cursor.execute("DELETE FROM patreon_benefit")
+            for idx, benefit in enumerate(page.get('benefits', [])):
+                cursor.execute(
+                    "INSERT INTO patreon_benefit (title, description, sort_order) VALUES (%s, %s, %s)",
+                    (benefit.get('title', ''), benefit.get('description', ''), idx)
+                )
+            # Write tiers
+            cursor.execute("DELETE FROM patreon_tier")
+            for idx, tier in enumerate(page.get('tiers', [])):
+                cursor.execute(
+                    "INSERT INTO patreon_tier (name, price, description, sort_order) VALUES (%s, %s, %s, %s)",
+                    (tier.get('name', ''), tier.get('price', ''),
+                     tier.get('description', ''), idx)
+                )
 
     def _write_content(self, cursor, payload):
         pages = payload.get('pages', {})

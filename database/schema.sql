@@ -228,6 +228,18 @@ CREATE TABLE connect_channel (
     sort_order  INT NOT NULL DEFAULT 0
 );
 
+-- connect page content (patreon/supporter page metadata)
+CREATE TABLE connect_page (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title               TEXT NOT NULL,
+    intro               TEXT,
+    membership_pitch    TEXT,
+    primary_link_label  TEXT,
+    primary_link_url    TEXT,
+    secondary_link_label TEXT,
+    secondary_link_url  TEXT
+);
+
 -- ============================================================
 -- PATREON / SUPPORTER PAGE
 -- ============================================================
