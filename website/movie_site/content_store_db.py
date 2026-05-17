@@ -3,6 +3,19 @@ import json
 from uuid import uuid4
 
 
+DEFAULT_TRAILER = {
+    'name': 'Open Mic Odyssey official trailer',
+    'description': 'Trailer for the documentary feature Open Mic Odyssey.',
+    'url': 'https://www.openmicodyssey.com/',
+    'embed_url': 'https://www.youtube.com/embed/tjGlVSgLhrU?si=cEkkJgf8-m-6HU0J',
+    'thumbnail_url': 'https://www.openmicodyssey.com/static/images/trailer_thumbnail.png',
+    'upload_date': '',
+    'duration_iso': '',
+    'encoding_format': 'video/mp4',
+    'is_family_friendly': True,
+}
+
+
 def _get_movie_id(cursor):
     """Get the single movie ID, or create one if none exists."""
     cursor.execute("SELECT id FROM movie LIMIT 1")
@@ -353,18 +366,25 @@ class DbContentReader:
         org = cursor.fetchone()
         if org:
             result['media']['contact_email'] = org.get('contact_email', '')
-        # Trailer info - would need a trailer table, for now use movie fields
-        result['media']['trailer'] = {
-            'name': '',
-            'description': '',
-            'url': '',
-            'embed_url': '',
-            'thumbnail_url': '',
-            'upload_date': '',
-            'duration_iso': '',
-            'encoding_format': '',
-            'is_family_friendly': True,
-        }
+
+        # Trailer info from trailer table, with safe defaults.
+        cursor.execute("SELECT * FROM trailer WHERE movie_id = %s LIMIT 1", (movie['id'],))
+        trailer = cursor.fetchone()
+        trailer_payload = dict(DEFAULT_TRAILER)
+        if trailer:
+            trailer_payload.update({
+                'name': trailer.get('name', trailer_payload['name']),
+                'description': trailer.get('description', trailer_payload['description']),
+                'url': trailer.get('url', trailer_payload['url']),
+                'embed_url': trailer.get('embed_url', trailer_payload['embed_url']),
+                'thumbnail_url': trailer.get('thumbnail_url', trailer_payload['thumbnail_url']),
+                'upload_date': str(trailer.get('upload_date', '')) if trailer.get('upload_date') else '',
+                'duration_iso': trailer.get('duration_iso', trailer_payload['duration_iso']),
+                'encoding_format': trailer.get('encoding_format', trailer_payload['encoding_format']),
+                'is_family_friendly': trailer.get('is_family_friendly', True),
+            })
+
+        result['media']['trailer'] = trailer_payload
         return result
 
     def read_all(self) -> dict:
@@ -784,6 +804,47 @@ class DbContentWriter:
             if org:
                 cursor.execute(
                     "UPDATE organization SET contact_email=%s WHERE id=%s", (contact_email, str(org['id'])))
+
+        # Upsert trailer data.
+        trailer = media.get('trailer', {})
+        if trailer:
+            cursor.execute("SELECT id FROM trailer WHERE movie_id = %s", (str(movie_id),))
+            existing = cursor.fetchone()
+            if existing:
+                cursor.execute(
+                    "UPDATE trailer SET name=%s, description=%s, url=%s, embed_url=%s, "
+                    "thumbnail_url=%s, upload_date=%s, duration_iso=%s, encoding_format=%s, is_family_friendly=%s "
+                    "WHERE movie_id=%s",
+                    (
+                        trailer.get('name', DEFAULT_TRAILER['name']),
+                        trailer.get('description', DEFAULT_TRAILER['description']),
+                        trailer.get('url', DEFAULT_TRAILER['url']),
+                        trailer.get('embed_url', DEFAULT_TRAILER['embed_url']),
+                        trailer.get('thumbnail_url', DEFAULT_TRAILER['thumbnail_url']),
+                        trailer.get('upload_date') or None,
+                        trailer.get('duration_iso', DEFAULT_TRAILER['duration_iso']),
+                        trailer.get('encoding_format', DEFAULT_TRAILER['encoding_format']),
+                        trailer.get('is_family_friendly', True),
+                        str(movie_id),
+                    )
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO trailer (movie_id, name, description, url, embed_url, thumbnail_url, upload_date, duration_iso, encoding_format, is_family_friendly) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        str(movie_id),
+                        trailer.get('name', DEFAULT_TRAILER['name']),
+                        trailer.get('description', DEFAULT_TRAILER['description']),
+                        trailer.get('url', DEFAULT_TRAILER['url']),
+                        trailer.get('embed_url', DEFAULT_TRAILER['embed_url']),
+                        trailer.get('thumbnail_url', DEFAULT_TRAILER['thumbnail_url']),
+                        trailer.get('upload_date') or None,
+                        trailer.get('duration_iso', DEFAULT_TRAILER['duration_iso']),
+                        trailer.get('encoding_format', DEFAULT_TRAILER['encoding_format']),
+                        trailer.get('is_family_friendly', True),
+                    )
+                )
 
 
 def get_content_reader() -> DbContentReader:
