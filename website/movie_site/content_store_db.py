@@ -273,7 +273,21 @@ class DbContentReader:
         # Read connect page data
         cursor.execute("SELECT * FROM connect_page LIMIT 1")
         page_row = cursor.fetchone()
-        page = {}
+        page = {
+            'title': '',
+            'intro': '',
+            'membership_pitch': '',
+            'primary_link': {
+                'label': '',
+                'url': '',
+            },
+            'secondary_link': {
+                'label': '',
+                'url': '',
+            },
+            'benefits': [],
+            'tiers': [],
+        }
         if page_row:
             page = {
                 'title': page_row.get('title', ''),
