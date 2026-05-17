@@ -10,6 +10,9 @@ from .admin_content import (
     _handle_faq_request,
     _handle_people_request,
     _handle_connect_request,
+    _handle_connect_social_request,
+    _handle_connect_supporters_request,
+    _handle_connect_patreon_request,
     _handle_media_assets_request,
     _handle_reviews_request,
 )
@@ -103,6 +106,21 @@ def edit_people():
 @admin_blueprint.route('/connect', methods=['GET', 'POST'])
 def edit_connect():
     return _handle_connect_request(request)
+
+
+@admin_blueprint.route('/connect/social', methods=['GET', 'POST'])
+def edit_connect_social():
+    return _handle_connect_social_request(request)
+
+
+@admin_blueprint.route('/connect/supporters', methods=['GET', 'POST'])
+def edit_connect_supporters():
+    return _handle_connect_supporters_request(request)
+
+
+@admin_blueprint.route('/connect/patreon', methods=['GET', 'POST'])
+def edit_connect_patreon():
+    return _handle_connect_patreon_request(request)
 
 
 @admin_blueprint.route('/media-assets', methods=['GET', 'POST'])

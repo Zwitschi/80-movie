@@ -1,0 +1,208 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Patreon Benefits &
+Tiers{% endblock %} {% block admin_content %} {% if save_success %}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %}
+
+<p>
+  Manage supporter page copy, benefits, and tiers. Switch to
+  <a href="{{ url_for('admin.edit_connect_social') }}">Social Links</a>
+  or
+  <a href="{{ url_for('admin.edit_connect_supporters') }}">Supporter Links</a>.
+</p>
+
+<section>
+  <h2>Page Copy</h2>
+  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+    <input type="hidden" name="action" value="save_page" />
+    <label for="page_title">Title</label>
+    <input
+      id="page_title"
+      name="page_title"
+      type="text"
+      value="{{ page.get('title', '') }}"
+    />
+    <label for="page_intro">Intro</label>
+    <textarea id="page_intro" name="page_intro" rows="3">
+{{ page.get('intro', '') }}</textarea
+    >
+    <label for="page_membership_pitch">Membership pitch</label>
+    <textarea id="page_membership_pitch" name="page_membership_pitch" rows="3">
+{{ page.get('membership_pitch', '') }}</textarea
+    >
+    <label for="page_primary_label">Primary link label</label>
+    <input
+      id="page_primary_label"
+      name="page_primary_label"
+      type="text"
+      value="{{ page.get('primary_link', {}).get('label', '') }}"
+    />
+    <label for="page_primary_url">Primary link URL</label>
+    <input
+      id="page_primary_url"
+      name="page_primary_url"
+      type="url"
+      value="{{ page.get('primary_link', {}).get('url', '') }}"
+    />
+    <label for="page_secondary_label">Secondary link label</label>
+    <input
+      id="page_secondary_label"
+      name="page_secondary_label"
+      type="text"
+      value="{{ page.get('secondary_link', {}).get('label', '') }}"
+    />
+    <label for="page_secondary_url">Secondary link URL</label>
+    <input
+      id="page_secondary_url"
+      name="page_secondary_url"
+      type="url"
+      value="{{ page.get('secondary_link', {}).get('url', '') }}"
+    />
+    <button type="submit">Save Page Copy</button>
+  </form>
+</section>
+
+<section>
+  <h2>Supporter Benefits</h2>
+  {% if benefits %}
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in benefits %}
+      <tr>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+            <input type="hidden" name="action" value="update_benefit" />
+            <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
+            <input type="text" name="benefit_title" value="{{ item.title }}" required />
+        </td>
+        <td>
+            <textarea name="benefit_description" rows="2">{{ item.description }}</textarea>
+        </td>
+        <td>
+            <button type="submit">Save</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_up_benefit" />
+            <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_down_benefit" />
+            <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="remove_benefit" />
+            <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No benefits.</p>
+  {% endif %}
+
+  <h3>Add Benefit</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+    <input type="hidden" name="action" value="add_benefit" />
+    <label for="benefit_title">Title <span aria-hidden="true">*</span></label>
+    <input id="benefit_title" name="benefit_title" type="text" required />
+    <label for="benefit_description">Description</label>
+    <textarea
+      id="benefit_description"
+      name="benefit_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Benefit</button>
+  </form>
+</section>
+
+<section>
+  <h2>Membership Tiers</h2>
+  {% if tiers %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Price</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in tiers %}
+      <tr>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+            <input type="hidden" name="action" value="update_tier" />
+            <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
+            <input type="text" name="tier_name" value="{{ item.name }}" required />
+        </td>
+        <td>
+            <input type="text" name="tier_price" value="{{ item.price }}" />
+        </td>
+        <td>
+            <textarea name="tier_description" rows="2">{{ item.description }}</textarea>
+        </td>
+        <td>
+            <button type="submit">Save</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_up_tier" />
+            <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_down_tier" />
+            <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+            <input type="hidden" name="action" value="remove_tier" />
+            <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No tiers.</p>
+  {% endif %}
+
+  <h3>Add Tier</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+    <input type="hidden" name="action" value="add_tier" />
+    <label for="tier_name">Name <span aria-hidden="true">*</span></label>
+    <input id="tier_name" name="tier_name" type="text" required />
+    <label for="tier_price">Price</label>
+    <input
+      id="tier_price"
+      name="tier_price"
+      type="text"
+      placeholder="$5 / month"
+    />
+    <label for="tier_description">Description</label>
+    <textarea id="tier_description" name="tier_description" rows="2"></textarea>
+    <button type="submit">Add Tier</button>
+  </form>
+</section>
+{% endblock %}

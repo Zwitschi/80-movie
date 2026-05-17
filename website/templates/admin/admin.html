@@ -26,6 +26,23 @@ endblock %} {% block admin_content %}
     <p>Per-page SEO title, description, keywords, and canonical path.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
+  <a href="{{ url_for('admin.edit_connect_social') }}" class="admin-card">
+    <h2>Social Links</h2>
+    <p>Manage global social channels like Instagram, TikTok, and YouTube.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_connect_supporters') }}" class="admin-card">
+    <h2>Supporter Links</h2>
+    <p>
+      Manage campaign and supporter destinations like Patreon or Kickstarter.
+    </p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.edit_connect_patreon') }}" class="admin-card">
+    <h2>Patreon Benefits &amp; Tiers</h2>
+    <p>Manage supporter page copy, benefits, and membership tiers.</p>
+    <span class="card-link">Edit &rarr;</span>
+  </a>
   <a href="{{ url_for('admin.edit_events') }}" class="admin-card">
     <h2>Events &amp; Offers</h2>
     <p>Screening events with venue details, dates, and global ticket offers.</p>
@@ -39,13 +56,6 @@ endblock %} {% block admin_content %}
   <a href="{{ url_for('admin.edit_people') }}" class="admin-card">
     <h2>People &amp; Orgs</h2>
     <p>People, contributors, credits, and linked organizations.</p>
-    <span class="card-link">Edit &rarr;</span>
-  </a>
-  <a href="{{ url_for('admin.edit_connect') }}" class="admin-card">
-    <h2>Social &amp; Connect</h2>
-    <p>
-      Social links, campaign links, supporter tiers, benefits, and page copy.
-    </p>
     <span class="card-link">Edit &rarr;</span>
   </a>
   <a href="{{ url_for('admin.edit_reviews') }}" class="admin-card">
