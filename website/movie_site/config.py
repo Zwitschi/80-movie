@@ -13,7 +13,7 @@ class DefaultConfig:
     SITE_URL = os.getenv('SITE_URL', 'https://www.openmicodyssey.com')
     DATABASE_URL = os.getenv(
         'DATABASE_URL', 'postgresql://user:password@localhost/omo')
-    DATA_SOURCE = os.getenv('DATA_SOURCE', 'JSON')  # 'JSON' or 'DB'
+    DATA_SOURCE = os.getenv('DATA_SOURCE', 'DB')  # 'JSON' or 'DB'
     CURRENT_YEAR = int(
         os.getenv('CURRENT_YEAR', str(datetime.now(timezone.utc).year)))
     MAPBOX_ACCESS_TOKEN = os.getenv('MAPBOX_ACCESS_TOKEN', '')
