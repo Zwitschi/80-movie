@@ -274,6 +274,17 @@ class DbContentReader:
         return {'social': items}
 
     def _read_connect(self, cursor):
+        cursor.execute(
+            "SELECT * FROM connect_campaign ORDER BY sort_order, id")
+        campaigns = []
+        for row in cursor.fetchall():
+            campaigns.append({
+                'label': row['label'],
+                'url': row['url'],
+                'status': row.get('status', ''),
+                'description': row.get('description', ''),
+            })
+
         cursor.execute("SELECT * FROM connect_channel ORDER BY sort_order, id")
         channels = []
         for row in cursor.fetchall():
@@ -330,7 +341,7 @@ class DbContentReader:
                     'description': r.get('description', '')}
                 for r in cursor.fetchall()
             ]
-        return {'connect': {'links': {'channels': channels}, 'page': page}}
+        return {'connect': {'links': {'campaigns': campaigns, 'channels': channels}, 'page': page}}
 
     def _read_content(self, cursor):
         cursor.execute("SELECT * FROM page ORDER BY route_name")
@@ -368,7 +379,8 @@ class DbContentReader:
             result['media']['contact_email'] = org.get('contact_email', '')
 
         # Trailer info from trailer table, with safe defaults.
-        cursor.execute("SELECT * FROM trailer WHERE movie_id = %s LIMIT 1", (movie['id'],))
+        cursor.execute(
+            "SELECT * FROM trailer WHERE movie_id = %s LIMIT 1", (movie['id'],))
         trailer = cursor.fetchone()
         trailer_payload = dict(DEFAULT_TRAILER)
         if trailer:
@@ -615,7 +627,7 @@ class DbContentWriter:
                 person_row = cursor.fetchone()
                 if person_row:
                     cursor.execute(
-                        "INSERT INTO movie_credit (movie_id, person_id, role) VALUES (%s, %s, %s)",
+                        "INSERT INTO movie_credit (movie_id, person_id, role) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                         (str(_get_movie_id(cursor)),
                          str(person_row['id']), role)
                     )
@@ -626,11 +638,20 @@ class DbContentWriter:
                            (credit.get('name', ''),))
             person_row = cursor.fetchone()
             if person_row:
-                cursor.execute(
-                    "UPDATE movie_credit SET sort_order=%s WHERE movie_id=%s AND person_id=%s AND role=%s",
-                    (idx, str(_get_movie_id(cursor)), str(
-                        person_row['id']), credit.get('role', ''))
-                )
+                role = (credit.get('role') or '').strip().lower()
+                if role in {'director', 'producer', 'actor', 'contributor'}:
+                    cursor.execute(
+                        "UPDATE movie_credit SET sort_order=%s WHERE movie_id=%s AND person_id=%s AND role=%s",
+                        (idx, str(_get_movie_id(cursor)),
+                         str(person_row['id']), role)
+                    )
+                else:
+                    # Legacy credits_people entries often omit role; apply order to all roles for that person.
+                    cursor.execute(
+                        "UPDATE movie_credit SET sort_order=%s WHERE movie_id=%s AND person_id=%s",
+                        (idx, str(_get_movie_id(cursor)),
+                         str(person_row['id']))
+                    )
 
     def _write_organizations(self, cursor, payload):
         cursor.execute("DELETE FROM organization_member")
@@ -689,6 +710,21 @@ class DbContentWriter:
             )
 
     def _write_connect(self, cursor, payload):
+        cursor.execute("DELETE FROM connect_campaign")
+        campaigns = payload.get('connect', {}).get(
+            'links', {}).get('campaigns', [])
+        for idx, campaign in enumerate(campaigns):
+            cursor.execute(
+                "INSERT INTO connect_campaign (label, url, status, description, sort_order) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    campaign.get('label', ''),
+                    campaign.get('url', ''),
+                    campaign.get('status', ''),
+                    campaign.get('description', ''),
+                    idx,
+                )
+            )
+
         cursor.execute("DELETE FROM connect_channel")
         channels = payload.get('connect', {}).get(
             'links', {}).get('channels', [])
@@ -808,7 +844,8 @@ class DbContentWriter:
         # Upsert trailer data.
         trailer = media.get('trailer', {})
         if trailer:
-            cursor.execute("SELECT id FROM trailer WHERE movie_id = %s", (str(movie_id),))
+            cursor.execute(
+                "SELECT id FROM trailer WHERE movie_id = %s", (str(movie_id),))
             existing = cursor.fetchone()
             if existing:
                 cursor.execute(
@@ -817,13 +854,17 @@ class DbContentWriter:
                     "WHERE movie_id=%s",
                     (
                         trailer.get('name', DEFAULT_TRAILER['name']),
-                        trailer.get('description', DEFAULT_TRAILER['description']),
+                        trailer.get('description',
+                                    DEFAULT_TRAILER['description']),
                         trailer.get('url', DEFAULT_TRAILER['url']),
                         trailer.get('embed_url', DEFAULT_TRAILER['embed_url']),
-                        trailer.get('thumbnail_url', DEFAULT_TRAILER['thumbnail_url']),
+                        trailer.get('thumbnail_url',
+                                    DEFAULT_TRAILER['thumbnail_url']),
                         trailer.get('upload_date') or None,
-                        trailer.get('duration_iso', DEFAULT_TRAILER['duration_iso']),
-                        trailer.get('encoding_format', DEFAULT_TRAILER['encoding_format']),
+                        trailer.get('duration_iso',
+                                    DEFAULT_TRAILER['duration_iso']),
+                        trailer.get('encoding_format',
+                                    DEFAULT_TRAILER['encoding_format']),
                         trailer.get('is_family_friendly', True),
                         str(movie_id),
                     )
@@ -835,13 +876,17 @@ class DbContentWriter:
                     (
                         str(movie_id),
                         trailer.get('name', DEFAULT_TRAILER['name']),
-                        trailer.get('description', DEFAULT_TRAILER['description']),
+                        trailer.get('description',
+                                    DEFAULT_TRAILER['description']),
                         trailer.get('url', DEFAULT_TRAILER['url']),
                         trailer.get('embed_url', DEFAULT_TRAILER['embed_url']),
-                        trailer.get('thumbnail_url', DEFAULT_TRAILER['thumbnail_url']),
+                        trailer.get('thumbnail_url',
+                                    DEFAULT_TRAILER['thumbnail_url']),
                         trailer.get('upload_date') or None,
-                        trailer.get('duration_iso', DEFAULT_TRAILER['duration_iso']),
-                        trailer.get('encoding_format', DEFAULT_TRAILER['encoding_format']),
+                        trailer.get('duration_iso',
+                                    DEFAULT_TRAILER['duration_iso']),
+                        trailer.get('encoding_format',
+                                    DEFAULT_TRAILER['encoding_format']),
                         trailer.get('is_family_friendly', True),
                     )
                 )

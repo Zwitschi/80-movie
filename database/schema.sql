@@ -218,6 +218,16 @@ CREATE TABLE social_link (
     sort_order  INT NOT NULL DEFAULT 0
 );
 
+-- connect campaigns
+CREATE TABLE connect_campaign (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    label       TEXT NOT NULL,
+    url         TEXT NOT NULL UNIQUE,
+    status      TEXT,
+    description TEXT,
+    sort_order  INT NOT NULL DEFAULT 0
+);
+
 -- connect / campaign channels
 CREATE TABLE connect_channel (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
