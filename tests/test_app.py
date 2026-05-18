@@ -226,6 +226,19 @@ class TestAdminFlows:
         assert response.status_code == 302
         assert response.headers['Location'].endswith('/admin/film')
 
+    def test_admin_dashboard_links_to_bot_control_room(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        login_response = self._login(client)
+        assert login_response.status_code == 302
+
+        response = client.get('/admin/')
+
+        assert response.status_code == 200
+        assert b'Discord Bot' in response.data
+        assert b'/admin/bot' in response.data
+
     def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
         app = self._admin_app()
         client = app.test_client()

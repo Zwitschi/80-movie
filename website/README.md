@@ -86,6 +86,8 @@ Current deployment is done to Coolify via nixpacks.
 
 Use [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md) for the current environment-variable matrix instead of maintaining a separate list here.
 
+The Discord bot worker runs separately from the website process. Local worker startup and env-loading notes live in [../bot/README.md](../bot/README.md).
+
 Use [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) for the current deployment topology, release-order guidance, and the planned split between the website, embedded control room, and future bot worker.
 
 ## Schema Generation

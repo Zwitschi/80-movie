@@ -35,6 +35,14 @@ The web application lives in [website/README.md](website/README.md), which docum
 
 Environment variables for the website, embedded control room, and planned bot worker are documented in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
 
+Discord bot worker startup now has a direct module command from the repo root:
+
+```powershell
+.venv\Scripts\python.exe -m bot.omo_bot
+```
+
+Worker-specific local run notes live in [bot/README.md](bot/README.md).
+
 Testing strategy for the website, control room, and bot scaffold is documented in [docs/TESTING.md](docs/TESTING.md).
 
 Deployment guidance for the website, embedded control room, and planned split-service bot topology is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).

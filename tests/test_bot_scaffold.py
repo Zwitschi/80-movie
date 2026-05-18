@@ -1,14 +1,101 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pytest
 
+from bot.omo_bot import config as bot_config
 from bot.omo_bot.config import BotConfig, ConfigError
-from bot.omo_bot.main import run
+from bot.omo_bot.main import build_runtime, run
 from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.repositories import InMemorySyndicationSourceRepository
+from bot.omo_bot.repositories import (
+    InMemorySyndicationSourceRepository,
+    PostgresSyndicationSourceRepository,
+)
 from bot.omo_bot.runtime.client import BotRuntime
 from bot.omo_bot.services import SyndicationPlanningService
+
+
+class FakeSyndicationCursor:
+    def __init__(self, connection):
+        self.connection = connection
+        self.result = None
+
+    def execute(self, query, params=None):
+        normalized_query = " ".join(query.split())
+
+        if "SELECT to_regclass('public.bot_syndication_source')" in normalized_query:
+            self.result = {
+                "source_table": "bot_syndication_source" if self.connection.tables_exist else None,
+                "checkpoint_table": "bot_syndication_checkpoint" if self.connection.tables_exist else None,
+            }
+            return
+
+        if "FROM bot_syndication_source AS s" in normalized_query:
+            assert params is not None
+            source_key = params[0]
+            source_row = self.connection.sources.get(source_key)
+            if source_row is None:
+                self.result = None
+                return
+
+            checkpoint_row = self.connection.checkpoints.get(source_key, {})
+            self.result = {
+                "source_key": source_key,
+                "is_enabled": source_row["is_enabled"],
+                "checkpoint": checkpoint_row.get("checkpoint"),
+                "last_polled_at": checkpoint_row.get("last_polled_at"),
+                "last_succeeded_at": checkpoint_row.get("last_succeeded_at"),
+                "last_failed_at": checkpoint_row.get("last_failed_at"),
+            }
+            return
+
+        if normalized_query.startswith("INSERT INTO bot_syndication_source"):
+            assert params is not None
+            source_key, is_enabled = params
+            self.connection.sources[source_key] = {"is_enabled": is_enabled}
+            return
+
+        if normalized_query.startswith("INSERT INTO bot_syndication_checkpoint"):
+            assert params is not None
+            source_key, checkpoint, last_polled_at, last_succeeded_at, last_failed_at = params
+            self.connection.checkpoints[source_key] = {
+                "checkpoint": checkpoint,
+                "last_polled_at": last_polled_at,
+                "last_succeeded_at": last_succeeded_at,
+                "last_failed_at": last_failed_at,
+            }
+            return
+
+        raise AssertionError(f"Unexpected query: {normalized_query}")
+
+    def fetchone(self):
+        return self.result
+
+    def close(self):
+        pass
+
+
+class FakeSyndicationConnection:
+    def __init__(self, *, tables_exist=True):
+        self.tables_exist = tables_exist
+        self.sources = {}
+        self.checkpoints = {}
+        self.commit_calls = 0
+        self.rollback_calls = 0
+        self.close_calls = 0
+
+    def cursor(self, cursor_factory=None):
+        return FakeSyndicationCursor(self)
+
+    def commit(self):
+        self.commit_calls += 1
+
+    def rollback(self):
+        self.rollback_calls += 1
+
+    def close(self):
+        self.close_calls += 1
 
 
 def test_bot_config_from_env_parses_contract():
@@ -48,6 +135,47 @@ def test_bot_config_requires_discord_token():
         BotConfig.from_env({})
 
 
+def test_bot_config_reads_runtime_settings_from_website_env_file(
+    monkeypatch, tmp_path: Path
+):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "OMO_DISCORD_TOKEN=file-token",
+                "OMO_DISCORD_GUILD_ID=987654321",
+                "OMO_DISCORD_CHANNEL_MAP=queue:100,announcements:200",
+                "OMO_DATABASE_URL=postgresql://user:pass@localhost/omo",
+                "OMO_SYNDICATION_SOURCES=youtube",
+                "OMO_SYNDICATION_POLL_SECONDS=120",
+                "OMO_LOG_LEVEL=debug",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(bot_config, "BOT_ENV_PATHS", (env_file,))
+    for name in (
+        "OMO_DISCORD_TOKEN",
+        "OMO_DISCORD_GUILD_ID",
+        "OMO_DISCORD_CHANNEL_MAP",
+        "OMO_DATABASE_URL",
+        "OMO_SYNDICATION_SOURCES",
+        "OMO_SYNDICATION_POLL_SECONDS",
+        "OMO_LOG_LEVEL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    config = BotConfig.from_env()
+
+    assert config.discord_token == "file-token"
+    assert config.guild_id == 987654321
+    assert config.channel_map == {"queue": 100, "announcements": 200}
+    assert config.database_url == "postgresql://user:pass@localhost/omo"
+    assert config.syndication_sources == ("youtube",)
+    assert config.syndication_poll_seconds == 120
+    assert config.log_level == "DEBUG"
+
+
 def test_bot_run_starts_and_stops_runtime():
     config = BotConfig.from_env(
         {
@@ -55,7 +183,7 @@ def test_bot_run_starts_and_stops_runtime():
             "OMO_DISCORD_CHANNEL_MAP": "queue:100",
         }
     )
-    runtime = BotRuntime(config=config, logger=__import__(
+    runtime = build_runtime(config, __import__(
         "logging").getLogger("test-bot"))
     shutdown_event = asyncio.Event()
     shutdown_event.set()
@@ -66,7 +194,39 @@ def test_bot_run_starts_and_stops_runtime():
     snapshot = runtime.health_snapshot()
     assert snapshot["state"] == "stopped"
     assert snapshot["configured_channels"] == ["queue"]
+    assert snapshot["syndication_repository_backend"] == "InMemorySyndicationSourceRepository"
     assert snapshot["last_started_at"] is not None
+
+
+def test_build_runtime_uses_in_memory_repository_without_database_url():
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+        }
+    )
+
+    runtime = build_runtime(config, __import__(
+        "logging").getLogger("test-bot"))
+
+    assert isinstance(runtime.syndication_repository,
+                      InMemorySyndicationSourceRepository)
+
+
+def test_build_runtime_uses_postgres_repository_with_database_url():
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "DATABASE_URL": "postgresql://user:pass@localhost/omo",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+        }
+    )
+
+    runtime = build_runtime(config, __import__(
+        "logging").getLogger("test-bot"))
+
+    assert isinstance(runtime.syndication_repository,
+                      PostgresSyndicationSourceRepository)
 
 
 def test_syndication_planning_service_creates_due_state_for_configured_source():
@@ -134,3 +294,37 @@ def test_syndication_planning_service_includes_overdue_source():
     due_sources = service.list_due_sources(now=now)
 
     assert [source.source_key for source in due_sources] == ["youtube"]
+
+
+def test_postgres_syndication_source_repository_round_trips_state():
+    fake_connection = FakeSyndicationConnection()
+    repository = PostgresSyndicationSourceRepository(
+        connection_factory=lambda: fake_connection
+    )
+    state = SyndicationSourceState(
+        source_key="youtube",
+        enabled=True,
+        checkpoint="video-123",
+        last_polled_at=datetime(2026, 5, 18, 12, 0, tzinfo=timezone.utc),
+        last_succeeded_at=datetime(2026, 5, 18, 12, 0, tzinfo=timezone.utc),
+    )
+
+    saved_state = repository.save(state)
+    loaded_state = repository.get_by_source_key("youtube")
+
+    assert saved_state == state
+    assert loaded_state == state
+    assert fake_connection.commit_calls == 1
+    assert fake_connection.rollback_calls == 0
+    assert fake_connection.close_calls == 2
+
+
+def test_postgres_syndication_source_repository_returns_none_when_tables_missing():
+    fake_connection = FakeSyndicationConnection(tables_exist=False)
+    repository = PostgresSyndicationSourceRepository(
+        connection_factory=lambda: fake_connection
+    )
+
+    loaded_state = repository.get_by_source_key("youtube")
+
+    assert loaded_state is None

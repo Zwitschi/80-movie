@@ -45,8 +45,41 @@ These values are parsed by `bot/omo_bot/config.py` for the planned bot runtime.
 ## Local development notes
 
 - The website loads `website/.env` automatically through `python-dotenv` in `website/movie_site/config.py`.
-- `website/.env.example` currently covers only a subset of the full runtime surface and still includes some legacy deployment placeholders. Use this page as the authoritative matrix when adding or reviewing configuration.
+- The bot worker now loads env vars from process env first, then repo-root `.env`, then `website/.env` through `bot/omo_bot/config.py`.
+- `website/.env.example` is intended to mirror the active runtime env surface used in code. Keep it aligned with this document when env reads change.
 - The embedded control room and the planned bot share some Discord-related env names through fallback aliases. Prefer the `OMO_*` names when configuring repo-owned services so the intent stays explicit.
+- Supported legacy aliases are limited to `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_REDIRECT_URI`. The bot guild id does not currently fall back from `DISCORD_GUILD_ID`.
+
+## Code-truth scan summary
+
+The current Python runtime reads these env vars directly:
+
+### Website and embedded control room
+
+- `SITE_URL`
+- `DATABASE_URL`
+- `DATA_SOURCE`
+- `CURRENT_YEAR`
+- `MAPBOX_ACCESS_TOKEN`
+- `SECRET_KEY`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD_HASH`
+- `OMO_DISCORD_CLIENT_ID` or `DISCORD_CLIENT_ID`
+- `OMO_DISCORD_CLIENT_SECRET` or `DISCORD_CLIENT_SECRET`
+- `OMO_DISCORD_REDIRECT_URI` or `DISCORD_REDIRECT_URI`
+- `OMO_BOT_OPS_ALLOWED_USER_IDS`
+- `OMO_BOT_OPS_DEFAULT_SCOPES`
+- `OMO_BOT_OPS_SESSION_IDLE_MINUTES`
+
+### Bot worker env reads
+
+- `OMO_DISCORD_TOKEN` or `DISCORD_TOKEN`
+- `OMO_DISCORD_GUILD_ID`
+- `OMO_DISCORD_CHANNEL_MAP`
+- `OMO_DATABASE_URL` or `DATABASE_URL`
+- `OMO_SYNDICATION_SOURCES`
+- `OMO_SYNDICATION_POLL_SECONDS`
+- `OMO_LOG_LEVEL`
 
 ## Minimum production sets
 

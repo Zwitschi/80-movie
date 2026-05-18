@@ -10,6 +10,14 @@ from urllib.request import Request, urlopen
 
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 
+from bot.omo_bot.config import BotConfig
+from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
+from bot.omo_bot.jobs import SyndicationPollingJob
+from bot.omo_bot.main import build_syndication_adapters
+from bot.omo_bot.models import SyndicationSourceState
+from bot.omo_bot.repositories import build_postgres_syndication_repository
+from bot.omo_bot.services import NullSyndicationDeliverySink, SyndicationPlanningService
+
 from . import bot_operator_repo
 from . import bot_operator_service
 
@@ -255,6 +263,417 @@ def build_health_snapshot() -> dict[str, object]:
         'security': {
             'secret_key_configured': secret_key_configured,
         },
+    }
+
+
+def _default_syndication_state(source_key: str) -> SyndicationSourceState:
+    return SyndicationSourceState(source_key=source_key)
+
+
+def _operator_can(*required_scopes: str) -> bool:
+    return bot_operator_service.has_operator_scope(
+        session.get(BOT_OPS_SCOPES_SESSION_KEY, []),
+        *required_scopes,
+    )
+
+
+def _manual_syndication_actions_supported(settings: BotRuntimeSettings) -> bool:
+    return bool(settings.database_url)
+
+
+def _syndication_last_poll_result(state: SyndicationSourceState) -> str:
+    if state.last_failed_at and (
+        state.last_succeeded_at is None or state.last_failed_at >= state.last_succeeded_at
+    ):
+        return 'failed'
+    if state.last_succeeded_at:
+        return 'succeeded'
+    if state.last_polled_at:
+        return 'in_progress'
+    return 'never'
+
+
+def _syndication_source_status(
+    state: SyndicationSourceState,
+    *,
+    due_now: bool,
+) -> str:
+    if not state.enabled:
+        return 'disabled'
+    if _syndication_last_poll_result(state) == 'failed':
+        return 'attention'
+    if due_now:
+        return 'due'
+    if state.last_succeeded_at:
+        return 'healthy'
+    return 'idle'
+
+
+def _syndication_summary(source_states: list[dict[str, object]]) -> dict[str, int]:
+    return {
+        'source_count': len(source_states),
+        'due_source_count': sum(1 for source in source_states if source['status'] == 'due'),
+        'attention_source_count': sum(
+            1 for source in source_states if source['status'] == 'attention'
+        ),
+    }
+
+
+def _build_bot_config_from_runtime_settings(settings: BotRuntimeSettings) -> BotConfig:
+    return BotConfig(
+        discord_token=settings.discord_token or 'control-room-placeholder-token',
+        guild_id=settings.guild_id,
+        channel_map=settings.channel_map,
+        database_url=settings.database_url,
+        syndication_sources=settings.syndication_sources,
+        syndication_poll_seconds=settings.syndication_poll_seconds,
+        log_level=settings.log_level,
+    )
+
+
+def _build_syndication_repository_from_settings(settings: BotRuntimeSettings):
+    if not settings.database_url:
+        raise ConfigError(
+            'Manual syndication actions require a configured database-backed repository.'
+        )
+    return build_postgres_syndication_repository(settings.database_url)
+
+
+def _build_manual_syndication_polling_job(
+    settings: BotRuntimeSettings,
+    repository,
+) -> SyndicationPollingJob:
+    config = _build_bot_config_from_runtime_settings(settings)
+    return SyndicationPollingJob(
+        planning_service=SyndicationPlanningService(
+            config=config,
+            repository=repository,
+        ),
+        repository=repository,
+        adapters=build_syndication_adapters(config),
+        delivery_sink=NullSyndicationDeliverySink(),
+    )
+
+
+def _configured_syndication_source(settings: BotRuntimeSettings, source_key: str) -> bool:
+    return source_key in settings.syndication_sources
+
+
+def _page_syndication_scope_error() -> Any:
+    return redirect(url_for('admin_bot.syndication_page', error='operator-scope-required'))
+
+
+def _page_syndication_config_error() -> Any:
+    return redirect(url_for('admin_bot.syndication_page', error='invalid-syndication-config'))
+
+
+def _page_config_scope_error() -> Any:
+    return redirect(url_for('admin_bot.config_page', error='operator-scope-required'))
+
+
+def _page_config_error() -> Any:
+    return redirect(url_for('admin_bot.config_page', error='invalid-syndication-config'))
+
+
+def _page_commands_scope_error() -> Any:
+    return redirect(url_for('admin_bot.commands_page', error='operator-scope-required'))
+
+
+def _page_commands_error() -> Any:
+    return redirect(url_for('admin_bot.commands_page', error='invalid-syndication-config'))
+
+
+def _serialize_syndication_state(
+    state: SyndicationSourceState,
+    *,
+    now: datetime,
+    poll_interval_seconds: int,
+    can_write: bool,
+    manual_actions_supported: bool,
+) -> dict[str, object]:
+    due_now = state.is_due(
+        now=now, poll_interval_seconds=poll_interval_seconds)
+    last_poll_result = _syndication_last_poll_result(state)
+    return {
+        'source_key': state.source_key,
+        'enabled': state.enabled,
+        'checkpoint': state.checkpoint,
+        'last_polled_at': state.last_polled_at.isoformat() if state.last_polled_at else None,
+        'last_succeeded_at': state.last_succeeded_at.isoformat() if state.last_succeeded_at else None,
+        'last_failed_at': state.last_failed_at.isoformat() if state.last_failed_at else None,
+        'due_now': due_now,
+        'last_poll_result': last_poll_result,
+        'status': _syndication_source_status(state, due_now=due_now),
+        'actions': {
+            'can_write': can_write,
+            'manual_actions_supported': manual_actions_supported,
+            'retry_api': url_for('admin_bot.retry_syndication_source_api', source_key=state.source_key),
+            'reset_checkpoint_api': url_for(
+                'admin_bot.reset_syndication_checkpoint_api', source_key=state.source_key
+            ),
+            'retry_page': url_for('admin_bot.retry_syndication_source_page_action', source_key=state.source_key),
+            'reset_checkpoint_page': url_for(
+                'admin_bot.reset_syndication_checkpoint_page_action', source_key=state.source_key
+            ),
+        },
+    }
+
+
+def _load_bot_runtime_settings() -> BotRuntimeSettings:
+    return read_runtime_settings()
+
+
+def build_syndication_snapshot() -> dict[str, object]:
+    now = _utcnow()
+
+    try:
+        settings = _load_bot_runtime_settings()
+    except ConfigError as exc:
+        return {
+            'status': 'invalid_config',
+            'generated_at': now.isoformat(),
+            'error': str(exc),
+            'bot_runtime': {
+                'discord_token_configured': bool(_read_env('OMO_DISCORD_TOKEN', 'DISCORD_TOKEN')),
+                'database_configured': bool(current_app.config.get('DATABASE_URL')),
+            },
+            'sources': [],
+            'channel_bindings': [],
+        }
+
+    repository_backend = 'in-memory'
+    repository_error = None
+    source_states: list[dict[str, object]] = []
+    can_write = _operator_can('syndication.write')
+    manual_actions_supported = _manual_syndication_actions_supported(settings)
+
+    if settings.database_url:
+        repository_backend = 'postgresql'
+        try:
+            repository = build_postgres_syndication_repository(
+                settings.database_url)
+            for source_key in settings.syndication_sources:
+                state = repository.get_by_source_key(
+                    source_key) or _default_syndication_state(source_key)
+                source_states.append(
+                    _serialize_syndication_state(
+                        state,
+                        now=now,
+                        poll_interval_seconds=settings.syndication_poll_seconds,
+                        can_write=can_write,
+                        manual_actions_supported=manual_actions_supported,
+                    )
+                )
+        except Exception as exc:
+            repository_error = str(exc)
+
+    if not source_states:
+        for source_key in settings.syndication_sources:
+            source_states.append(
+                _serialize_syndication_state(
+                    _default_syndication_state(source_key),
+                    now=now,
+                    poll_interval_seconds=settings.syndication_poll_seconds,
+                    can_write=can_write,
+                    manual_actions_supported=manual_actions_supported,
+                )
+            )
+
+    channel_bindings = [
+        {'binding_key': binding_key, 'channel_id': channel_id}
+        for binding_key, channel_id in sorted(settings.channel_map.items())
+    ]
+
+    status = 'degraded' if repository_error else 'ok'
+    return {
+        'status': status,
+        'generated_at': now.isoformat(),
+        'bot_runtime': {
+            'discord_token_configured': bool(settings.discord_token),
+            'guild_id': settings.guild_id,
+            'database_configured': bool(settings.database_url),
+            'syndication_poll_seconds': settings.syndication_poll_seconds,
+            'log_level': settings.log_level,
+            'repository_backend': repository_backend,
+            'repository_error': repository_error,
+            'manual_actions_supported': manual_actions_supported,
+            'operator_can_write': can_write,
+        },
+        'summary': _syndication_summary(source_states),
+        'sources': source_states,
+        'channel_bindings': channel_bindings,
+    }
+
+
+def build_bot_configuration_snapshot() -> dict[str, object]:
+    syndication = build_syndication_snapshot()
+    bot_runtime = cast(dict[str, object], syndication['bot_runtime'])
+    return {
+        'status': syndication['status'],
+        'generated_at': syndication['generated_at'],
+        'sources': [
+            {
+                **source,
+                'managed_by': (
+                    'repository' if bot_runtime['manual_actions_supported'] else 'runtime-default'
+                ),
+                'editable': bool(
+                    bot_runtime['manual_actions_supported']
+                    and bot_runtime['operator_can_write']
+                ),
+                'enable_api': url_for('admin_bot.enable_syndication_source_api', source_key=source['source_key']),
+                'disable_api': url_for('admin_bot.disable_syndication_source_api', source_key=source['source_key']),
+                'enable_page': url_for('admin_bot.enable_syndication_source_page_action', source_key=source['source_key']),
+                'disable_page': url_for('admin_bot.disable_syndication_source_page_action', source_key=source['source_key']),
+            }
+            for source in cast(list[dict[str, object]], syndication['sources'])
+        ],
+        'channel_bindings': [
+            {
+                **binding,
+                'managed_by': 'environment',
+                'editable': False,
+            }
+            for binding in cast(list[dict[str, object]], syndication['channel_bindings'])
+        ],
+        'bot_runtime': bot_runtime,
+        'permissions': {
+            'can_manage_sources': bool(
+                bot_runtime['manual_actions_supported']
+                and bot_runtime['operator_can_write']
+            ),
+            'can_manage_channel_bindings': False,
+            'operator_can_write': bot_runtime['operator_can_write'],
+        },
+    }
+
+
+def build_bot_commands_snapshot() -> dict[str, object]:
+    config_snapshot = build_bot_configuration_snapshot()
+    bot_runtime = cast(dict[str, object], config_snapshot['bot_runtime'])
+    return {
+        'status': config_snapshot['status'],
+        'generated_at': config_snapshot['generated_at'],
+        'available_commands': [
+            {
+                'command_key': 'poll_all_sources',
+                'label': 'Poll all sources now',
+                'required_scope': 'syndication.write',
+                'supported': bool(bot_runtime['manual_actions_supported']),
+                'api_url': url_for('admin_bot.poll_all_sources_api'),
+                'page_url': url_for('admin_bot.poll_all_sources_page_action'),
+            },
+        ],
+        'sources': config_snapshot['sources'],
+        'channel_bindings': config_snapshot['channel_bindings'],
+        'permissions': config_snapshot['permissions'],
+    }
+
+
+def _run_manual_syndication_retry(source_key: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    if not _configured_syndication_source(settings, source_key):
+        raise KeyError(source_key)
+
+    repository = _build_syndication_repository_from_settings(settings)
+    polling_job = _build_manual_syndication_polling_job(settings, repository)
+    result = polling_job.run_source_key(source_key, now=_utcnow())
+    refreshed_state = repository.get_by_source_key(
+        source_key) or _default_syndication_state(source_key)
+    return (
+        _serialize_syndication_state(
+            refreshed_state,
+            now=_utcnow(),
+            poll_interval_seconds=settings.syndication_poll_seconds,
+            can_write=_operator_can('syndication.write'),
+            manual_actions_supported=_manual_syndication_actions_supported(
+                settings),
+        ),
+        {
+            'source_key': source_key,
+            'delivered_items': result.delivered_items,
+            'polled_sources': list(result.polled_sources),
+        },
+    )
+
+
+def _reset_syndication_checkpoint(source_key: str) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    if not _configured_syndication_source(settings, source_key):
+        raise KeyError(source_key)
+
+    repository = _build_syndication_repository_from_settings(settings)
+    state = repository.get_by_source_key(
+        source_key) or _default_syndication_state(source_key)
+    reset_state = SyndicationSourceState(
+        source_key=state.source_key,
+        enabled=state.enabled,
+        checkpoint=None,
+        last_polled_at=state.last_polled_at,
+        last_succeeded_at=state.last_succeeded_at,
+        last_failed_at=state.last_failed_at,
+    )
+    repository.save(reset_state)
+    return _serialize_syndication_state(
+        reset_state,
+        now=_utcnow(),
+        poll_interval_seconds=settings.syndication_poll_seconds,
+        can_write=_operator_can('syndication.write'),
+        manual_actions_supported=_manual_syndication_actions_supported(
+            settings),
+    )
+
+
+def _set_syndication_source_enabled(source_key: str, enabled: bool) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    if not _configured_syndication_source(settings, source_key):
+        raise KeyError(source_key)
+
+    repository = _build_syndication_repository_from_settings(settings)
+    state = repository.get_by_source_key(source_key) or _default_syndication_state(source_key)
+    updated_state = SyndicationSourceState(
+        source_key=state.source_key,
+        enabled=enabled,
+        checkpoint=state.checkpoint,
+        last_polled_at=state.last_polled_at,
+        last_succeeded_at=state.last_succeeded_at,
+        last_failed_at=state.last_failed_at,
+    )
+    repository.save(updated_state)
+    return _serialize_syndication_state(
+        updated_state,
+        now=_utcnow(),
+        poll_interval_seconds=settings.syndication_poll_seconds,
+        can_write=_operator_can('syndication.write'),
+        manual_actions_supported=_manual_syndication_actions_supported(settings),
+    )
+
+
+def _run_manual_syndication_poll_all() -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    repository = _build_syndication_repository_from_settings(settings)
+    polling_job = _build_manual_syndication_polling_job(settings, repository)
+    total_delivered_items = 0
+    source_results: list[dict[str, object]] = []
+
+    for source_key in settings.syndication_sources:
+        result = polling_job.run_source_key(source_key, now=_utcnow())
+        total_delivered_items += result.delivered_items
+        state = repository.get_by_source_key(source_key) or _default_syndication_state(source_key)
+        source_results.append(
+            _serialize_syndication_state(
+                state,
+                now=_utcnow(),
+                poll_interval_seconds=settings.syndication_poll_seconds,
+                can_write=_operator_can('syndication.write'),
+                manual_actions_supported=_manual_syndication_actions_supported(settings),
+            )
+        )
+
+    return {
+        'source_count': len(settings.syndication_sources),
+        'delivered_items': total_delivered_items,
+        'sources': source_results,
     }
 
 
@@ -505,7 +924,7 @@ def overview():
 @admin_bot_blueprint.get('/health')
 def health_page():
     health = build_health_snapshot()
-    return render_template('admin/bot/health.html', health=health)
+    return render_template('admin/bot/health.html', health=health, syndication=build_syndication_snapshot())
 
 
 @admin_bot_blueprint.get('/api/health')
@@ -535,9 +954,225 @@ def operators_page():
     )
 
 
+@admin_bot_blueprint.get('/syndication')
+def syndication_page():
+    return render_template(
+        'admin/bot/syndication.html',
+        syndication=build_syndication_snapshot(),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
+@admin_bot_blueprint.get('/config')
+def config_page():
+    return render_template(
+        'admin/bot/config.html',
+        config_snapshot=build_bot_configuration_snapshot(),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
+@admin_bot_blueprint.get('/commands')
+def commands_page():
+    return render_template(
+        'admin/bot/commands.html',
+        commands_snapshot=build_bot_commands_snapshot(),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
 @admin_bot_blueprint.get('/api/operators')
 def operators_api():
     return jsonify({'data': bot_operator_repo.list_bot_operators()})
+
+
+@admin_bot_blueprint.get('/api/syndication')
+def syndication_api():
+    return jsonify({'data': build_syndication_snapshot()})
+
+
+@admin_bot_blueprint.get('/api/config')
+def config_api():
+    return jsonify({'data': build_bot_configuration_snapshot()})
+
+
+@admin_bot_blueprint.get('/api/commands')
+def commands_api():
+    return jsonify({'data': build_bot_commands_snapshot()})
+
+
+@admin_bot_blueprint.get('/api/syndication/sources')
+def syndication_sources_api():
+    snapshot = build_syndication_snapshot()
+    return jsonify({'data': snapshot['sources'], 'meta': {'status': snapshot['status']}})
+
+
+@admin_bot_blueprint.get('/api/syndication/channels')
+def syndication_channels_api():
+    snapshot = build_syndication_snapshot()
+    return jsonify({'data': snapshot['channel_bindings'], 'meta': {'status': snapshot['status']}})
+
+
+@admin_bot_blueprint.post('/api/syndication/sources/<source_key>/retry')
+def retry_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state, meta = _run_manual_syndication_retry(source_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+    except Exception as exc:
+        return jsonify({'error': {'code': 'syndication_retry_failed', 'message': str(exc)}}), 500
+
+    return jsonify({'data': source_state, 'meta': meta})
+
+
+@admin_bot_blueprint.post('/syndication/sources/<source_key>/retry')
+def retry_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_syndication_scope_error()
+
+    try:
+        _run_manual_syndication_retry(source_key)
+    except ConfigError:
+        return _page_syndication_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+    except Exception:
+        return redirect(url_for('admin_bot.syndication_page', error='retry-failed'))
+
+    return redirect(url_for('admin_bot.syndication_page', saved='retry'))
+
+
+@admin_bot_blueprint.post('/api/syndication/sources/<source_key>/checkpoint/reset')
+def reset_syndication_checkpoint_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _reset_syndication_checkpoint(source_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/syndication/sources/<source_key>/checkpoint/reset')
+def reset_syndication_checkpoint_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_syndication_scope_error()
+
+    try:
+        _reset_syndication_checkpoint(source_key)
+    except ConfigError:
+        return _page_syndication_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.syndication_page', saved='checkpoint-reset'))
+
+
+@admin_bot_blueprint.post('/api/config/sources/<source_key>/enable')
+def enable_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _set_syndication_source_enabled(source_key, True)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/config/sources/<source_key>/enable')
+def enable_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _set_syndication_source_enabled(source_key, True)
+    except ConfigError:
+        return _page_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.config_page', saved='source-enabled'))
+
+
+@admin_bot_blueprint.post('/api/config/sources/<source_key>/disable')
+def disable_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _set_syndication_source_enabled(source_key, False)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/config/sources/<source_key>/disable')
+def disable_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _set_syndication_source_enabled(source_key, False)
+    except ConfigError:
+        return _page_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.config_page', saved='source-disabled'))
+
+
+@admin_bot_blueprint.post('/api/commands/poll-all')
+def poll_all_sources_api():
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        result = _run_manual_syndication_poll_all()
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except Exception as exc:
+        return jsonify({'error': {'code': 'command_failed', 'message': str(exc)}}), 500
+
+    return jsonify({'data': result})
+
+
+@admin_bot_blueprint.post('/commands/poll-all')
+def poll_all_sources_page_action():
+    if not _operator_can('syndication.write'):
+        return _page_commands_scope_error()
+
+    try:
+        _run_manual_syndication_poll_all()
+    except ConfigError:
+        return _page_commands_error()
+    except Exception:
+        return redirect(url_for('admin_bot.commands_page', error='command-failed'))
+
+    return redirect(url_for('admin_bot.commands_page', saved='poll-all'))
 
 
 @admin_bot_blueprint.post('/api/operators/<user_id>/disable')

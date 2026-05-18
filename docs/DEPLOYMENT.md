@@ -16,7 +16,7 @@ Use this guide to keep deployment planning aligned with the code that exists now
 | ----------------------------- | -------------------- | -------------------------- | -------------------------------------------------- | ------------------- | ---------------------------------------------------------- |
 | Website                       | Deployable now       | `website/`                 | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` | `8000`              | Current production baseline                                |
 | Embedded control room         | Deploys with website | `website/`                 | same Flask process as website                      | `/admin/bot`        | Separate operator auth, same web resource                  |
-| Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot.main`                       | none                | Long-running worker, no public HTTP surface documented yet |
+| Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot`                            | none                | Long-running worker, no public HTTP surface documented yet |
 | Extracted control-room UI/API | Future only          | not implemented            | not implemented                                    | not implemented     | Keep as planned topology, not current runtime fact         |
 
 ## Recommended topology
@@ -136,7 +136,7 @@ The bot worker is not production-ready yet, but the planned runtime command alre
 From the repository root:
 
 ```powershell
-python -m bot.omo_bot.main
+python -m bot.omo_bot
 ```
 
 ### Planned worker resource shape
@@ -145,7 +145,7 @@ python -m bot.omo_bot.main
 | -------------- | ---------------------------------- |
 | Resource type  | Long-running application or worker |
 | Base directory | `/`                                |
-| Start command  | `python -m bot.omo_bot.main`       |
+| Start command  | `python -m bot.omo_bot`            |
 | Public port    | none required                      |
 | Restart policy | enabled                            |
 

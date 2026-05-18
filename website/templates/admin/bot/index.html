@@ -36,4 +36,21 @@ endblock %} {% block bot_content %}
     >
   </p>
 </section>
+
+<section>
+  <h2>Control Room Sections</h2>
+  <ul>
+    <li><a href="{{ url_for('admin_bot.overview') }}">Overview</a></li>
+    <li><a href="{{ url_for('admin_bot.health_page') }}">Health</a></li>
+    <li><a href="{{ url_for('admin_bot.config_page') }}">Bot Config</a></li>
+    <li><a href="{{ url_for('admin_bot.commands_page') }}">Command Actions</a></li>
+    <li>
+      <a href="{{ url_for('admin_bot.syndication_page') }}"
+        >Syndication Configuration</a
+      >
+    </li>
+    <li><a href="{{ url_for('admin_bot.operators_page') }}">Operators</a></li>
+  </ul>
+  <p>Config, command, retry, and audit actions now share one control-room home.</p>
+</section>
 {% endblock %}

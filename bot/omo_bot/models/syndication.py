@@ -52,3 +52,14 @@ class SyndicationSourceState:
             last_succeeded_at=normalized_time,
             last_failed_at=None,
         )
+
+    def with_poll_failed(self, *, polled_at: datetime) -> "SyndicationSourceState":
+        normalized_time = polled_at.astimezone(timezone.utc)
+        return SyndicationSourceState(
+            source_key=self.source_key,
+            enabled=self.enabled,
+            checkpoint=self.checkpoint,
+            last_polled_at=normalized_time,
+            last_succeeded_at=self.last_succeeded_at,
+            last_failed_at=normalized_time,
+        )

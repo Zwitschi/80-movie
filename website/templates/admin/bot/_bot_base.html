@@ -10,6 +10,11 @@ admin_content %}
     <ul>
       <li><a href="{{ url_for('admin_bot.overview') }}">Overview</a></li>
       <li><a href="{{ url_for('admin_bot.health_page') }}">Health</a></li>
+      <li><a href="{{ url_for('admin_bot.config_page') }}">Config</a></li>
+      <li><a href="{{ url_for('admin_bot.commands_page') }}">Commands</a></li>
+      <li>
+        <a href="{{ url_for('admin_bot.syndication_page') }}">Syndication</a>
+      </li>
       <li><a href="{{ url_for('admin_bot.operators_page') }}">Operators</a></li>
     </ul>
   </nav>

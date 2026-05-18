@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from ..config import BotConfig
 from ..models import SyndicationSourceState
-from ..repositories import InMemorySyndicationSourceRepository
+from ..repositories import SyndicationSourceRepository
 
 
 class SyndicationPlanningService:
@@ -16,7 +16,7 @@ class SyndicationPlanningService:
         self,
         *,
         config: BotConfig,
-        repository: InMemorySyndicationSourceRepository,
+        repository: SyndicationSourceRepository,
     ) -> None:
         self._config = config
         self._repository = repository

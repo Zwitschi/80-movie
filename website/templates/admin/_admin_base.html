@@ -126,6 +126,13 @@
             </li>
             <li><span class="nav-section-label">System</span></li>
             <li>
+              <a
+                href="{{ url_for('admin_bot.overview') }}"
+                class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_bot.') else '' }}"
+                >Discord Bot</a
+              >
+            </li>
+            <li>
               <a href="{{ url_for('admin.logout') }}">Logout</a>
             </li>
           </ul>
