@@ -9,12 +9,13 @@ from bot.omo_bot.config import BotConfig, ConfigError
 from bot.omo_bot.main import build_runtime, run
 from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.repositories import (
+    InMemoryBotAuditLogRepository,
     InMemoryBotConfigRepository,
     InMemorySyndicationSourceRepository,
     PostgresSyndicationSourceRepository,
 )
 from bot.omo_bot.runtime.client import BotRuntime
-from bot.omo_bot.services import SyndicationPlanningService
+from bot.omo_bot.services import BotAuditService, SyndicationPlanningService
 
 
 class FakeSyndicationCursor:
@@ -273,6 +274,26 @@ def test_build_runtime_uses_repository_managed_config(monkeypatch):
     assert snapshot["guild_id"] == 222
     assert snapshot["configured_channels"] == ["queue"]
     assert snapshot["configured_roles"] == ["moderator"]
+
+
+def test_bot_audit_service_records_append_only_entries():
+    repository = InMemoryBotAuditLogRepository()
+    service = BotAuditService(repository)
+
+    entry = service.record(
+        actor_user_id="123456",
+        actor_session_id="session-1",
+        action_key="syndication.source.disabled",
+        target_type="syndication_source",
+        target_key="youtube",
+        request_id="request-1",
+        before_state={"enabled": True},
+        after_state={"enabled": False},
+    )
+
+    assert entry.action_key == "syndication.source.disabled"
+    assert len(repository.entries) == 1
+    assert repository.entries[0].target_key == "youtube"
 
 
 def test_bot_runtime_polling_loop_updates_health_snapshot():

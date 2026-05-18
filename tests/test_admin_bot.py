@@ -8,7 +8,7 @@ from website.movie_site import bot_operator_repo
 from website.movie_site import bot_operator_service
 from bot.omo_bot.config import BotRuntimeSettings
 from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem
-from bot.omo_bot.repositories import InMemoryBotConfigRepository, InMemorySyndicationSourceRepository
+from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryBotConfigRepository, InMemorySyndicationSourceRepository
 from bot.omo_bot.models import SyndicationSourceState
 
 
@@ -872,6 +872,72 @@ def test_admin_bot_disable_syndication_source_api_updates_enabled_state(monkeypa
     assert payload['data']['enabled'] is False
 
 
+def test_admin_bot_disable_syndication_source_api_emits_audit_entry(monkeypatch):
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    with client.session_transaction() as flask_session:
+        flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
+        flask_session[admin_bot.BOT_OPS_SESSION_ID_KEY] = 'session-1'
+        flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = [
+            'syndication.write']
+
+    monkeypatch.setattr(
+        admin_bot,
+        '_load_bot_runtime_settings',
+        lambda: BotRuntimeSettings(
+            discord_token='token-value',
+            guild_id=None,
+            channel_map={'announcements': 200},
+            database_url='postgresql://user:pass@localhost/omo',
+            syndication_sources=('youtube',),
+            syndication_poll_seconds=300,
+            log_level='INFO',
+        ),
+    )
+    repository = InMemorySyndicationSourceRepository(
+        [SyndicationSourceState(source_key='youtube',
+                                enabled=True, checkpoint='video-123')]
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_syndication_repository',
+        lambda database_url: repository,
+    )
+    audit_repository = InMemoryBotAuditLogRepository()
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_audit_log_repository',
+        lambda database_url: audit_repository,
+    )
+
+    response = client.post('/admin/bot/api/config/sources/youtube/disable')
+
+    assert response.status_code == 200
+    assert len(audit_repository.entries) == 1
+    entry = audit_repository.entries[0]
+    assert entry.action_key == 'syndication.source.disabled'
+    assert entry.target_key == 'youtube'
+    assert entry.actor_user_id == '123456'
+    assert entry.before_state == {
+        'source_key': 'youtube',
+        'enabled': True,
+        'checkpoint': 'video-123',
+        'last_polled_at': None,
+        'last_succeeded_at': None,
+        'last_failed_at': None,
+    }
+    assert entry.after_state == {
+        'source_key': 'youtube',
+        'enabled': False,
+        'checkpoint': 'video-123',
+        'last_polled_at': None,
+        'last_succeeded_at': None,
+        'last_failed_at': None,
+    }
+
+
 def test_admin_bot_commands_page_renders_poll_all_command(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
@@ -1142,6 +1208,62 @@ def test_admin_bot_disable_operator_api_disables_record(monkeypatch):
     payload = response.get_json()
     assert payload['data']['discord_user_id'] == '123456'
     assert payload['data']['is_active'] is False
+
+
+def test_admin_bot_disable_operator_api_emits_audit_entry(monkeypatch):
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    with client.session_transaction() as flask_session:
+        flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
+        flask_session[admin_bot.BOT_OPS_SESSION_ID_KEY] = 'session-1'
+        flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = ['ops.admin']
+
+    monkeypatch.setattr(
+        bot_operator_repo,
+        'get_bot_operator_by_discord_user_id',
+        lambda user_id: {
+            'discord_user_id': user_id,
+            'username': 'operator',
+            'global_name': 'Operator Name',
+            'avatar_url': None,
+            'scopes': ['ops.read'],
+            'is_active': True,
+            'last_login_at': None,
+        },
+    )
+    monkeypatch.setattr(
+        bot_operator_repo,
+        'set_bot_operator_active',
+        lambda user_id, is_active: {
+            'discord_user_id': user_id,
+            'username': 'operator',
+            'global_name': 'Operator Name',
+            'avatar_url': None,
+            'scopes': ['ops.read'],
+            'is_active': is_active,
+            'last_login_at': None,
+        },
+    )
+    audit_repository = InMemoryBotAuditLogRepository()
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_audit_log_repository',
+        lambda database_url: audit_repository,
+    )
+
+    response = client.post('/admin/bot/api/operators/123456/disable')
+
+    assert response.status_code == 200
+    assert len(audit_repository.entries) == 1
+    entry = audit_repository.entries[0]
+    assert entry.action_key == 'operator.disabled'
+    assert entry.target_key == '123456'
+    assert entry.before_state is not None
+    assert entry.before_state['is_active'] is True
+    assert entry.after_state is not None
+    assert entry.after_state['is_active'] is False
 
 
 def test_admin_bot_disable_operator_api_rejects_missing_scope(monkeypatch):

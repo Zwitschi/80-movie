@@ -16,10 +16,11 @@ from bot.omo_bot.jobs import SyndicationPollingJob
 from bot.omo_bot.main import build_syndication_adapters
 from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.repositories import (
+    build_postgres_bot_audit_log_repository,
     build_postgres_bot_config_repository,
     build_postgres_syndication_repository,
 )
-from bot.omo_bot.services import NullSyndicationDeliverySink, SyndicationPlanningService
+from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
 
 from . import bot_operator_repo
 from . import bot_operator_service
@@ -46,6 +47,69 @@ class OperatorAuthError(RuntimeError):
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _serialize_audit_value(value: object) -> object:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(key): _serialize_audit_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_serialize_audit_value(item) for item in value]
+    return value
+
+
+def _serialize_audit_state(state: object) -> dict[str, object] | None:
+    if state is None:
+        return None
+    if isinstance(state, dict):
+        return cast(dict[str, object], _serialize_audit_value(state))
+    if hasattr(state, '__dict__'):
+        return cast(dict[str, object], _serialize_audit_value(vars(state)))
+    return {'value': cast(object, _serialize_audit_value(state))}
+
+
+def _audit_database_url() -> str | None:
+    try:
+        settings = _load_bot_runtime_settings()
+    except ConfigError:
+        settings = None
+
+    if settings and settings.database_url:
+        return settings.database_url
+    return str(current_app.config.get('DATABASE_URL') or '').strip() or None
+
+
+def _build_bot_audit_service() -> BotAuditService | None:
+    database_url = _audit_database_url()
+    if not database_url:
+        return None
+    return BotAuditService(build_postgres_bot_audit_log_repository(database_url))
+
+
+def _record_bot_audit_event(
+    *,
+    action_key: str,
+    target_type: str,
+    target_key: str,
+    before_state: object,
+    after_state: object,
+) -> None:
+    audit_service = _build_bot_audit_service()
+    if audit_service is None:
+        return
+    audit_service.record(
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        actor_session_id=str(session.get(
+            BOT_OPS_SESSION_ID_KEY, '')).strip() or None,
+        action_key=action_key,
+        target_type=target_type,
+        target_key=target_key,
+        request_id=request.headers.get('X-Request-Id') or token_urlsafe(8),
+        before_state=_serialize_audit_state(before_state),
+        after_state=_serialize_audit_state(after_state),
+    )
 
 
 def _bool_status(configured: bool) -> str:
@@ -674,8 +738,18 @@ def build_bot_commands_snapshot() -> dict[str, object]:
 def _set_active_guild_id(guild_id: int) -> dict[str, object]:
     settings = _load_bot_runtime_settings()
     repository = _build_bot_config_repository_from_settings(settings)
+    before_guild_id = repository.get_active_guild_id()
     repository.set_active_guild_id(guild_id)
-    return cast(dict[str, object], build_bot_configuration_snapshot()['guild_config'])
+    guild_config = cast(
+        dict[str, object], build_bot_configuration_snapshot()['guild_config'])
+    _record_bot_audit_event(
+        action_key='config.guild.set',
+        target_type='guild_config',
+        target_key=str(guild_id),
+        before_state={'guild_id': before_guild_id},
+        after_state=guild_config,
+    )
+    return guild_config
 
 
 def _upsert_channel_binding(binding_key: str, channel_id: int) -> dict[str, object]:
@@ -684,6 +758,11 @@ def _upsert_channel_binding(binding_key: str, channel_id: int) -> dict[str, obje
         raise ConfigError(
             'An active guild id is required before channel bindings can be managed.')
     repository = _build_bot_config_repository_from_settings(settings)
+    before_binding = next(
+        (binding for binding in repository.list_channel_bindings(
+            settings.guild_id) if binding['binding_key'] == binding_key),
+        None,
+    )
     repository.upsert_channel_binding(
         guild_id=settings.guild_id,
         binding_key=binding_key,
@@ -691,6 +770,13 @@ def _upsert_channel_binding(binding_key: str, channel_id: int) -> dict[str, obje
     )
     for binding in cast(list[dict[str, object]], build_bot_configuration_snapshot()['channel_bindings']):
         if binding['binding_key'] == binding_key:
+            _record_bot_audit_event(
+                action_key='config.channel_binding.upserted',
+                target_type='channel_binding',
+                target_key=binding_key,
+                before_state=before_binding,
+                after_state=binding,
+            )
             return binding
     raise KeyError(binding_key)
 
@@ -701,8 +787,20 @@ def _delete_channel_binding(binding_key: str) -> None:
         raise ConfigError(
             'An active guild id is required before channel bindings can be managed.')
     repository = _build_bot_config_repository_from_settings(settings)
+    before_binding = next(
+        (binding for binding in repository.list_channel_bindings(
+            settings.guild_id) if binding['binding_key'] == binding_key),
+        None,
+    )
     if not repository.delete_channel_binding(guild_id=settings.guild_id, binding_key=binding_key):
         raise KeyError(binding_key)
+    _record_bot_audit_event(
+        action_key='config.channel_binding.deleted',
+        target_type='channel_binding',
+        target_key=binding_key,
+        before_state=before_binding,
+        after_state=None,
+    )
 
 
 def _upsert_role_binding(binding_key: str, role_id: int) -> dict[str, object]:
@@ -711,6 +809,11 @@ def _upsert_role_binding(binding_key: str, role_id: int) -> dict[str, object]:
         raise ConfigError(
             'An active guild id is required before role bindings can be managed.')
     repository = _build_bot_config_repository_from_settings(settings)
+    before_binding = next(
+        (binding for binding in repository.list_role_bindings(
+            settings.guild_id) if binding['binding_key'] == binding_key),
+        None,
+    )
     repository.upsert_role_binding(
         guild_id=settings.guild_id,
         binding_key=binding_key,
@@ -718,6 +821,13 @@ def _upsert_role_binding(binding_key: str, role_id: int) -> dict[str, object]:
     )
     for binding in cast(list[dict[str, object]], build_bot_configuration_snapshot()['role_bindings']):
         if binding['binding_key'] == binding_key:
+            _record_bot_audit_event(
+                action_key='config.role_binding.upserted',
+                target_type='role_binding',
+                target_key=binding_key,
+                before_state=before_binding,
+                after_state=binding,
+            )
             return binding
     raise KeyError(binding_key)
 
@@ -728,8 +838,20 @@ def _delete_role_binding(binding_key: str) -> None:
         raise ConfigError(
             'An active guild id is required before role bindings can be managed.')
     repository = _build_bot_config_repository_from_settings(settings)
+    before_binding = next(
+        (binding for binding in repository.list_role_bindings(
+            settings.guild_id) if binding['binding_key'] == binding_key),
+        None,
+    )
     if not repository.delete_role_binding(guild_id=settings.guild_id, binding_key=binding_key):
         raise KeyError(binding_key)
+    _record_bot_audit_event(
+        action_key='config.role_binding.deleted',
+        target_type='role_binding',
+        target_key=binding_key,
+        before_state=before_binding,
+        after_state=None,
+    )
 
 
 def _run_manual_syndication_retry(source_key: str) -> tuple[dict[str, object], dict[str, object]]:
@@ -738,10 +860,19 @@ def _run_manual_syndication_retry(source_key: str) -> tuple[dict[str, object], d
         raise KeyError(source_key)
 
     repository = _build_syndication_repository_from_settings(settings)
+    before_state = repository.get_by_source_key(
+        source_key) or _default_syndication_state(source_key)
     polling_job = _build_manual_syndication_polling_job(settings, repository)
     result = polling_job.run_source_key(source_key, now=_utcnow())
     refreshed_state = repository.get_by_source_key(
         source_key) or _default_syndication_state(source_key)
+    _record_bot_audit_event(
+        action_key='syndication.source.retried',
+        target_type='syndication_source',
+        target_key=source_key,
+        before_state=before_state,
+        after_state=refreshed_state,
+    )
     return (
         _serialize_syndication_state(
             refreshed_state,
@@ -776,6 +907,13 @@ def _reset_syndication_checkpoint(source_key: str) -> dict[str, object]:
         last_failed_at=state.last_failed_at,
     )
     repository.save(reset_state)
+    _record_bot_audit_event(
+        action_key='syndication.checkpoint.reset',
+        target_type='syndication_source',
+        target_key=source_key,
+        before_state=state,
+        after_state=reset_state,
+    )
     return _serialize_syndication_state(
         reset_state,
         now=_utcnow(),
@@ -803,6 +941,13 @@ def _set_syndication_source_enabled(source_key: str, enabled: bool) -> dict[str,
         last_failed_at=state.last_failed_at,
     )
     repository.save(updated_state)
+    _record_bot_audit_event(
+        action_key='syndication.source.enabled' if enabled else 'syndication.source.disabled',
+        target_type='syndication_source',
+        target_key=source_key,
+        before_state=state,
+        after_state=updated_state,
+    )
     return _serialize_syndication_state(
         updated_state,
         now=_utcnow(),
@@ -836,11 +981,19 @@ def _run_manual_syndication_poll_all() -> dict[str, object]:
             )
         )
 
-    return {
+    result = {
         'source_count': len(settings.syndication_sources),
         'delivered_items': total_delivered_items,
         'sources': source_results,
     }
+    _record_bot_audit_event(
+        action_key='syndication.sources.polled_all',
+        target_type='syndication_batch',
+        target_key='all_sources',
+        before_state={'source_keys': list(settings.syndication_sources)},
+        after_state=result,
+    )
+    return result
 
 
 def _health_components(health: dict[str, object]) -> dict[str, Any]:
@@ -926,10 +1079,19 @@ def _update_operator_active(user_id: str, is_active: bool):
     if scope_error is not None:
         return scope_error
 
+    before_state = bot_operator_repo.get_bot_operator_by_discord_user_id(
+        user_id)
     operator_record = bot_operator_repo.set_bot_operator_active(
         user_id, is_active)
     if operator_record is None:
         return _operator_not_found_response()
+    _record_bot_audit_event(
+        action_key='operator.enabled' if is_active else 'operator.disabled',
+        target_type='operator',
+        target_key=user_id,
+        before_state=before_state,
+        after_state=operator_record,
+    )
     return operator_record
 
 
@@ -938,6 +1100,8 @@ def _update_operator_scopes(user_id: str, raw_scopes: object):
     if scope_error is not None:
         return scope_error
 
+    before_state = bot_operator_repo.get_bot_operator_by_discord_user_id(
+        user_id)
     scopes = bot_operator_service.normalize_operator_scopes(raw_scopes)
     if not scopes:
         return _invalid_operator_scopes_response()
@@ -946,6 +1110,13 @@ def _update_operator_scopes(user_id: str, raw_scopes: object):
         user_id, scopes)
     if operator_record is None:
         return _operator_not_found_response()
+    _record_bot_audit_event(
+        action_key='operator.scopes.updated',
+        target_type='operator',
+        target_key=user_id,
+        before_state=before_state,
+        after_state=operator_record,
+    )
     return operator_record
 
 
