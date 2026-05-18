@@ -4,7 +4,7 @@
 
 Open Mic Odyssey currently ships as Flask website with protected admin CMS, PostgreSQL-backed content store, JSON-LD SEO generation, and static export pipeline. Public site lives at `openmicodyssey.com`.
 
-Current repository does **not** contain implemented Discord bot runtime or separate operator dashboard SPA. Those remain planned expansion areas and are documented here as future-state architecture, not current production facts.
+Current repository now also contains an embedded `/admin/bot` control-room surface with Discord OAuth operator login, operator/session management, health/config/command views, and syndication control APIs, plus a scaffolded bot worker runtime focused on configuration, startup lifecycle, and YouTube-first syndication polling. The repository still does **not** contain a feature-complete Discord automation worker or a separate operator dashboard SPA.
 
 ### Current Product Goals
 
@@ -40,16 +40,19 @@ Current repository does **not** contain implemented Discord bot runtime or separ
 - Flask application runtime in `website/`
 - Public pages, compatibility redirects, sitemap, robots, and hidden map route
 - Admin login and editorial CMS routes under `/admin`
+- Embedded control-room routes, templates, and ops APIs under `/admin/bot`
+- Discord OAuth operator login for the embedded control room
 - PostgreSQL-backed content read/write layer
 - JSON-LD schema generation from structured content
 - Static export generation to `website/dist`
 - Coolify/Nixpacks website deployment configuration
+- Bot scaffold runtime in `bot/omo_bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
+- Bot-owned operator and syndication persistence seams backed by PostgreSQL migrations
 
 ### Current Out Of Scope
 
-- Implemented Discord bot runtime
-- Discord OAuth bridge
-- Separate bot operations API
+- Feature-complete Discord gateway automation worker
+- Queue, mileage / XP, onboarding, and moderation domains
 - Separate React/Vite dashboard application
 - Native mobile applications
 
@@ -65,9 +68,10 @@ Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `websi
 ┌──────────────────────┐       HTTPS        ┌──────────────────────────┐
 │ Public visitors      │◄──────────────────►│ Flask website             │
 │ Admin editors        │                    │ openmicodyssey.com       │
-└──────────────────────┘                    ├──────────────────────────┤
-                                            │ Public pages              │
+│ Bot operators        │                    ├──────────────────────────┤
+└──────────────────────┘                    │ Public pages              │
                                             │ Admin CMS                 │
+                                            │ Embedded /admin/bot       │
                                             │ Schema / SEO generation   │
                                             │ Static export pipeline    │
                                             └─────────────┬────────────┘
@@ -75,6 +79,12 @@ Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `websi
                                                           ▼
                                                ┌────────────────────────┐
                                                │ PostgreSQL content DB   │
+                                               └─────────────┬──────────┘
+                                                             │
+                                                             ▼
+                                               ┌────────────────────────┐
+                                               │ Bot scaffold runtime    │
+                                               │ config + syndication    │
                                                └────────────────────────┘
 ```
 
@@ -379,14 +389,16 @@ Repository also supports generating static HTML output from same public routes. 
 
 - Public site is anonymous-read.
 - Admin CMS uses Flask session auth with configured username and password hash.
+- Embedded control-room operator auth uses Discord OAuth plus locally managed operator scopes and session idle timeout rules.
 - Secrets are environment-based.
 - Hidden `/map` page still depends on public Mapbox token for client-side rendering.
 
 ### Current Operational Characteristics
 
-- App is small modular Flask codebase with public and admin blueprints.
+- App is small modular Flask codebase with public, editorial admin, and embedded control-room blueprints.
 - Structured content is assembled dynamically for page render and sitemap generation.
 - Static export path gives additional confidence in route renderability and schema validity.
+- Bot worker runtime can start independently for config validation, lifecycle smoke checks, and syndication polling seam wiring, but it is not yet a feature-complete Discord automation service.
 
 ## 9. Testing And Quality
 
@@ -525,7 +537,7 @@ Current and planned auth boundaries should stay separate at first:
 - Website admin auth remains Flask-Login session auth for editorial CMS.
 - Bot service auth should use service-level secrets/config, not website session cookies.
 - Future control room should use its own operator auth layer and call internal website/bot APIs with explicit credentials.
-- Discord OAuth for operator login can be added later, but should not be prerequisite for current website CMS.
+- Discord OAuth is already the operator login path for the embedded `/admin/bot` control room and is not a prerequisite for the editorial CMS.
 
 Confirmed near-term product decision:
 
@@ -536,13 +548,23 @@ Confirmed near-term product decision:
 ### Deployment Relationship
 
 - Website remains independently deployable on Coolify as web app.
-- Future bot should run as separate long-lived worker/service process.
+- Current bot scaffold can already run as a separate process, and the future bot should mature into a long-lived worker/service process.
 - Future control room may be separate SPA or separate Flask/API surface, but should deploy independently from public website shell when possible.
 - Shared database migrations must preserve subsystem ownership to avoid one surface breaking another during deploy.
 
-### Planned Discord Bot
+### Current Bot Status And Planned Discord Bot
 
-Planned bot remains future work. Intended domains currently under consideration:
+Implemented today:
+
+- bot runtime config parsing and env loading
+- runtime startup and shutdown lifecycle scaffold
+- YouTube-first syndication adapter, repository, and polling job seams
+- embedded control-room operator auth, health/config/commands pages, and syndication actions
+- bot operator and syndication persistence migrations
+
+Still planned:
+
+Intended next domains still under consideration:
 
 - Community onboarding and role assignment
 - Event queue management
@@ -658,9 +680,9 @@ Recommended migration rules:
 | Security      | Secrets remain environment-based; privileged commands require explicit role checks |
 | Operability   | Health, logs, and manual recovery hooks should exist before broad rollout          |
 
-### Planned Bot Code Structure
+### Current And Planned Bot Code Structure
 
-Recommended repository addition:
+Current repository shape already follows this boundary, with queue, mileage, onboarding, reminder, and richer adapter modules still to be added:
 
 ```txt
 bot/

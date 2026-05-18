@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
@@ -91,6 +91,7 @@ class BotConfig:
     database_url: str | None
     syndication_sources: tuple[str, ...]
     syndication_poll_seconds: int
+    role_map: dict[str, int] = field(default_factory=dict)
     log_level: str = "INFO"
 
     @classmethod
@@ -108,6 +109,7 @@ class BotConfig:
             database_url=settings.database_url,
             syndication_sources=settings.syndication_sources,
             syndication_poll_seconds=settings.syndication_poll_seconds,
+            role_map=settings.role_map,
             log_level=settings.log_level,
         )
 
@@ -122,6 +124,7 @@ class BotRuntimeSettings:
     database_url: str | None
     syndication_sources: tuple[str, ...]
     syndication_poll_seconds: int
+    role_map: dict[str, int] = field(default_factory=dict)
     log_level: str = "INFO"
 
 
@@ -166,5 +169,6 @@ def read_runtime_settings(
         database_url=database_url,
         syndication_sources=syndication_sources,
         syndication_poll_seconds=syndication_poll_seconds,
+        role_map={},
         log_level=log_level,
     )

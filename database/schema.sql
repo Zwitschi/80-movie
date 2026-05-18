@@ -345,6 +345,39 @@ CREATE TABLE bot_syndication_checkpoint (
 );
 
 -- ============================================================
+-- BOT RUNTIME CONFIGURATION
+-- ============================================================
+
+CREATE TABLE bot_guild_config (
+    guild_id         BIGINT PRIMARY KEY,
+    is_active        BOOLEAN NOT NULL DEFAULT true,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_bot_guild_config_single_active
+    ON bot_guild_config (is_active)
+    WHERE is_active = true;
+
+CREATE TABLE bot_channel_binding (
+    guild_id         BIGINT NOT NULL REFERENCES bot_guild_config(guild_id) ON DELETE CASCADE,
+    binding_key      TEXT NOT NULL,
+    channel_id       BIGINT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (guild_id, binding_key)
+);
+
+CREATE TABLE bot_role_binding (
+    guild_id         BIGINT NOT NULL REFERENCES bot_guild_config(guild_id) ON DELETE CASCADE,
+    binding_key      TEXT NOT NULL,
+    role_id          BIGINT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (guild_id, binding_key)
+);
+
+-- ============================================================
 -- UPDATED_AT TRIGGER HELPER
 -- ============================================================
 
@@ -374,4 +407,16 @@ CREATE TRIGGER bot_syndication_source_updated_at
 
 CREATE TRIGGER bot_syndication_checkpoint_updated_at
     BEFORE UPDATE ON bot_syndication_checkpoint
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_guild_config_updated_at
+    BEFORE UPDATE ON bot_guild_config
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_channel_binding_updated_at
+    BEFORE UPDATE ON bot_channel_binding
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_role_binding_updated_at
+    BEFORE UPDATE ON bot_role_binding
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();

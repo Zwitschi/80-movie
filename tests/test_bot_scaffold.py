@@ -9,6 +9,7 @@ from bot.omo_bot.config import BotConfig, ConfigError
 from bot.omo_bot.main import build_runtime, run
 from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.repositories import (
+    InMemoryBotConfigRepository,
     InMemorySyndicationSourceRepository,
     PostgresSyndicationSourceRepository,
 )
@@ -196,6 +197,7 @@ def test_bot_run_starts_and_stops_runtime():
     assert snapshot["configured_channels"] == ["queue"]
     assert snapshot["syndication_repository_backend"] == "InMemorySyndicationSourceRepository"
     assert snapshot["last_started_at"] is not None
+    assert snapshot["polling_task_state"] == "stopped"
 
 
 def test_build_runtime_uses_in_memory_repository_without_database_url():
@@ -227,6 +229,99 @@ def test_build_runtime_uses_postgres_repository_with_database_url():
 
     assert isinstance(runtime.syndication_repository,
                       PostgresSyndicationSourceRepository)
+
+
+def test_build_runtime_uses_discord_delivery_sink_when_channels_configured():
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "OMO_DISCORD_CHANNEL_MAP": "announcements:200",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+        }
+    )
+
+    runtime = build_runtime(config, __import__(
+        "logging").getLogger("test-bot"))
+
+    assert runtime.health_snapshot(
+    )["syndication_delivery_backend"] == "DiscordApiSyndicationDeliverySink"
+
+
+def test_build_runtime_uses_repository_managed_config(monkeypatch):
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "OMO_DISCORD_GUILD_ID": "111",
+            "OMO_DISCORD_CHANNEL_MAP": "announcements:200",
+            "DATABASE_URL": "postgresql://user:pass@localhost/omo",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+        }
+    )
+    monkeypatch.setattr(
+        "bot.omo_bot.main.build_postgres_bot_config_repository",
+        lambda database_url: InMemoryBotConfigRepository(
+            guild_id=222,
+            channel_map={"queue": 300},
+            role_map={"moderator": 400},
+        ),
+    )
+
+    runtime = build_runtime(config, __import__(
+        "logging").getLogger("test-bot"))
+
+    snapshot = runtime.health_snapshot()
+    assert snapshot["guild_id"] == 222
+    assert snapshot["configured_channels"] == ["queue"]
+    assert snapshot["configured_roles"] == ["moderator"]
+
+
+def test_bot_runtime_polling_loop_updates_health_snapshot():
+    class RecordingPollingJob:
+        def __init__(self) -> None:
+            self.run_calls = 0
+
+        def run(self, *, now=None):
+            self.run_calls += 1
+
+            class Result:
+                polled_sources = ("youtube",)
+                delivered_items = 1
+                failed_sources = ()
+
+            return Result()
+
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+            "OMO_SYNDICATION_POLL_SECONDS": "60",
+        }
+    )
+    runtime = BotRuntime(
+        config=config,
+        logger=__import__("logging").getLogger("test-bot"),
+        syndication_repository=InMemorySyndicationSourceRepository(),
+        syndication_planning_service=SyndicationPlanningService(
+            config=config,
+            repository=InMemorySyndicationSourceRepository(),
+        ),
+        syndication_polling_job=RecordingPollingJob(),
+        syndication_delivery_sink=object(),
+    )
+
+    async def scenario():
+        await runtime.start()
+        await asyncio.sleep(0)
+        await runtime.close()
+
+    asyncio.run(scenario())
+
+    snapshot = runtime.health_snapshot()
+    assert snapshot["last_poll_started_at"] is not None
+    assert snapshot["last_poll_completed_at"] is not None
+    assert snapshot["last_poll_delivered_items"] == 1
+    assert snapshot["last_poll_sources"] == ["youtube"]
+    assert snapshot["last_poll_error"] is None
 
 
 def test_syndication_planning_service_creates_due_state_for_configured_source():

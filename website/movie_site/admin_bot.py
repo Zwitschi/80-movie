@@ -15,7 +15,10 @@ from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_set
 from bot.omo_bot.jobs import SyndicationPollingJob
 from bot.omo_bot.main import build_syndication_adapters
 from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.repositories import build_postgres_syndication_repository
+from bot.omo_bot.repositories import (
+    build_postgres_bot_config_repository,
+    build_postgres_syndication_repository,
+)
 from bot.omo_bot.services import NullSyndicationDeliverySink, SyndicationPlanningService
 
 from . import bot_operator_repo
@@ -327,8 +330,74 @@ def _build_bot_config_from_runtime_settings(settings: BotRuntimeSettings) -> Bot
         database_url=settings.database_url,
         syndication_sources=settings.syndication_sources,
         syndication_poll_seconds=settings.syndication_poll_seconds,
+        role_map=settings.role_map,
         log_level=settings.log_level,
     )
+
+
+def _build_bot_config_repository_from_settings(settings: BotRuntimeSettings):
+    if not settings.database_url:
+        raise ConfigError(
+            'Bot configuration management requires a configured database-backed repository.'
+        )
+    return build_postgres_bot_config_repository(settings.database_url)
+
+
+def _effective_runtime_settings(
+    settings: BotRuntimeSettings,
+) -> tuple[BotRuntimeSettings, str | None, bool]:
+    if not settings.database_url:
+        return settings, None, False
+
+    try:
+        managed = _build_bot_config_repository_from_settings(settings).load_runtime_config(
+            default_guild_id=settings.guild_id,
+            default_channel_map=settings.channel_map,
+            default_role_map=settings.role_map,
+        )
+        return (
+            BotRuntimeSettings(
+                discord_token=settings.discord_token,
+                guild_id=managed.guild_id,
+                channel_map=managed.channel_map,
+                database_url=settings.database_url,
+                syndication_sources=settings.syndication_sources,
+                syndication_poll_seconds=settings.syndication_poll_seconds,
+                role_map=managed.role_map,
+                log_level=settings.log_level,
+            ),
+            None,
+            managed.managed_by_repository,
+        )
+    except Exception as exc:
+        return settings, str(exc), False
+
+
+def _config_write_supported(settings: BotRuntimeSettings) -> bool:
+    return bool(settings.database_url and _operator_can('syndication.write'))
+
+
+def _request_data() -> dict[str, object]:
+    if request.is_json:
+        return cast(dict[str, object], request.get_json(silent=True) or {})
+    return {key: value for key, value in request.form.items()}
+
+
+def _parse_binding_key(raw_value: object, field_name: str = 'binding_key') -> str:
+    binding_key = str(raw_value or '').strip()
+    if not binding_key:
+        raise ConfigError(f'{field_name} is required.')
+    return binding_key
+
+
+def _parse_required_int(raw_value: object, field_name: str) -> int:
+    text = str(raw_value or '').strip()
+    if not text:
+        raise ConfigError(f'{field_name} is required.')
+    try:
+        return int(text)
+    except ValueError as exc:
+        raise ConfigError(f'{field_name} must be an integer.') from exc
 
 
 def _build_syndication_repository_from_settings(settings: BotRuntimeSettings):
@@ -373,6 +442,10 @@ def _page_config_scope_error() -> Any:
 
 def _page_config_error() -> Any:
     return redirect(url_for('admin_bot.config_page', error='invalid-syndication-config'))
+
+
+def _page_config_binding_error() -> Any:
+    return redirect(url_for('admin_bot.config_page', error='invalid-config-binding'))
 
 
 def _page_commands_scope_error() -> Any:
@@ -427,7 +500,7 @@ def build_syndication_snapshot() -> dict[str, object]:
     now = _utcnow()
 
     try:
-        settings = _load_bot_runtime_settings()
+        settings = _effective_runtime_settings(_load_bot_runtime_settings())[0]
     except ConfigError as exc:
         return {
             'status': 'invalid_config',
@@ -506,10 +579,13 @@ def build_syndication_snapshot() -> dict[str, object]:
 
 
 def build_bot_configuration_snapshot() -> dict[str, object]:
+    raw_settings = _load_bot_runtime_settings()
+    effective_settings, config_repository_error, managed_by_repository = _effective_runtime_settings(
+        raw_settings)
     syndication = build_syndication_snapshot()
     bot_runtime = cast(dict[str, object], syndication['bot_runtime'])
     return {
-        'status': syndication['status'],
+        'status': 'degraded' if config_repository_error else syndication['status'],
         'generated_at': syndication['generated_at'],
         'sources': [
             {
@@ -530,21 +606,45 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
         ],
         'channel_bindings': [
             {
-                **binding,
-                'managed_by': 'environment',
-                'editable': False,
+                'binding_key': binding_key,
+                'channel_id': channel_id,
+                'managed_by': 'repository' if managed_by_repository else 'environment',
+                'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
+                'delete_api': url_for('admin_bot.delete_channel_binding_api', binding_key=binding_key),
+                'delete_page': url_for('admin_bot.delete_channel_binding_page_action', binding_key=binding_key),
             }
-            for binding in cast(list[dict[str, object]], syndication['channel_bindings'])
+            for binding_key, channel_id in sorted(effective_settings.channel_map.items())
         ],
+        'role_bindings': [
+            {
+                'binding_key': binding_key,
+                'role_id': role_id,
+                'managed_by': 'repository' if managed_by_repository else 'runtime-default',
+                'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
+                'delete_api': url_for('admin_bot.delete_role_binding_api', binding_key=binding_key),
+                'delete_page': url_for('admin_bot.delete_role_binding_page_action', binding_key=binding_key),
+            }
+            for binding_key, role_id in sorted(effective_settings.role_map.items())
+        ],
+        'guild_config': {
+            'guild_id': effective_settings.guild_id,
+            'managed_by': 'repository' if managed_by_repository else 'environment',
+            'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
+            'set_api': url_for('admin_bot.set_active_guild_api'),
+            'set_page': url_for('admin_bot.set_active_guild_page_action'),
+        },
         'bot_runtime': bot_runtime,
         'permissions': {
             'can_manage_sources': bool(
                 bot_runtime['manual_actions_supported']
                 and bot_runtime['operator_can_write']
             ),
-            'can_manage_channel_bindings': False,
+            'can_manage_channel_bindings': bool(managed_by_repository and _config_write_supported(effective_settings)),
+            'can_manage_role_bindings': bool(managed_by_repository and _config_write_supported(effective_settings)),
+            'can_manage_guild_config': bool(managed_by_repository and _config_write_supported(effective_settings)),
             'operator_can_write': bot_runtime['operator_can_write'],
         },
+        'repository_error': config_repository_error,
     }
 
 
@@ -566,8 +666,70 @@ def build_bot_commands_snapshot() -> dict[str, object]:
         ],
         'sources': config_snapshot['sources'],
         'channel_bindings': config_snapshot['channel_bindings'],
+        'role_bindings': config_snapshot['role_bindings'],
         'permissions': config_snapshot['permissions'],
     }
+
+
+def _set_active_guild_id(guild_id: int) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    repository = _build_bot_config_repository_from_settings(settings)
+    repository.set_active_guild_id(guild_id)
+    return cast(dict[str, object], build_bot_configuration_snapshot()['guild_config'])
+
+
+def _upsert_channel_binding(binding_key: str, channel_id: int) -> dict[str, object]:
+    settings = _effective_runtime_settings(_load_bot_runtime_settings())[0]
+    if settings.guild_id is None:
+        raise ConfigError(
+            'An active guild id is required before channel bindings can be managed.')
+    repository = _build_bot_config_repository_from_settings(settings)
+    repository.upsert_channel_binding(
+        guild_id=settings.guild_id,
+        binding_key=binding_key,
+        channel_id=channel_id,
+    )
+    for binding in cast(list[dict[str, object]], build_bot_configuration_snapshot()['channel_bindings']):
+        if binding['binding_key'] == binding_key:
+            return binding
+    raise KeyError(binding_key)
+
+
+def _delete_channel_binding(binding_key: str) -> None:
+    settings = _effective_runtime_settings(_load_bot_runtime_settings())[0]
+    if settings.guild_id is None:
+        raise ConfigError(
+            'An active guild id is required before channel bindings can be managed.')
+    repository = _build_bot_config_repository_from_settings(settings)
+    if not repository.delete_channel_binding(guild_id=settings.guild_id, binding_key=binding_key):
+        raise KeyError(binding_key)
+
+
+def _upsert_role_binding(binding_key: str, role_id: int) -> dict[str, object]:
+    settings = _effective_runtime_settings(_load_bot_runtime_settings())[0]
+    if settings.guild_id is None:
+        raise ConfigError(
+            'An active guild id is required before role bindings can be managed.')
+    repository = _build_bot_config_repository_from_settings(settings)
+    repository.upsert_role_binding(
+        guild_id=settings.guild_id,
+        binding_key=binding_key,
+        role_id=role_id,
+    )
+    for binding in cast(list[dict[str, object]], build_bot_configuration_snapshot()['role_bindings']):
+        if binding['binding_key'] == binding_key:
+            return binding
+    raise KeyError(binding_key)
+
+
+def _delete_role_binding(binding_key: str) -> None:
+    settings = _effective_runtime_settings(_load_bot_runtime_settings())[0]
+    if settings.guild_id is None:
+        raise ConfigError(
+            'An active guild id is required before role bindings can be managed.')
+    repository = _build_bot_config_repository_from_settings(settings)
+    if not repository.delete_role_binding(guild_id=settings.guild_id, binding_key=binding_key):
+        raise KeyError(binding_key)
 
 
 def _run_manual_syndication_retry(source_key: str) -> tuple[dict[str, object], dict[str, object]]:
@@ -630,7 +792,8 @@ def _set_syndication_source_enabled(source_key: str, enabled: bool) -> dict[str,
         raise KeyError(source_key)
 
     repository = _build_syndication_repository_from_settings(settings)
-    state = repository.get_by_source_key(source_key) or _default_syndication_state(source_key)
+    state = repository.get_by_source_key(
+        source_key) or _default_syndication_state(source_key)
     updated_state = SyndicationSourceState(
         source_key=state.source_key,
         enabled=enabled,
@@ -645,7 +808,8 @@ def _set_syndication_source_enabled(source_key: str, enabled: bool) -> dict[str,
         now=_utcnow(),
         poll_interval_seconds=settings.syndication_poll_seconds,
         can_write=_operator_can('syndication.write'),
-        manual_actions_supported=_manual_syndication_actions_supported(settings),
+        manual_actions_supported=_manual_syndication_actions_supported(
+            settings),
     )
 
 
@@ -659,14 +823,16 @@ def _run_manual_syndication_poll_all() -> dict[str, object]:
     for source_key in settings.syndication_sources:
         result = polling_job.run_source_key(source_key, now=_utcnow())
         total_delivered_items += result.delivered_items
-        state = repository.get_by_source_key(source_key) or _default_syndication_state(source_key)
+        state = repository.get_by_source_key(
+            source_key) or _default_syndication_state(source_key)
         source_results.append(
             _serialize_syndication_state(
                 state,
                 now=_utcnow(),
                 poll_interval_seconds=settings.syndication_poll_seconds,
                 can_write=_operator_can('syndication.write'),
-                manual_actions_supported=_manual_syndication_actions_supported(settings),
+                manual_actions_supported=_manual_syndication_actions_supported(
+                    settings),
             )
         )
 
@@ -997,6 +1163,162 @@ def syndication_api():
 @admin_bot_blueprint.get('/api/config')
 def config_api():
     return jsonify({'data': build_bot_configuration_snapshot()})
+
+
+@admin_bot_blueprint.post('/api/config/guild')
+def set_active_guild_api():
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        guild = _set_active_guild_id(_parse_required_int(
+            payload.get('guild_id'), 'guild_id'))
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+
+    return jsonify({'data': guild})
+
+
+@admin_bot_blueprint.post('/config/guild')
+def set_active_guild_page_action():
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _set_active_guild_id(_parse_required_int(
+            request.form.get('guild_id'), 'guild_id'))
+    except ConfigError:
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='guild-updated'))
+
+
+@admin_bot_blueprint.post('/api/config/channels')
+def upsert_channel_binding_api():
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        binding = _upsert_channel_binding(
+            _parse_binding_key(payload.get('binding_key')),
+            _parse_required_int(payload.get('channel_id'), 'channel_id'),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+
+    return jsonify({'data': binding})
+
+
+@admin_bot_blueprint.post('/config/channels')
+def upsert_channel_binding_page_action():
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _upsert_channel_binding(
+            _parse_binding_key(request.form.get('binding_key')),
+            _parse_required_int(request.form.get('channel_id'), 'channel_id'),
+        )
+    except ConfigError:
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='channel-binding-saved'))
+
+
+@admin_bot_blueprint.post('/api/config/channels/<binding_key>/delete')
+def delete_channel_binding_api(binding_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        _delete_channel_binding(binding_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'binding_not_found', 'message': 'Channel binding was not found.'}}), 404
+
+    return jsonify({'data': {'binding_key': binding_key, 'deleted': True}})
+
+
+@admin_bot_blueprint.post('/config/channels/<binding_key>/delete')
+def delete_channel_binding_page_action(binding_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _delete_channel_binding(binding_key)
+    except (ConfigError, KeyError):
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='channel-binding-deleted'))
+
+
+@admin_bot_blueprint.post('/api/config/roles')
+def upsert_role_binding_api():
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        binding = _upsert_role_binding(
+            _parse_binding_key(payload.get('binding_key')),
+            _parse_required_int(payload.get('role_id'), 'role_id'),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+
+    return jsonify({'data': binding})
+
+
+@admin_bot_blueprint.post('/config/roles')
+def upsert_role_binding_page_action():
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _upsert_role_binding(
+            _parse_binding_key(request.form.get('binding_key')),
+            _parse_required_int(request.form.get('role_id'), 'role_id'),
+        )
+    except ConfigError:
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='role-binding-saved'))
+
+
+@admin_bot_blueprint.post('/api/config/roles/<binding_key>/delete')
+def delete_role_binding_api(binding_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        _delete_role_binding(binding_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'binding_not_found', 'message': 'Role binding was not found.'}}), 404
+
+    return jsonify({'data': {'binding_key': binding_key, 'deleted': True}})
+
+
+@admin_bot_blueprint.post('/config/roles/<binding_key>/delete')
+def delete_role_binding_page_action(binding_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _delete_role_binding(binding_key)
+    except (ConfigError, KeyError):
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='role-binding-deleted'))
 
 
 @admin_bot_blueprint.get('/api/commands')
