@@ -8,9 +8,9 @@ This project contains materials and code for the "Open Mic Odyssey" movie projec
 .github/           # GitHub-specific files (workflows, issue templates, etc.)
 tests/             # Test suite for the project
 website/           # Flask web application for the movie website
+  database/        # PostgreSQL schema and migration plan
   static/          # Static assets (CSS, JS, images)
   templates/       # Jinja2 templates for rendering HTML pages
-  data/            # JSON files containing content data for the site
   movie_site/      # Flask app modules (views, models, admin, etc.)
   README.md        # Documentation for the website module
 .gitignore         # Git ignore rules
@@ -32,6 +32,20 @@ The web application lives in [website/README.md](website/README.md), which docum
 - secure admin dashboard and content management
 - JSON-LD schema generation
 - content, template, CSS, and background customization
+
+Environment variables for the website, embedded control room, and planned bot worker are documented in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
+
+Discord bot worker startup now has a direct module command from the repo root:
+
+```powershell
+.venv\Scripts\python.exe -m bot.omo_bot
+```
+
+Worker-specific local run notes live in [bot/README.md](bot/README.md).
+
+Testing strategy for the website, control room, and bot scaffold is documented in [docs/TESTING.md](docs/TESTING.md).
+
+Deployment guidance for the website, embedded control room, and planned split-service bot topology is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 The website will include the following content:
 
@@ -58,59 +72,6 @@ A stupid web game lol
 Something that says all the content you get from patreon like the main movie, the texas podcast, the just driving footage and music cut, and more. Maybe podcasts recorded on discord or something.
 ```
 
-## Pella Zip Export
-
-To package the deployable contents of `website/` into a zip file for Pella hosting, run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File website\export_pella_zip.ps1 -Force
-```
-
-By default this writes `website/build/website-pella.zip` and places the website contents at the root of the archive.
-
-The packaging step excludes local-only artifacts such as `.env`, `dist/`, `build/`, `__pycache__/`, and existing zip files.
-
-## Static Export
-
-Generate a deployable static bundle in `website/dist/` from the Flask app templates and data:
-
-```powershell
-f:\Documents\02-Projects\80-movie\.venv\Scripts\python.exe website\export_static.py
-```
-
-This command renders the public routes into HTML files, copies static assets into flat root-level directories under `website/dist/` such as `website/dist/css/`, `website/dist/images/`, `website/dist/js/`, and `website/dist/video/`, rewrites Flask-style asset and route links for static hosting, validates HTML structure, and validates JSON-LD blocks as JSON with a schema.org envelope check.
-
-The repository keeps `website/generate_static_site.py` as the implementation module behind this command. `website/export_static.py` is the stable entrypoint for local use and CI.
-
-The export also writes `website/dist/robots.txt` with crawler access enabled:
-
-```text
-User-agent: *
-Allow: /
-```
-
-## Static Export Deployment
-
-GitHub Actions can export and deploy the static bundle to the dedicated Pages repository.
-
-Workflow:
-
-- `.github/workflows/deploy-static-export.yml`
-- triggers on push to `main` and on manual dispatch
-- runs `python website/export_static.py`
-- writes `build/robots.txt` as part of the generated bundle and allows crawlers by default
-- stages the generated `website/dist/` contents into the destination repository folder `build/` in `WEBSITE_DEPLOY_REPOSITORY`
-- pushes directly to `WEBSITE_DEPLOY_BRANCH` and defaults to `build` if the variable is unset
-
-Required GitHub configuration in this source repository:
-
-- Secret: `WEBSITE_DEPLOY_TOKEN`
-  token with push permission to the destination Pages repository
-- Variable: `WEBSITE_DEPLOY_REPOSITORY`
-  destination repository in `owner/name` format, for example `Zwitschi/openmicodyssey-website`
-- Optional variable: `WEBSITE_DEPLOY_BRANCH`
-  destination branch; defaults to `build`
-
 ## Map Easter Egg
 
 A hidden /map page displays a Mapbox GL JS route visualization of the film's road trip, built from TeslaCam GPS data.
@@ -123,12 +84,14 @@ The map is not listed in the site navigation. A hidden "Route Map" link in the f
 
 The map requires a Mapbox public access token:
 
-1. Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
-2. Add it to website/.env:
-   ```
-   MAPBOX_ACCESS_TOKEN=pk.your_token_here
-   ```
-3. For the static export deployment, add a MAPBOX_ACCESS_TOKEN secret to the GitHub repository.
+- Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
+- Add it to `website/.env`:
+
+```dotenv
+MAPBOX_ACCESS_TOKEN=pk.your_token_here
+```
+
+- For the static export deployment, add a `MAPBOX_ACCESS_TOKEN` secret to the GitHub repository.
 
 ### Route data
 
@@ -137,6 +100,8 @@ Route points are stored in website/static/data/map_data.json (649 GPS coordinate
 ## Coolify Deployment
 
 Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instructions/DEPLOYMENT_COOLIFY.md](.github/instructions/DEPLOYMENT_COOLIFY.md).
+
+For the broader split-service deployment view, including the embedded control room and planned bot worker, use [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Build settings
 
@@ -147,21 +112,24 @@ Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instr
 | Start command  | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` |
 | Port           | `8000`                                             |
 
-### Required environment variables
+### Environment variables
 
-| Variable              | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| `SECRET_KEY`          | Long random string — never use the dev default in production |
-| `ADMIN_PASSWORD_HASH` | Werkzeug hash of the admin UI password                       |
-| `SITE_URL`            | Canonical public URL, no trailing slash                      |
+The full runtime matrix lives in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
 
-### Optional environment variables
+Minimum website deployment set:
 
-| Variable              | Description                                                   |
-| --------------------- | ------------------------------------------------------------- |
-| `ADMIN_USERNAME`      | Admin UI login username (default: `admin`)                    |
-| `MAPBOX_ACCESS_TOKEN` | Required only for the `/map` easter-egg route                 |
-| `CURRENT_YEAR`        | Override footer year; auto-detected from system time if unset |
+- `SITE_URL`
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `ADMIN_PASSWORD_HASH`
+
+Common optional website values:
+
+- `ADMIN_USERNAME`
+- `MAPBOX_ACCESS_TOKEN`
+- `CURRENT_YEAR`
+
+If you enable the embedded control room or the future bot worker, use the Discord and bot-specific variables from [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) instead of extending this README with a second matrix.
 
 Generate a `SECRET_KEY`:
 

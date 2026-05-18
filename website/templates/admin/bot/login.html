@@ -1,0 +1,27 @@
+{% extends 'admin/bot/_bot_base.html' %} {% block admin_title %}Bot Operator
+Login{% endblock %} {% block bot_content %}
+<section>
+  <h2>Operator Login</h2>
+  <p>
+    Sign in with Discord to access the control room. This operator session stays
+    separate from the editorial CMS login and only grants access to
+    `/admin/bot`.
+  </p>
+
+  {% if error %}
+  <p><strong>{{ error }}</strong></p>
+  {% endif %} {% if oauth_ready %}
+  <p>
+    <a href="{{ url_for('admin_bot.oauth_start', next=next_url) }}"
+      >Continue with Discord</a
+    >
+  </p>
+  {% else %}
+  <p>
+    Discord OAuth is not configured yet. Set the bot operator client id, client
+    secret, redirect URI, and allowlisted Discord user ids before enabling
+    login.
+  </p>
+  {% endif %}
+</section>
+{% endblock %}

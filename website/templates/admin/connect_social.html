@@ -1,0 +1,90 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Social Links{%
+endblock %} {% block admin_content %} {% if save_success %}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %}
+
+<p>
+  Manage global social media links. Switch to
+  <a href="{{ url_for('admin.edit_connect_supporters') }}">Supporter Links</a>
+  or
+  <a href="{{ url_for('admin.edit_connect_patreon') }}"
+    >Patreon Benefits &amp; Tiers</a
+  >.
+</p>
+
+<section>
+  <h2>Social Links</h2>
+  {% if social %}
+  <table>
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>URL</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in social %}
+      <tr>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_connect_social') }}">
+            <input type="hidden" name="action" value="update_social" />
+            <input type="hidden" name="social_index" value="{{ loop.index0 }}" />
+            <input type="text" name="social_label" value="{{ item.label }}" required />
+        </td>
+        <td>
+            <input type="url" name="social_url" value="{{ item.url }}" />
+        </td>
+        <td>
+            <textarea name="social_description" rows="2">{{ item.description }}</textarea>
+        </td>
+        <td>
+            <button type="submit">Save</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_social') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_up_social" />
+            <input type="hidden" name="social_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_social') }}" style="display:inline;">
+            <input type="hidden" name="action" value="move_down_social" />
+            <input type="hidden" name="social_index" value="{{ loop.index0 }}" />
+            <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
+          </form>
+
+          <form method="post" action="{{ url_for('admin.edit_connect_social') }}" style="display:inline;">
+            <input type="hidden" name="action" value="remove_social" />
+            <input type="hidden" name="social_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No social links.</p>
+  {% endif %}
+
+  <h3>Add Social Link</h3>
+  <form method="post" action="{{ url_for('admin.edit_connect_social') }}">
+    <input type="hidden" name="action" value="add_social" />
+    <label for="social_label">Label <span aria-hidden="true">*</span></label>
+    <input id="social_label" name="social_label" type="text" required />
+    <label for="social_url">URL</label>
+    <input id="social_url" name="social_url" type="url" />
+    <label for="social_description">Description</label>
+    <textarea
+      id="social_description"
+      name="social_description"
+      rows="2"
+    ></textarea>
+    <button type="submit">Add Social Link</button>
+  </form>
+</section>
+{% endblock %}

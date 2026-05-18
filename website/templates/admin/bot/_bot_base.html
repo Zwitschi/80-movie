@@ -1,0 +1,25 @@
+{% extends 'admin/_admin_base.html' %} {% block title %}Bot Ops | {{ super()
+}}{% endblock %} {% block admin_title %}Bot Control Room{% endblock %} {% block
+admin_content %}
+<section>
+  <p>
+    Embedded operator surface for bot health and future queue, mileage,
+    syndication, sync, and audit workflows.
+  </p>
+  <nav aria-label="Bot control room sections">
+    <ul>
+      <li><a href="{{ url_for('admin_bot.overview') }}">Overview</a></li>
+      <li><a href="{{ url_for('admin_bot.health_page') }}">Health</a></li>
+      <li><a href="{{ url_for('admin_bot.config_page') }}">Config</a></li>
+      <li><a href="{{ url_for('admin_bot.commands_page') }}">Commands</a></li>
+      <li>
+        <a href="{{ url_for('admin_bot.syndication_page') }}">Syndication</a>
+      </li>
+      <li><a href="{{ url_for('admin_bot.operators_page') }}">Operators</a></li>
+    </ul>
+  </nav>
+  <form method="post" action="{{ url_for('admin_bot.logout') }}">
+    <button type="submit">Sign out</button>
+  </form>
+</section>
+{% block bot_content %}{% endblock %} {% endblock %}

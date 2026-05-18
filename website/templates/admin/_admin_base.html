@@ -71,6 +71,28 @@
                 >Metadata &amp; Copy</a
               >
             </li>
+            <li><span class="nav-section-label">Connect</span></li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_connect_social') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_connect_social' else '' }}"
+                >Social Links</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_connect_supporters') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_connect_supporters' else '' }}"
+                >Supporter Links</a
+              >
+            </li>
+            <li>
+              <a
+                href="{{ url_for('admin.edit_connect_patreon') }}"
+                class="{{ 'active' if request.endpoint == 'admin.edit_connect_patreon' else '' }}"
+                >Patreon Benefits &amp; Tiers</a
+              >
+            </li>
             <li><span class="nav-section-label">Screenings</span></li>
             <li>
               <a
@@ -102,14 +124,14 @@
                 >FAQ</a
               >
             </li>
+            <li><span class="nav-section-label">System</span></li>
             <li>
               <a
-                href="{{ url_for('admin.edit_connect') }}"
-                class="{{ 'active' if request.endpoint == 'admin.edit_connect' else '' }}"
-                >Social &amp; Connect</a
+                href="{{ url_for('admin_bot.overview') }}"
+                class="{{ 'active' if request.endpoint and request.endpoint.startswith('admin_bot.') else '' }}"
+                >Discord Bot</a
               >
             </li>
-            <li><span class="nav-section-label">System</span></li>
             <li>
               <a href="{{ url_for('admin.logout') }}">Logout</a>
             </li>
