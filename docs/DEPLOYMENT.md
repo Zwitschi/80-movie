@@ -19,6 +19,34 @@ Use this guide to keep deployment planning aligned with the code that exists now
 | Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot`                            | none                | Long-running worker, no public HTTP surface documented yet |
 | Extracted control-room UI/API | Future only          | not implemented            | not implemented                                    | not implemented     | Keep as planned topology, not current runtime fact         |
 
+## Deployment path map
+
+Use this section when choosing the deploy base directory or tracing an entrypoint back to code.
+
+### Website paths
+
+| Deploy shape                        | Base directory | Startup target                                             | Code path                                            | Notes                                                |
+| ----------------------------------- | -------------- | ---------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| Current repo, website subdir deploy | `website/`     | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`         | `website/app.py` -> `website/movie_site/__init__.py` | Current documented Coolify path                      |
+| Current repo, repo-root deploy      | `/`            | `gunicorn website.app:app --bind 0.0.0.0:8000 --workers 2` | `website/app.py` -> `website/movie_site/__init__.py` | Use this only if the platform deploys from repo root |
+| Mirror repo rooted at Flask app     | `/`            | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`         | `app.py` -> `movie_site/__init__.py`                 | Matches the mirror-repo layout                       |
+
+HTTP surface shipped by the website process today:
+
+- public site under `/`
+- editorial admin under `/admin`
+- embedded bot control room under `/admin/bot`
+- Discord OAuth callback alias under `/oauth/discord/callback`
+
+### Bot worker paths
+
+| Deploy shape               | Base directory | Startup target               | Code path                                          | Notes                                   |
+| -------------------------- | -------------- | ---------------------------- | -------------------------------------------------- | --------------------------------------- |
+| Current repo worker deploy | `/`            | `python -m bot.omo_bot`      | `bot/omo_bot/__main__.py` -> `bot/omo_bot/main.py` | Preferred worker command                |
+| Direct module fallback     | `/`            | `python -m bot.omo_bot.main` | `bot/omo_bot/main.py`                              | Backup command for local debugging only |
+
+The bot worker does not expose a public HTTP route today. Deploy it as a background worker process only.
+
 ## Recommended topology
 
 ### Phase 1: current recommended deployment
@@ -76,15 +104,18 @@ The current website deployment path remains Coolify + Nixpacks.
 
 ### Coolify resource settings
 
-| Setting                | Value                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------ |
-| Resource type          | Application                                                                                      |
-| Base directory         | `website` when deploying from this repo, or `/` when using a mirror repo rooted at the Flask app |
-| Build pack             | Nixpacks                                                                                         |
-| Build command          | leave empty                                                                                      |
-| Start command          | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`                                               |
-| Port                   | `8000`                                                                                           |
-| Suggested health check | `/robots.txt`                                                                                    |
+- Resource type: `Application`
+- Base directory: `website` or `/`
+- Build pack: `Nixpacks`
+- Build command: leave empty
+- Port: `8000`
+- Suggested health check: `/robots.txt`
+
+Path-specific command mapping:
+
+- Base directory `website`: `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`
+- Mirror repo rooted at Flask app: `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`
+- Current repo deployed from repo root: `gunicorn website.app:app --bind 0.0.0.0:8000 --workers 2`
 
 ### Website environment
 
@@ -124,6 +155,7 @@ Operational implications:
 Suggested post-deploy checks:
 
 - `/admin/bot/login` renders
+- `/oauth/discord/callback` is routed by the website process at the deployed domain
 - `/admin/bot/api/health` returns the expected shape when authenticated or the expected auth error when not
 - Discord OAuth callback configuration matches the deployed domain
 
