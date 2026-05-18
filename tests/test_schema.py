@@ -2,17 +2,11 @@ import json
 import pytest
 from website.movie_site.schema import build_movie_schema_json, build_org_social_schema_json
 from website.movie_site.schema_parts.graph import build_movie_schema_graph
-from website.movie_site.schema_parts.social import build_org_social_schema_json as build_org_social_schema_json_for_site
 from website.movie_site.movie_data import get_movie_data
 
 
 class TestSchemaBuilder:
     """Test schema.org JSON-LD generation."""
-
-    @pytest.fixture
-    def sample_movie_data(self):
-        """Get sample movie data for testing."""
-        return get_movie_data()
 
     @pytest.fixture
     def app_context(self):
@@ -22,6 +16,11 @@ class TestSchemaBuilder:
         app.config['TESTING'] = True
         with app.app_context():
             yield app
+
+    @pytest.fixture
+    def sample_movie_data(self, app_context):
+        """Get sample movie data for testing."""
+        return get_movie_data()
 
     def test_build_movie_schema_graph_structure(self, sample_movie_data, app_context):
         """Test that movie schema graph has expected structure."""

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+jobs:
+    website-tests:
+        name: Website tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+                  cache: "pip"
+                  cache-dependency-path: |
+                      requirements.txt
+                      website/requirements.txt
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install -r requirements.txt
+
+            - name: Run website test slice
+              run: |
+                  python -m pytest \
+                    tests/test_app.py \
+                    tests/test_schema.py
+
+    bot-scaffold-tests:
+        name: Bot scaffold tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+                  cache: "pip"
+                  cache-dependency-path: |
+                      requirements.txt
+                      website/requirements.txt
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install -r requirements.txt
+
+            - name: Run bot scaffold test slice
+              run: python -m pytest tests/test_bot_scaffold.py
+
+    control-room-tests:
+        name: Control-room tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout source
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+                  cache: "pip"
+                  cache-dependency-path: |
+                      requirements.txt
+                      website/requirements.txt
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  python -m pip install -r requirements.txt
+
+            - name: Run control-room test slice
+              run: python -m pytest tests/test_admin_bot.py

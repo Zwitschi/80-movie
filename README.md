@@ -33,6 +33,20 @@ The web application lives in [website/README.md](website/README.md), which docum
 - JSON-LD schema generation
 - content, template, CSS, and background customization
 
+Environment variables for the website, embedded control room, and planned bot worker are documented in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
+
+Discord bot worker startup now has a direct module command from the repo root:
+
+```powershell
+.venv\Scripts\python.exe -m bot.omo_bot
+```
+
+Worker-specific local run notes live in [bot/README.md](bot/README.md).
+
+Testing strategy for the website, control room, and bot scaffold is documented in [docs/TESTING.md](docs/TESTING.md).
+
+Deployment guidance for the website, embedded control room, and planned split-service bot topology is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 The website will include the following content:
 
 > from [Google Docs](https://docs.google.com/document/d/1T9QmXg7GLwMNTnOL72V16Ry0WEPrJj3ahbCa4TjS6HQ/edit?tab=t.0#heading=h.flei6gybekyw)
@@ -70,12 +84,14 @@ The map is not listed in the site navigation. A hidden "Route Map" link in the f
 
 The map requires a Mapbox public access token:
 
-1. Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
-2. Add it to website/.env:
-   ```
-   MAPBOX_ACCESS_TOKEN=pk.your_token_here
-   ```
-3. For the static export deployment, add a MAPBOX_ACCESS_TOKEN secret to the GitHub repository.
+- Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
+- Add it to `website/.env`:
+
+```dotenv
+MAPBOX_ACCESS_TOKEN=pk.your_token_here
+```
+
+- For the static export deployment, add a `MAPBOX_ACCESS_TOKEN` secret to the GitHub repository.
 
 ### Route data
 
@@ -84,6 +100,8 @@ Route points are stored in website/static/data/map_data.json (649 GPS coordinate
 ## Coolify Deployment
 
 Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instructions/DEPLOYMENT_COOLIFY.md](.github/instructions/DEPLOYMENT_COOLIFY.md).
+
+For the broader split-service deployment view, including the embedded control room and planned bot worker, use [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ### Build settings
 
@@ -94,21 +112,24 @@ Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instr
 | Start command  | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` |
 | Port           | `8000`                                             |
 
-### Required environment variables
+### Environment variables
 
-| Variable              | Description                                                  |
-| --------------------- | ------------------------------------------------------------ |
-| `SECRET_KEY`          | Long random string — never use the dev default in production |
-| `ADMIN_PASSWORD_HASH` | Werkzeug hash of the admin UI password                       |
-| `SITE_URL`            | Canonical public URL, no trailing slash                      |
+The full runtime matrix lives in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
 
-### Optional environment variables
+Minimum website deployment set:
 
-| Variable              | Description                                                   |
-| --------------------- | ------------------------------------------------------------- |
-| `ADMIN_USERNAME`      | Admin UI login username (default: `admin`)                    |
-| `MAPBOX_ACCESS_TOKEN` | Required only for the `/map` easter-egg route                 |
-| `CURRENT_YEAR`        | Override footer year; auto-detected from system time if unset |
+- `SITE_URL`
+- `DATABASE_URL`
+- `SECRET_KEY`
+- `ADMIN_PASSWORD_HASH`
+
+Common optional website values:
+
+- `ADMIN_USERNAME`
+- `MAPBOX_ACCESS_TOKEN`
+- `CURRENT_YEAR`
+
+If you enable the embedded control room or the future bot worker, use the Discord and bot-specific variables from [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) instead of extending this README with a second matrix.
 
 Generate a `SECRET_KEY`:
 

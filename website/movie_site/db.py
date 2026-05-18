@@ -5,14 +5,19 @@ from psycopg2.extras import RealDictCursor
 from flask import current_app, g
 
 
+DB_POOL_EXTENSION_KEY = 'movie_site.db_pool'
+
+
 def get_db_pool():
-    if 'db_pool' not in g:
-        g.db_pool = SimpleConnectionPool(
+    pool = current_app.extensions.get(DB_POOL_EXTENSION_KEY)
+    if pool is None:
+        pool = SimpleConnectionPool(
             minconn=1,
             maxconn=10,
             dsn=current_app.config['DATABASE_URL']
         )
-    return g.db_pool
+        current_app.extensions[DB_POOL_EXTENSION_KEY] = pool
+    return pool
 
 
 def get_conn():
@@ -28,7 +33,11 @@ def get_dict_cursor():
 def close_conn(e=None):
     db_conn = g.pop('db_conn', None)
     if db_conn is not None:
-        get_db_pool().putconn(db_conn)
+        db_pool = current_app.extensions.get(DB_POOL_EXTENSION_KEY)
+        if db_pool is not None:
+            db_pool.putconn(db_conn)
+        else:
+            db_conn.close()
 
 
 def init_app(app):

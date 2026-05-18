@@ -1,0 +1,69 @@
+{% extends 'admin/bot/_bot_base.html' %} {% block admin_title %}Bot Operators{%
+endblock %} {% block bot_content %}
+<section>
+  <h2>Operators</h2>
+  <p>
+    Control-room access is sourced from bot operator records when available.
+  </p>
+  {% if save_success %}
+  <p>Operator settings saved.</p>
+  {% endif %} {% if error == 'invalid-operator-scopes' %}
+  <p>At least one valid operator scope is required.</p>
+  {% elif error == 'operator-not-found' %}
+  <p>That operator record no longer exists.</p>
+  {% endif %} {% if operators %}
+  <ul>
+    {% for operator in operators %}
+    <li>
+      <strong
+        >{{ operator.global_name or operator.username or
+        operator.discord_user_id }}</strong
+      >
+      <br />
+      Discord ID: {{ operator.discord_user_id }}
+      <br />
+      Active: {{ 'yes' if operator.is_active else 'no' }}
+      <br />
+      Scopes: {{ operator.scopes|join(', ') if operator.scopes else 'none' }} {%
+      if operator.last_login_at %}
+      <br />
+      Last login: {{ operator.last_login_at }} {% endif %}
+      <div>
+        {% if operator.is_active %}
+        <form
+          method="post"
+          action="{{ url_for('admin_bot.disable_operator_page_action', user_id=operator.discord_user_id) }}"
+        >
+          <button type="submit">Disable</button>
+        </form>
+        {% else %}
+        <form
+          method="post"
+          action="{{ url_for('admin_bot.enable_operator_page_action', user_id=operator.discord_user_id) }}"
+        >
+          <button type="submit">Enable</button>
+        </form>
+        {% endif %}
+        <form
+          method="post"
+          action="{{ url_for('admin_bot.update_operator_scopes_page_action', user_id=operator.discord_user_id) }}"
+        >
+          <label>
+            Scopes
+            <input
+              type="text"
+              name="scopes"
+              value="{{ operator.scopes|join(', ') if operator.scopes else '' }}"
+            />
+          </label>
+          <button type="submit">Update scopes</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No bot operator records found yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
