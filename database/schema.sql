@@ -305,6 +305,25 @@ CREATE INDEX idx_credit_movie ON movie_credit(movie_id);
 CREATE INDEX idx_credit_person ON movie_credit(person_id);
 
 -- ============================================================
+-- BOT OPERATOR ACCESS
+-- ============================================================
+
+CREATE TABLE bot_operator (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    discord_user_id     TEXT NOT NULL UNIQUE,
+    username            TEXT,
+    global_name         TEXT,
+    avatar_url          TEXT,
+    scopes              TEXT[] NOT NULL DEFAULT ARRAY['ops.read']::TEXT[],
+    is_active           BOOLEAN NOT NULL DEFAULT true,
+    last_login_at       TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bot_operator_active ON bot_operator(is_active);
+
+-- ============================================================
 -- UPDATED_AT TRIGGER HELPER
 -- ============================================================
 
@@ -322,4 +341,8 @@ CREATE TRIGGER movie_updated_at
 
 CREATE TRIGGER page_updated_at
     BEFORE UPDATE ON page
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_operator_updated_at
+    BEFORE UPDATE ON bot_operator
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();

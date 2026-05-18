@@ -6,7 +6,9 @@ This folder contains the Flask website for Open Mic Odyssey.
 
 The website is a Flask application that uses a PostgreSQL database as its content store. The database schema is defined in `database/schema.sql`.
 
-The application can be configured to use either the database or the JSON files in the `data/` directory as its content store by setting the `DATA_SOURCE` environment variable.
+Environment variables for the website, embedded control room, and planned bot worker are documented centrally in [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md).
+
+`DATA_SOURCE` still exists in configuration, but the current runtime content-store factory is DB-backed only. Treat JSON mode as a planned or historical path, not the active production path.
 
 ## Structure
 
@@ -82,6 +84,10 @@ The main routes are:
 
 Current deployment is done to Coolify via nixpacks.
 
+Use [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md) for the current environment-variable matrix instead of maintaining a separate list here.
+
+Use [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) for the current deployment topology, release-order guidance, and the planned split between the website, embedded control room, and future bot worker.
+
 ## Schema Generation
 
 The structured data is generated in code, not hardcoded into the page.
@@ -118,7 +124,7 @@ To add a new schema node type:
 
 Movie content is stored in a PostgreSQL database. The admin dashboard at `/admin` provides a user interface for managing the content.
 
-Alternatively, the application can be configured to use the JSON files in the `data/` directory as its content store by setting the `DATA_SOURCE` environment variable to `JSON`.
+The `data/` directory remains the structured content source used for templates, tests, and historical import paths, but the current runtime content-store implementation writes through the PostgreSQL-backed path.
 
 ## Template Customization
 

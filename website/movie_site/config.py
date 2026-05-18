@@ -25,3 +25,27 @@ class DefaultConfig:
         'ADMIN_PASSWORD_HASH',
         generate_password_hash('admin')
     )
+    BOT_OPS_DISCORD_CLIENT_ID = os.getenv(
+        'OMO_DISCORD_CLIENT_ID',
+        os.getenv('DISCORD_CLIENT_ID', ''),
+    )
+    BOT_OPS_DISCORD_CLIENT_SECRET = os.getenv(
+        'OMO_DISCORD_CLIENT_SECRET',
+        os.getenv('DISCORD_CLIENT_SECRET', ''),
+    )
+    BOT_OPS_DISCORD_REDIRECT_URI = os.getenv(
+        'OMO_DISCORD_REDIRECT_URI',
+        os.getenv('DISCORD_REDIRECT_URI', ''),
+    )
+    BOT_OPS_ALLOWED_USER_IDS = tuple(
+        value.strip()
+        for value in os.getenv('OMO_BOT_OPS_ALLOWED_USER_IDS', '').split(',')
+        if value.strip()
+    )
+    BOT_OPS_DEFAULT_SCOPES = tuple(
+        value.strip()
+        for value in os.getenv('OMO_BOT_OPS_DEFAULT_SCOPES', 'ops.read').split(',')
+        if value.strip()
+    )
+    BOT_OPS_SESSION_IDLE_MINUTES = int(
+        os.getenv('OMO_BOT_OPS_SESSION_IDLE_MINUTES', '60'))

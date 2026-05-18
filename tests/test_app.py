@@ -1,15 +1,33 @@
 import pytest
-import json
+from werkzeug.security import generate_password_hash
+
 from website.app import create_app
+from website.movie_site import admin_content
+from website.movie_site.content_store import get_content_reader
 from website.movie_site.movie_data import get_movie_data, get_movie_page_context
 
 
-class TestMovieData:
-    """Test movie data loading from JSON files."""
+@pytest.fixture
+def app():
+    """Create and configure a test app instance."""
+    app = create_app()
+    app.config['TESTING'] = True
+    return app
 
-    def test_get_movie_data_structure(self):
+
+@pytest.fixture
+def client(app):
+    """A test client for the app."""
+    return app.test_client()
+
+
+class TestMovieData:
+    """Test movie data loading from configured content store."""
+
+    def test_get_movie_data_structure(self, app):
         """Test that get_movie_data returns expected structure."""
-        data = get_movie_data()
+        with app.app_context():
+            data = get_movie_data()
 
         # Check core movie fields
         required_fields = [
@@ -25,9 +43,10 @@ class TestMovieData:
         assert isinstance(data['keywords'], list), "keywords should be a list"
         assert isinstance(data['title'], str), "title should be a string"
 
-    def test_get_movie_page_context(self):
+    def test_get_movie_page_context(self, app):
         """Test that get_movie_page_context returns proper context."""
-        context = get_movie_page_context(2026)
+        with app.app_context():
+            context = get_movie_page_context(2026)
 
         required_keys = [
             'movie', 'movie_title', 'movie_tagline', 'movie_description',
@@ -40,44 +59,36 @@ class TestMovieData:
 
         assert context['current_year'] == 2026
 
-    def test_json_data_integrity(self):
-        """Test that JSON files contain valid data."""
-        import os
-        data_dir = os.path.join(os.path.dirname(
-            __file__), '..', 'website', 'data')
-
-        json_files = [
+    def test_content_store_payload_integrity(self, app):
+        """Test that content store exposes expected logical payloads."""
+        logical_files = [
             'movies.json', 'people.json', 'organizations.json',
             'media_assets.json', 'events.json', 'reviews.json',
             'offers.json', 'faq.json', 'gallery.json', 'social.json',
             'connect.json'
         ]
 
-        for json_file in json_files:
-            file_path = os.path.join(data_dir, json_file)
-            assert os.path.exists(file_path), f"JSON file missing: {json_file}"
+        with app.app_context():
+            payloads = get_content_reader().read_all()
 
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                assert data, f"JSON file is empty: {json_file}"
-                assert isinstance(
-                    data, dict), f"JSON root should be dict: {json_file}"
+        for logical_file in logical_files:
+            assert logical_file in payloads, f"Missing content payload: {logical_file}"
+            assert isinstance(payloads[logical_file], dict), (
+                f"Payload root should be dict: {logical_file}"
+            )
+
+    def test_db_content_reader_exposes_movie_payload(self, app):
+        """Test DB-backed content reader returns the expected movie payload shape."""
+        with app.app_context():
+            payload = get_content_reader().read('movies.json')
+
+        assert 'movie' in payload
+        assert isinstance(payload['movie'], dict)
+        assert payload['movie']['title']
 
 
 class TestFlaskApp:
     """Test Flask application functionality."""
-
-    @pytest.fixture
-    def app(self):
-        """Create and configure a test app instance."""
-        app = create_app()
-        app.config['TESTING'] = True
-        return app
-
-    @pytest.fixture
-    def client(self, app):
-        """A test client for the app."""
-        return app.test_client()
 
     def test_index_page(self, client):
         """Test that index page loads successfully."""
@@ -159,3 +170,127 @@ class TestFlaskApp:
         # Media assets
         assert '<loc>https://example.com/static/images/poster.jpg</loc>' in body
         assert '<loc>https://example.com/static/images/trailer_thumbnail.png</loc>' in body
+
+
+class TestAdminFlows:
+    """Test admin auth and representative save flows."""
+
+    @staticmethod
+    def _admin_app():
+        app = create_app()
+        app.config.update(
+            TESTING=False,
+            ADMIN_USERNAME='editor',
+            ADMIN_PASSWORD_HASH=generate_password_hash('secret-pass'),
+        )
+        return app
+
+    @staticmethod
+    def _login(client, next_path: str | None = None):
+        login_path = '/admin/login'
+        if next_path:
+            login_path = f'/admin/login?next={next_path}'
+        return client.post(
+            login_path,
+            data={'username': 'editor', 'password': 'secret-pass'},
+            follow_redirects=False,
+        )
+
+    def test_admin_protected_route_redirects_to_login(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        response = client.get('/admin/film')
+
+        assert response.status_code == 302
+        assert '/admin/login?next=' in response.headers['Location']
+
+    def test_admin_login_rejects_invalid_credentials(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        response = client.post(
+            '/admin/login',
+            data={'username': 'editor', 'password': 'wrong-pass'},
+        )
+
+        assert response.status_code == 200
+        assert b'Invalid credentials' in response.data
+
+    def test_admin_login_redirects_to_requested_page(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        response = self._login(client, '/admin/film')
+
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/admin/film')
+
+    def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
+        app = self._admin_app()
+        client = app.test_client()
+
+        class FakeReader:
+            def read(self, logical_file: str):
+                assert logical_file == 'movies.json'
+                return {
+                    'movie': {
+                        'title': 'Old Title',
+                        'tagline': 'Old Tagline',
+                        'description': 'Old Description',
+                        'genre': 'Documentary',
+                        'runtime': '80 min',
+                        'duration_iso': 'PT80M',
+                        'release_date': '2026-01-01',
+                        'release_status': {
+                            'label': 'Old Label',
+                            'headline': 'Old Headline',
+                            'summary': 'Old Summary',
+                            'detail': 'Old Detail',
+                        },
+                    }
+                }
+
+        class FakeWriter:
+            def __init__(self):
+                self.calls: list[tuple[str, dict]] = []
+
+            def write(self, logical_file: str, payload: dict):
+                self.calls.append((logical_file, payload))
+
+        fake_writer = FakeWriter()
+        monkeypatch.setattr(
+            admin_content, 'get_content_reader', lambda: FakeReader())
+        monkeypatch.setattr(
+            admin_content, 'get_content_writer', lambda: fake_writer)
+
+        login_response = self._login(client)
+        assert login_response.status_code == 302
+
+        response = client.post(
+            '/admin/film',
+            data={
+                'title': 'New Title',
+                'tagline': 'New Tagline',
+                'description': 'New Description',
+                'genre': 'Road Documentary',
+                'runtime': '91 min',
+                'duration_iso': 'PT91M',
+                'release_date': '2026-05-18',
+                'release_status_label': 'Now Showing',
+                'release_status_headline': 'On the road now',
+                'release_status_summary': 'Fresh summary',
+                'release_status_detail': 'Fresh detail',
+            },
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/admin/film?saved=1')
+        assert len(fake_writer.calls) == 1
+
+        logical_file, payload = fake_writer.calls[0]
+        assert logical_file == 'movies.json'
+        assert payload['movie']['title'] == 'New Title'
+        assert payload['movie']['release_status']['label'] == 'Now Showing'
+        assert payload['movie']['release_status']['headline'] == 'On the road now'
