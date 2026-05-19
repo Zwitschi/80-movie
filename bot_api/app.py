@@ -48,3 +48,7 @@ def create_app() -> Flask:
         })
 
     return app
+
+
+# Module-level app instance for gunicorn
+app = create_app()
