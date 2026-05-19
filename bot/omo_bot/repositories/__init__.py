@@ -23,6 +23,12 @@ from .queue_repo import (
     QueueRepository,
     build_postgres_queue_repository,
 )
+from .mileage_repo import (
+    InMemoryMileageRepository,
+    MileageRepository,
+    PostgresMileageRepository,
+    build_postgres_mileage_repository,
+)
 from .syndication_repo import (
     InMemorySyndicationSourceRepository,
     PostgresSyndicationSourceRepository,
@@ -38,11 +44,15 @@ __all__ = [
     "build_postgres_bot_audit_log_repository",
     "BotManagedRuntimeConfig",
     "InMemoryBotConfigRepository",
+    "InMemoryMileageRepository",
     "InMemoryQueueRepository",
     "InMemoryWebsiteContentRepository",
+    "MileageRepository",
     "PostgresBotConfigRepository",
+    "PostgresMileageRepository",
     "PostgresQueueRepository",
     "build_postgres_bot_config_repository",
+    "build_postgres_mileage_repository",
     "build_postgres_queue_repository",
     "InMemorySyndicationSourceRepository",
     "PostgresSyndicationSourceRepository",

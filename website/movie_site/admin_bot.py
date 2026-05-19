@@ -14,14 +14,21 @@ from bot.omo_bot.config import BotConfig
 from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
 from bot.omo_bot.jobs import SyndicationPollingJob
 from bot.omo_bot.main import build_syndication_adapters
-from bot.omo_bot.models import QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
+from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
 from bot.omo_bot.repositories import (
     build_postgres_bot_audit_log_repository,
     build_postgres_bot_config_repository,
+    build_postgres_mileage_repository,
     build_postgres_queue_repository,
     build_postgres_syndication_repository,
 )
 from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
+from bot.omo_bot.services.mileage_service import (
+    MileageConflictError,
+    MileageNotFoundError,
+    MileageService,
+    MileageValidationError,
+)
 from bot.omo_bot.services.queue_service import (
     QueueConflictError,
     QueueEntryNotFoundError,
@@ -562,6 +569,28 @@ def _page_queue_confirmation_error(queue_id: str | None = None) -> Any:
     return _queue_page_redirect(queue_id, error='queue-clear-confirmation-required')
 
 
+def _mileage_page_redirect(user_id: str | None = None, **params: str) -> Any:
+    if user_id:
+        return redirect(url_for('admin_bot.mileage_detail_page', user_id=user_id, **params))
+    return redirect(url_for('admin_bot.mileage_page', **params))
+
+
+def _page_mileage_scope_error(user_id: str | None = None) -> Any:
+    return _mileage_page_redirect(user_id, error='operator-scope-required')
+
+
+def _page_mileage_config_error(user_id: str | None = None) -> Any:
+    return _mileage_page_redirect(user_id, error='invalid-mileage-config')
+
+
+def _page_mileage_action_error(user_id: str | None = None) -> Any:
+    return _mileage_page_redirect(user_id, error='invalid-mileage-action')
+
+
+def _page_mileage_not_found_error(user_id: str | None = None) -> Any:
+    return _mileage_page_redirect(user_id, error='mileage-not-found')
+
+
 def _serialize_syndication_state(
     state: SyndicationSourceState,
     *,
@@ -851,6 +880,213 @@ def _serialize_queue_snapshot(snapshot: QueueSnapshot, *, can_write: bool) -> di
         ],
         'last_event': _serialize_queue_event(snapshot.last_event) if snapshot.last_event else None,
     }
+
+
+def _build_mileage_service_from_settings(settings: BotRuntimeSettings) -> MileageService:
+    if not settings.database_url:
+        raise ConfigError(
+            'Mileage operations require a configured database-backed repository.'
+        )
+    return MileageService(build_postgres_mileage_repository(settings.database_url))
+
+
+def _mileage_active_guild_id(settings: BotRuntimeSettings) -> int:
+    if settings.guild_id is None:
+        raise ConfigError(
+            'An active guild id is required for mileage operations.')
+    return settings.guild_id
+
+
+def _serialize_mileage_total(total: MileageTotal, *, can_write: bool) -> dict[str, object]:
+    return {
+        'guild_id': total.guild_id,
+        'discord_user_id': total.discord_user_id,
+        'display_name': total.display_name,
+        'total_points': total.total_points,
+        'current_tier_id': total.current_tier_id,
+        'current_tier_name': total.current_tier_name,
+        'last_event_id': total.last_event_id,
+        'last_event_at': total.last_event_at.isoformat() if total.last_event_at else None,
+        'updated_at': total.updated_at.isoformat() if total.updated_at else None,
+        'detail_api': url_for('admin_bot.mileage_user_detail_api', user_id=total.discord_user_id),
+        'detail_page': url_for('admin_bot.mileage_detail_page', user_id=total.discord_user_id),
+        'adjust_api': url_for('admin_bot.adjust_mileage_user_api', user_id=total.discord_user_id),
+        'adjust_page': url_for('admin_bot.adjust_mileage_user_page_action', user_id=total.discord_user_id),
+        'editable': can_write,
+    }
+
+
+def _serialize_mileage_event(event: MileageEvent, *, can_write: bool) -> dict[str, object]:
+    return {
+        'event_id': event.event_id,
+        'guild_id': event.guild_id,
+        'discord_user_id': event.discord_user_id,
+        'display_name': event.display_name,
+        'event_type': event.event_type,
+        'points_delta': event.points_delta,
+        'reason': event.reason,
+        'actor_user_id': event.actor_user_id,
+        'correlation_id': event.correlation_id,
+        'reversed_event_id': event.reversed_event_id,
+        'metadata': cast(dict[str, object], _serialize_audit_value(event.metadata)),
+        'created_at': event.created_at.isoformat(),
+        'reverse_api': url_for('admin_bot.reverse_mileage_event_api', event_id=event.event_id),
+        'reverse_page': url_for('admin_bot.reverse_mileage_event_page_action', event_id=event.event_id),
+        'reversible': bool(can_write and event.reversed_event_id is None and event.event_type != 'manual_reversal'),
+    }
+
+
+def _serialize_mileage_tier_stat(tier_stat: MileageTierStat) -> dict[str, object]:
+    return {
+        'tier_id': tier_stat.tier.tier_id,
+        'guild_id': tier_stat.tier.guild_id,
+        'name': tier_stat.tier.name,
+        'points_required': tier_stat.tier.points_required,
+        'role_id': tier_stat.tier.role_id,
+        'sort_order': tier_stat.tier.sort_order,
+        'updated_at': tier_stat.tier.updated_at.isoformat() if tier_stat.tier.updated_at else None,
+        'user_count': tier_stat.user_count,
+    }
+
+
+def _serialize_mileage_user_detail(detail: MileageUserDetail, *, can_write: bool) -> dict[str, object]:
+    return {
+        'total': _serialize_mileage_total(detail.total, can_write=can_write),
+        'current_tier': _serialize_mileage_tier_stat(MileageTierStat(detail.current_tier, 0)) if detail.current_tier else None,
+        'events': [
+            _serialize_mileage_event(event, can_write=can_write)
+            for event in detail.events
+        ],
+    }
+
+
+def build_mileage_index_snapshot(*, search: str = '', tier_id: str | None = None) -> dict[str, object]:
+    generated_at = _utcnow().isoformat()
+    can_write = _operator_can('mileage.write')
+    try:
+        settings = _load_bot_runtime_settings()
+        guild_id = _mileage_active_guild_id(settings)
+        service = _build_mileage_service_from_settings(settings)
+        tier_stats = service.list_tier_stats(guild_id)
+        user_totals = service.list_user_summaries(
+            guild_id, search=search, tier_id=tier_id)
+        return {
+            'status': 'ok',
+            'generated_at': generated_at,
+            'guild_id': guild_id,
+            'search': search,
+            'selected_tier_id': tier_id,
+            'tiers': [_serialize_mileage_tier_stat(tier_stat) for tier_stat in tier_stats],
+            'users': [_serialize_mileage_total(total, can_write=can_write) for total in user_totals],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': None,
+        }
+    except ConfigError as exc:
+        return {
+            'status': 'missing_config',
+            'generated_at': generated_at,
+            'guild_id': None,
+            'search': search,
+            'selected_tier_id': tier_id,
+            'tiers': [],
+            'users': [],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': str(exc),
+        }
+    except Exception as exc:
+        return {
+            'status': 'error',
+            'generated_at': generated_at,
+            'guild_id': None,
+            'search': search,
+            'selected_tier_id': tier_id,
+            'tiers': [],
+            'users': [],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': str(exc),
+        }
+
+
+def build_mileage_detail_snapshot(user_id: str) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    guild_id = _mileage_active_guild_id(settings)
+    service = _build_mileage_service_from_settings(settings)
+    detail = service.get_user_detail(guild_id, user_id, limit=50)
+    can_write = _operator_can('mileage.write')
+    return {
+        'status': 'ok',
+        'generated_at': _utcnow().isoformat(),
+        'guild_id': guild_id,
+        'user': _serialize_mileage_user_detail(detail, can_write=can_write),
+        'permissions': {'operator_can_write': can_write},
+    }
+
+
+def _mileage_user_before_state(service: MileageService, guild_id: int, user_id: str) -> dict[str, object] | None:
+    try:
+        detail = service.get_user_detail(guild_id, user_id, limit=50)
+    except MileageNotFoundError:
+        return None
+    return _serialize_mileage_user_detail(detail, can_write=_operator_can('mileage.write'))
+
+
+def _adjust_mileage_user(user_id: str, display_name: str, delta: int, reason: str, correlation_id: str | None) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    guild_id = _mileage_active_guild_id(settings)
+    service = _build_mileage_service_from_settings(settings)
+    before_state = _mileage_user_before_state(service, guild_id, user_id)
+    detail, event = service.adjust_user_mileage(
+        guild_id=guild_id,
+        discord_user_id=user_id,
+        display_name=display_name,
+        points_delta=delta,
+        reason=reason,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        correlation_id=correlation_id,
+    )
+    after_state = _serialize_mileage_user_detail(
+        detail, can_write=_operator_can('mileage.write'))
+    event_payload = _serialize_mileage_event(
+        event, can_write=_operator_can('mileage.write'))
+    _record_bot_audit_event(
+        action_key='mileage.adjusted',
+        target_type='mileage_user',
+        target_key=user_id,
+        before_state=before_state,
+        after_state={'user': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _reverse_mileage_event(event_id: str, reason: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    guild_id = _mileage_active_guild_id(settings)
+    service = _build_mileage_service_from_settings(settings)
+    original_event = service._repository.get_event(event_id)
+    if original_event is None or original_event.guild_id != guild_id:
+        raise MileageNotFoundError(f"Mileage event '{event_id}' was not found")
+    before_state = _mileage_user_before_state(
+        service, guild_id, original_event.discord_user_id)
+    detail, reversal_event = service.reverse_event(
+        guild_id=guild_id,
+        event_id=event_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        reason=reason,
+    )
+    after_state = _serialize_mileage_user_detail(
+        detail, can_write=_operator_can('mileage.write'))
+    event_payload = _serialize_mileage_event(
+        reversal_event, can_write=_operator_can('mileage.write'))
+    _record_bot_audit_event(
+        action_key='mileage.reversed',
+        target_type='mileage_event',
+        target_key=event_id,
+        before_state=before_state,
+        after_state={'user': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
 
 
 def build_queue_index_snapshot() -> dict[str, object]:
@@ -1671,6 +1907,36 @@ def commands_page():
     )
 
 
+@admin_bot_blueprint.get('/mileage')
+def mileage_page():
+    return render_template(
+        'admin/bot/mileage.html',
+        mileage_snapshot=build_mileage_index_snapshot(
+            search=str(request.args.get('q') or '').strip(),
+            tier_id=str(request.args.get('tier_id') or '').strip() or None,
+        ),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
+@admin_bot_blueprint.get('/mileage/<user_id>')
+def mileage_detail_page(user_id: str):
+    try:
+        mileage_detail_snapshot = build_mileage_detail_snapshot(user_id)
+    except ConfigError:
+        return _page_mileage_config_error(user_id)
+    except MileageNotFoundError:
+        return _page_mileage_not_found_error()
+
+    return render_template(
+        'admin/bot/mileage_detail.html',
+        mileage_detail_snapshot=mileage_detail_snapshot,
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
 @admin_bot_blueprint.get('/queues')
 def queues_page():
     return render_template(
@@ -1902,6 +2168,135 @@ def queue_events_api(queue_id: str):
         return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
 
     return jsonify({'data': snapshot['events'], 'meta': {'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users')
+def mileage_users_api():
+    snapshot = build_mileage_index_snapshot(
+        search=str(request.args.get('q') or '').strip(),
+        tier_id=str(request.args.get('tier_id') or '').strip() or None,
+    )
+    return jsonify({'data': snapshot['users'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users/<user_id>')
+def mileage_user_detail_api(user_id: str):
+    try:
+        snapshot = build_mileage_detail_snapshot(user_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage user was not found.'}}), 404
+
+    return jsonify({'data': snapshot['user'], 'meta': {'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users/<user_id>/events')
+def mileage_user_events_api(user_id: str):
+    try:
+        snapshot = build_mileage_detail_snapshot(user_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage user was not found.'}}), 404
+
+    return jsonify({'data': snapshot['user']['events'], 'meta': {'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/tiers')
+def mileage_tiers_api():
+    snapshot = build_mileage_index_snapshot(
+        search=str(request.args.get('q') or '').strip(),
+        tier_id=str(request.args.get('tier_id') or '').strip() or None,
+    )
+    return jsonify({'data': snapshot['tiers'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.post('/api/mileage/users/<user_id>/adjust')
+def adjust_mileage_user_api(user_id: str):
+    scope_error = require_operator_scope('mileage.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        user, event = _adjust_mileage_user(
+            user_id,
+            _parse_required_text(payload.get('display_name')
+                                 or user_id, 'display_name'),
+            _parse_required_int(payload.get('delta'), 'delta'),
+            _parse_required_text(payload.get('reason'), 'reason'),
+            str(payload.get('correlation_id') or '').strip() or None,
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_action', 'message': str(exc)}}), 400
+
+    return jsonify({'data': user, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/mileage/users/<user_id>/adjust')
+def adjust_mileage_user_page_action(user_id: str):
+    if not _operator_can('mileage.write'):
+        return _page_mileage_scope_error(user_id)
+
+    try:
+        _adjust_mileage_user(
+            user_id,
+            _parse_required_text(request.form.get(
+                'display_name') or user_id, 'display_name'),
+            _parse_required_int(request.form.get('delta'), 'delta'),
+            _parse_required_text(request.form.get('reason'), 'reason'),
+            str(request.form.get('correlation_id') or '').strip() or None,
+        )
+    except ConfigError:
+        return _page_mileage_config_error(user_id)
+    except MileageValidationError:
+        return _page_mileage_action_error(user_id)
+
+    return _mileage_page_redirect(user_id, saved='mileage-adjusted')
+
+
+@admin_bot_blueprint.post('/api/mileage/events/<event_id>/reverse')
+def reverse_mileage_event_api(event_id: str):
+    scope_error = require_operator_scope('mileage.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        user, event = _reverse_mileage_event(
+            event_id,
+            _parse_required_text(payload.get('reason'), 'reason'),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage event was not found.'}}), 404
+    except (MileageValidationError, MileageConflictError) as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_action', 'message': str(exc)}}), 409
+
+    return jsonify({'data': user, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/mileage/events/<event_id>/reverse')
+def reverse_mileage_event_page_action(event_id: str):
+    if not _operator_can('mileage.write'):
+        return _page_mileage_scope_error()
+    try:
+        user, _event = _reverse_mileage_event(
+            event_id,
+            _parse_required_text(request.form.get('reason'), 'reason'),
+        )
+    except ConfigError:
+        return _page_mileage_config_error()
+    except MileageNotFoundError:
+        return _page_mileage_not_found_error()
+    except (MileageValidationError, MileageConflictError):
+        return _page_mileage_action_error()
+
+    return _mileage_page_redirect(str(cast(dict[str, object], user['total'])['discord_user_id']), saved='mileage-reversed')
 
 
 @admin_bot_blueprint.post('/api/queues')
