@@ -20,9 +20,9 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 ### 1. Website (openmicodyssey.com)
 
 1. In Coolify, create new Application resource
-2. Set base directory: `website/`
+2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn app:app --bind 0.0.0.0:8880 --workers 2`
+4. Start command: `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`
 5. Port: `8880`
 6. Health check: `GET /robots.txt`
 7. Set environment variables (see `.env.website.example`)

@@ -120,12 +120,12 @@ Route points are stored in website/static/data/map_data.json (649 GPS coordinate
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment steps. Quick reference:
 
-| Service      | Base Dir        | Start Command                                      | Port |
-| ------------ | --------------- | -------------------------------------------------- | ---- |
-| Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 |
-| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 |
-| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 |
-| Bot Worker   | `/`             | `python -m bot.omo_bot`                            | none |
+| Service      | Base Dir        | Start Command                                              | Port |
+| ------------ | --------------- | ---------------------------------------------------------- | ---- |
+| Website      | `/` (repo root) | `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2` | 8880 |
+| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2`         | 8480 |
+| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2`         | 8787 |
+| Bot Worker   | `/`             | `python -m bot.omo_bot`                                    | none |
 
 ### Environment variables
 

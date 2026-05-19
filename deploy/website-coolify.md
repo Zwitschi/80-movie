@@ -6,12 +6,14 @@
 ## Coolify Settings
 
 - Resource type: Application
-- Base directory: website/
+- Base directory: `/` (repo root, NOT website/)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: gunicorn app:app --bind 0.0.0.0:8880 --workers 2
+- Start command: gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2
 - Port: 8880
 - Health check path: /robots.txt
+
+**CRITICAL**: Base directory MUST be repo root (`/`), not `website/`. This ensures `shared/` is on the Python path. The start command uses `website.app:app` to reference the Flask app from repo root.
 
 ## Environment Variables (set in Coolify)
 
