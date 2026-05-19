@@ -15,17 +15,27 @@ def create_app() -> Flask:
     """Create and configure the control room Flask application."""
     from pathlib import Path
     repo_root = Path(__file__).resolve().parents[1]
-    website_templates = repo_root / "website" / "templates"
-    website_static = repo_root / "website" / "static"
-
-    app = Flask(
-        __name__,
-        template_folder=str(website_templates),
-        static_folder=str(website_static),
-    )
 
     # Load env files
     load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
+
+    # Add website to sys.path so movie_site is importable
+    website_path = str(repo_root / "website")
+    import sys
+    if website_path not in sys.path:
+        sys.path.insert(0, website_path)
+
+    # Resolve template folder from movie_site package location
+    import movie_site
+    movie_site_path = Path(movie_site.__file__).parent
+    website_templates = str(movie_site_path.parent / "templates")
+    website_static = str(movie_site_path.parent / "static")
+
+    app = Flask(
+        __name__,
+        template_folder=website_templates,
+        static_folder=website_static,
+    )
 
     # Apply config
     app.config.update(get_control_room_config_values())
@@ -35,11 +45,6 @@ def create_app() -> Flask:
 
     # Import and register admin_bot blueprint from website
     # This will be replaced with native control_room blueprints in Phase 2
-    import sys
-    website_path = str(repo_root / "website")
-    if website_path not in sys.path:
-        sys.path.insert(0, website_path)
-
     from movie_site.admin_bot import admin_bot_blueprint, oauth_callback
 
     app.register_blueprint(admin_bot_blueprint)
