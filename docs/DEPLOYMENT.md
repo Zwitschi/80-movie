@@ -31,9 +31,9 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 ### 2. Control Room (admin.openmicodyssey.com)
 
 1. In Coolify, create new Application resource
-2. Set base directory: `control_room/`
+2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn app:app --bind 0.0.0.0:8480 --workers 2`
+4. Start command: `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2`
 5. Port: `8480`
 6. Health check: `GET /admin/bot/api/health`
 7. Set environment variables (see `.env.control_room.example`)
@@ -42,9 +42,9 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 ### 3. Bot API (api.openmicodyssey.com)
 
 1. In Coolify, create new Application resource
-2. Set base directory: `bot_api/`
+2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn app:app --bind 0.0.0.0:8787 --workers 2`
+4. Start command: `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`
 5. Port: `8787`
 6. Health check: `GET /health`
 7. Set environment variables (see `.env.bot_api.example`)

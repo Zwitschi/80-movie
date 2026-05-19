@@ -6,10 +6,10 @@
 ## Coolify Settings
 
 - Resource type: Application
-- Base directory: control_room/
+- Base directory: `/` (repo root, NOT control_room/)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: gunicorn app:app --bind 0.0.0.0:8480 --workers 2
+- Start command: gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2
 - Port: 8480
 - Health check path: /admin/bot/api/health
 
