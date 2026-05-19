@@ -399,15 +399,15 @@ class TestAdminFlows:
         response = client.post(
             '/admin/film',
             data={
-                'title': 'New Title',
-                'tagline': 'New Tagline',
-                'description': 'New Description',
-                'genre': 'Road Documentary',
-                'runtime': '91 min',
-                'duration_iso': 'PT91M',
-                'release_date': '2026-05-18',
-                'release_status_label': 'Now Showing',
-                'release_status_headline': 'On the road now',
+                'title': 'Open Mic Odyssey: The Movie',
+                'tagline': 'Three best friends embark on an outrageous journey.',
+                'description': 'A documentary road story about stand-up stages, hotel suites, long drives, and the emotional math of trying to make a creative life real.',
+                'genre': 'Documentary',
+                'runtime': '180 min',
+                'duration_iso': 'PT180M',
+                'release_date': '2026-08-18',
+                'release_status_label': 'Post-Production',
+                'release_status_headline': 'Trailer streaming now',
                 'release_status_summary': 'Fresh summary',
                 'release_status_detail': 'Fresh detail',
             },
@@ -420,6 +420,6 @@ class TestAdminFlows:
 
         logical_file, payload = fake_writer.calls[0]
         assert logical_file == 'movies.json'
-        assert payload['movie']['title'] == 'New Title'
-        assert payload['movie']['release_status']['label'] == 'Now Showing'
-        assert payload['movie']['release_status']['headline'] == 'On the road now'
+        assert payload['movie']['title'] == 'Open Mic Odyssey: The Movie'
+        assert payload['movie']['release_status']['label'] == 'Post-Production'
+        assert payload['movie']['release_status']['headline'] == 'Trailer streaming now'

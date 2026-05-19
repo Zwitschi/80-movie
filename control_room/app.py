@@ -4,20 +4,12 @@ Standalone Flask app for admin CMS, bot operator login, health/config views,
 and syndication control APIs.
 """
 
-from pathlib import Path
-import sys
-
-# Ensure website is on sys.path before any imports
-repo_root = Path(__file__).resolve().parents[1]
-website_path = str(repo_root / "website")
-if website_path not in sys.path:
-    sys.path.insert(0, website_path)
-
-from flask import Flask
-from flask_login import LoginManager
-
-from shared.config import load_dotenv_files, get_control_room_config_values
+import os
 from shared.db import init_app as init_db_app
+from shared.config import load_dotenv_files, get_control_room_config_values
+from flask_login import LoginManager
+from flask import Flask
+from pathlib import Path
 
 
 def create_app() -> Flask:
@@ -59,7 +51,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_blueprint)
 
     # Register bot operator blueprint
-    from movie_site.admin_bot import admin_bot_blueprint, oauth_callback
+    from .admin_bot import admin_bot_blueprint, oauth_callback
     app.register_blueprint(admin_bot_blueprint)
     app.add_url_rule(
         '/oauth/discord/callback',
@@ -74,6 +66,7 @@ def create_app() -> Flask:
 # Module-level app instance for gunicorn (lazy creation)
 _app_instance = None
 
+
 def get_app():
     """Get or create the Flask app instance."""
     global _app_instance
@@ -81,7 +74,7 @@ def get_app():
         _app_instance = create_app()
     return _app_instance
 
+
 # Only auto-create for gunicorn (not during test imports)
-import os
 if os.environ.get('CONTROL_ROOM_AUTO_CREATE', '1') == '1':
     app = get_app()

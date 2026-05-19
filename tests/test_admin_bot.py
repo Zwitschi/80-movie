@@ -3,18 +3,14 @@ from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryBotConfigRepository, InMemoryMileageRepository, InMemoryQueueRepository, InMemorySyndicationSourceRepository
 from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem
 from bot.omo_bot.config import BotRuntimeSettings
-import movie_site.bot_operator_service as bot_operator_service
-import movie_site.bot_operator_repo as bot_operator_repo
-import movie_site.admin_bot as admin_bot
+import control_room.bot_operator_service as bot_operator_service
+import control_room.bot_operator_repo as bot_operator_repo
+import control_room.admin_bot as admin_bot
 from datetime import datetime, timedelta, timezone
 from typing import cast
 from urllib.parse import parse_qs, urlparse
 
 from control_room.app import create_app
-
-# admin_bot imports these via movie_site.* (not website.movie_site.*)
-import sys
-sys.path.insert(0, 'website')
 
 
 class _FailingAuditRepository:

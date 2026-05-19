@@ -1,5 +1,5 @@
 from website.app import create_app
-from website.movie_site.bot_content_repo import (
+from control_room.bot_content_repo import (
     ContentStoreWebsiteContentRepository,
     build_content_store_website_content_repository,
 )
