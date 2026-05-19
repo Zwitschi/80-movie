@@ -13,11 +13,18 @@ from shared.db import init_app as init_db_app
 
 def create_app() -> Flask:
     """Create and configure the control room Flask application."""
-    app = Flask(__name__)
-
-    # Load env files
     from pathlib import Path
     repo_root = Path(__file__).resolve().parents[1]
+    website_templates = repo_root / "website" / "templates"
+    website_static = repo_root / "website" / "static"
+
+    app = Flask(
+        __name__,
+        template_folder=str(website_templates),
+        static_folder=str(website_static),
+    )
+
+    # Load env files
     load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
 
     # Apply config
