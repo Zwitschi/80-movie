@@ -1,18 +1,15 @@
-from . import content_store_db
-from flask import current_app, has_app_context
+"""Content store abstractions — delegates to shared.content_store."""
 
+from shared.content_store import (
+    ContentReadError,
+    ContentWriteError,
+    get_content_reader,
+    get_content_writer,
+)
 
-class ContentReadError(RuntimeError):
-    pass
-
-
-class ContentWriteError(RuntimeError):
-    pass
-
-
-def get_content_reader():
-    return content_store_db.get_content_reader()
-
-
-def get_content_writer():
-    return content_store_db.get_content_writer()
+__all__ = [
+    'ContentReadError',
+    'ContentWriteError',
+    'get_content_reader',
+    'get_content_writer',
+]

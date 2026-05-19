@@ -1,0 +1,3 @@
+# Shared dependencies for all OMO services
+python-dotenv
+psycopg2-binary

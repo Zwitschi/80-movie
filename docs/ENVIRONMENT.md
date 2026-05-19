@@ -1,103 +1,80 @@
 # Environment Reference
 
-This document is the source of truth for runtime configuration across the Flask website, the embedded bot control room, and the planned Discord bot worker.
+This document is the source of truth for runtime configuration across all OMO services.
 
-## Website runtime
+## Website (openmicodyssey.com)
 
-| Variable              | Required           | Default                                    | Used by               | Notes                                                                                                                                                                   |
-| --------------------- | ------------------ | ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SITE_URL`            | Yes for production | `https://www.openmicodyssey.com`           | website               | Canonical public base URL used for schema, sitemap, and metadata generation. Use no trailing slash in production.                                                       |
-| `DATABASE_URL`        | Yes                | `postgresql://user:password@localhost/omo` | website, bot fallback | PostgreSQL DSN used by the website content store and DB helpers. The bot can also fall back to this when `OMO_DATABASE_URL` is unset.                                   |
-| `SECRET_KEY`          | Yes for production | `dev-secret-key-change-in-production`      | website               | Flask session secret for the public site, admin login, and embedded control room. Never use the default outside local development.                                      |
-| `ADMIN_USERNAME`      | No                 | `admin`                                    | website admin         | Username for the editorial admin login.                                                                                                                                 |
-| `ADMIN_PASSWORD_HASH` | Yes for production | generated hash for `admin`                 | website admin         | Werkzeug password hash for the editorial admin login.                                                                                                                   |
-| `CURRENT_YEAR`        | No                 | current UTC year                           | website               | Footer and template year override.                                                                                                                                      |
-| `MAPBOX_ACCESS_TOKEN` | Optional           | empty                                      | website               | Public Mapbox token for the hidden `/map` route. Required only if that route is used.                                                                                   |
-| `DATA_SOURCE`         | No                 | `DB`                                       | website config        | Present in config and health output, but the current runtime content-store factory is DB-backed only. Treat JSON mode as documented intent, not an active runtime path. |
+| Variable              | Required | Default                                         | Notes                            |
+| --------------------- | -------- | ----------------------------------------------- | -------------------------------- |
+| `SITE_URL`            | Yes      | `https://www.openmicodyssey.com`                | Canonical URL, no trailing slash |
+| `DATABASE_URL`        | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN                   |
+| `SECRET_KEY`          | Yes      | `dev-secret-key-change-in-production`           | Flask session secret             |
+| `ADMIN_USERNAME`      | No       | `admin`                                         | Editorial admin username         |
+| `ADMIN_PASSWORD_HASH` | Yes      | Werkzeug hash for `admin`                       | Editorial admin password         |
+| `CURRENT_YEAR`        | No       | current UTC year                                | Footer override                  |
+| `MAPBOX_ACCESS_TOKEN` | No       | empty                                           | For hidden `/map` route          |
+| `DATA_SOURCE`         | No       | `DB`                                            | Documented but DB-only in code   |
 
-## Control-room operator auth
+## Control Room (admin.openmicodyssey.com)
 
-These values configure the embedded `/admin/bot` operator login flow inside the Flask app.
+| Variable                           | Required      | Default                                         | Notes                            |
+| ---------------------------------- | ------------- | ----------------------------------------------- | -------------------------------- |
+| `DATABASE_URL`                     | Yes           | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN                   |
+| `SECRET_KEY`                       | Yes           | `dev-secret-key-change-in-production`           | Flask session secret             |
+| `OMO_DISCORD_CLIENT_ID`            | Yes for OAuth | falls back to `DISCORD_CLIENT_ID`               | Discord OAuth client ID          |
+| `OMO_DISCORD_CLIENT_SECRET`        | Yes for OAuth | falls back to `DISCORD_CLIENT_SECRET`           | Discord OAuth client secret      |
+| `OMO_DISCORD_REDIRECT_URI`         | Yes for OAuth | falls back to `DISCORD_REDIRECT_URI`            | Callback URL                     |
+| `OMO_BOT_OPS_ALLOWED_USER_IDS`     | No            | empty                                           | Comma-separated Discord user IDs |
+| `OMO_BOT_OPS_DEFAULT_SCOPES`       | No            | `ops.read`                                      | Comma-separated scopes           |
+| `OMO_BOT_OPS_SESSION_IDLE_MINUTES` | No            | `60`                                            | Session idle timeout             |
 
-| Variable                           | Required           | Default                               | Used by      | Notes                                                                                   |
-| ---------------------------------- | ------------------ | ------------------------------------- | ------------ | --------------------------------------------------------------------------------------- |
-| `OMO_DISCORD_CLIENT_ID`            | Yes for real OAuth | falls back to `DISCORD_CLIENT_ID`     | control room | Discord OAuth client id for operator login.                                             |
-| `OMO_DISCORD_CLIENT_SECRET`        | Yes for real OAuth | falls back to `DISCORD_CLIENT_SECRET` | control room | Discord OAuth client secret for operator login.                                         |
-| `OMO_DISCORD_REDIRECT_URI`         | Yes for real OAuth | falls back to `DISCORD_REDIRECT_URI`  | control room | Full callback URL for `/admin/bot/oauth/callback`.                                      |
-| `OMO_BOT_OPS_ALLOWED_USER_IDS`     | Optional           | empty                                 | control room | Comma-separated fallback allowlist used when no DB-backed `bot_operator` record exists. |
-| `OMO_BOT_OPS_DEFAULT_SCOPES`       | Optional           | `ops.read`                            | control room | Comma-separated fallback scope list for allowlisted operators without DB-backed scopes. |
-| `OMO_BOT_OPS_SESSION_IDLE_MINUTES` | Optional           | `60`                                  | control room | Idle timeout for operator sessions.                                                     |
+## Bot API (api.openmicodyssey.com)
 
-## Discord bot worker
+| Variable                       | Required | Default                                         | Notes                          |
+| ------------------------------ | -------- | ----------------------------------------------- | ------------------------------ |
+| `DATABASE_URL`                 | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN                 |
+| `SECRET_KEY`                   | Yes      | `dev-secret-key-change-in-production`           | Flask session secret           |
+| `OMO_DISCORD_TOKEN`            | No       | falls back to `DISCORD_TOKEN`                   | Discord bot token              |
+| `OMO_DISCORD_GUILD_ID`         | No       | unset                                           | Primary guild ID (integer)     |
+| `OMO_SYNDICATION_SOURCES`      | No       | empty                                           | Comma-separated (youtube only) |
+| `OMO_SYNDICATION_POLL_SECONDS` | No       | `300`                                           | Poll interval                  |
+| `OMO_LOG_LEVEL`                | No       | `INFO`                                          | Log level                      |
 
-These values are parsed by `bot/omo_bot/config.py` for the planned bot runtime.
+## Bot Worker (internal)
 
-| Variable                       | Required | Default                       | Used by | Notes                                                                                            |
-| ------------------------------ | -------- | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
-| `OMO_DISCORD_TOKEN`            | Yes      | falls back to `DISCORD_TOKEN` | bot     | Discord bot token. Required to start the worker.                                                 |
-| `OMO_DISCORD_GUILD_ID`         | Optional | unset                         | bot     | Primary guild id for bot operations. Must be an integer when set.                                |
-| `OMO_DISCORD_CHANNEL_MAP`      | Optional | empty                         | bot     | Comma-separated `name:id` pairs such as `queue:100,announcements:200`.                           |
-| `OMO_DATABASE_URL`             | Optional | falls back to `DATABASE_URL`  | bot     | Dedicated DB DSN for the bot if it should not share the website DSN directly.                    |
-| `OMO_SYNDICATION_SOURCES`      | Optional | empty                         | bot     | Comma-separated source list for syndication polling. Current MVP runtime accepts `youtube` only. |
-| `OMO_SYNDICATION_POLL_SECONDS` | Optional | `300`                         | bot     | Poll interval for syndication jobs. Must be a positive integer.                                  |
-| `OMO_LOG_LEVEL`                | Optional | `INFO`                        | bot     | Log level, normalized to uppercase.                                                              |
+| Variable                       | Required | Default                                         | Notes                   |
+| ------------------------------ | -------- | ----------------------------------------------- | ----------------------- |
+| `OMO_DISCORD_TOKEN`            | Yes      | falls back to `DISCORD_TOKEN`                   | Discord bot token       |
+| `DATABASE_URL`                 | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN          |
+| `OMO_DISCORD_GUILD_ID`         | No       | unset                                           | Primary guild ID        |
+| `OMO_DISCORD_CHANNEL_MAP`      | No       | empty                                           | `name:id` pairs         |
+| `OMO_SYNDICATION_SOURCES`      | No       | empty                                           | Comma-separated sources |
+| `OMO_SYNDICATION_POLL_SECONDS` | No       | `300`                                           | Poll interval           |
+| `OMO_LOG_LEVEL`                | No       | `INFO`                                          | Log level               |
 
 ## Local development notes
 
-- The website loads `website/.env` automatically through `python-dotenv` in `website/movie_site/config.py`.
-- The bot worker now loads env vars from process env first, then repo-root `.env`, then `website/.env` through `bot/omo_bot/config.py`.
-- `website/.env.example` is intended to mirror the active runtime env surface used in code. Keep it aligned with this document when env reads change.
-- The embedded control room and the planned bot share some Discord-related env names through fallback aliases. Prefer the `OMO_*` names when configuring repo-owned services so the intent stays explicit.
-- Supported legacy aliases are limited to `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, and `DISCORD_REDIRECT_URI`. The bot guild id does not currently fall back from `DISCORD_GUILD_ID`.
-
-## Code-truth scan summary
-
-The current Python runtime reads these env vars directly:
-
-### Website and embedded control room
-
-- `SITE_URL`
-- `DATABASE_URL`
-- `DATA_SOURCE`
-- `CURRENT_YEAR`
-- `MAPBOX_ACCESS_TOKEN`
-- `SECRET_KEY`
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD_HASH`
-- `OMO_DISCORD_CLIENT_ID` or `DISCORD_CLIENT_ID`
-- `OMO_DISCORD_CLIENT_SECRET` or `DISCORD_CLIENT_SECRET`
-- `OMO_DISCORD_REDIRECT_URI` or `DISCORD_REDIRECT_URI`
-- `OMO_BOT_OPS_ALLOWED_USER_IDS`
-- `OMO_BOT_OPS_DEFAULT_SCOPES`
-- `OMO_BOT_OPS_SESSION_IDLE_MINUTES`
-
-### Bot worker env reads
-
-- `OMO_DISCORD_TOKEN` or `DISCORD_TOKEN`
-- `OMO_DISCORD_GUILD_ID`
-- `OMO_DISCORD_CHANNEL_MAP`
-- `OMO_DATABASE_URL` or `DATABASE_URL`
-- `OMO_SYNDICATION_SOURCES`
-- `OMO_SYNDICATION_POLL_SECONDS`
-- `OMO_LOG_LEVEL`
+- Website loads `website/.env` via `python-dotenv` in `website/movie_site/config.py`
+- Control room loads repo-root `.env` then `website/.env` via `shared/config.py`
+- Bot API loads repo-root `.env` then `website/.env` via `shared/config.py`
+- Bot worker loads process env → repo-root `.env` → `website/.env` via `bot/omo_bot/config.py`
+- Prefer `OMO_*` prefixed names for clarity
+- Legacy aliases: `DISCORD_TOKEN`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_REDIRECT_URI`
 
 ## Minimum production sets
 
 ### Website only
 
-- `SITE_URL`
-- `DATABASE_URL`
-- `SECRET_KEY`
-- `ADMIN_PASSWORD_HASH`
+- `SITE_URL`, `DATABASE_URL`, `SECRET_KEY`, `ADMIN_PASSWORD_HASH`
 
-### Website plus embedded control room
+### Website + Control Room
 
-- Website-only set
-- `OMO_DISCORD_CLIENT_ID`
-- `OMO_DISCORD_CLIENT_SECRET`
-- `OMO_DISCORD_REDIRECT_URI`
+- Website set + `OMO_DISCORD_CLIENT_ID`, `OMO_DISCORD_CLIENT_SECRET`, `OMO_DISCORD_REDIRECT_URI`
 
-### Bot worker
+### Bot API
 
-- `OMO_DISCORD_TOKEN`
-- `DATABASE_URL` or `OMO_DATABASE_URL`
+- `DATABASE_URL`, `SECRET_KEY`
+
+### Bot Worker
+
+- `OMO_DISCORD_TOKEN`, `DATABASE_URL`

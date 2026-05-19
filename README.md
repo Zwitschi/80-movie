@@ -5,49 +5,68 @@ This project contains materials and code for the "Open Mic Odyssey" movie projec
 ## Repository Structure
 
 ```text
-.github/           # GitHub-specific files (workflows, issue templates, etc.)
-tests/             # Test suite for the project
-website/           # Flask web application for the movie website
-  database/        # PostgreSQL schema and migration plan
-  static/          # Static assets (CSS, JS, images)
-  templates/       # Jinja2 templates for rendering HTML pages
-  movie_site/      # Flask app modules (views, models, admin, etc.)
-  README.md        # Documentation for the website module
-.gitignore         # Git ignore rules
-pytest.ini         # Pytest configuration
-README.md          # Root-level documentation for the overall project
-requirements.txt   # Python dependencies for the project
-run_tests.py       # Script to run the test suite
-runtime.txt        # Python runtime specification for hosting environments
+shared/            # Shared modules (db, content store, schema, config, utils)
+website/           # Flask web application (public site + admin CMS)
+control_room/      # Flask app for bot operator login + health/config views
+bot_api/           # Flask app for bot health + config endpoints
+bot/               # Discord bot worker runtime (scaffold)
+deploy/            # Coolify deployment configs per service
+database/          # PostgreSQL schema and migrations
+docs/              # Architecture, deployment, environment, testing docs
+tests/             # Test suite
+.env.*.example     # Environment variable templates per service
 ```
 
-## Website
+## Services
 
-The public site is [openmicodyssey.com](https://www.openmicodyssey.com).
+| Service      | Domain                   | Port | Source          |
+| ------------ | ------------------------ | ---- | --------------- |
+| Website      | openmicodyssey.com       | 8880 | `website/`      |
+| Control Room | admin.openmicodyssey.com | 8480 | `control_room/` |
+| Bot API      | api.openmicodyssey.com   | 8787 | `bot_api/`      |
+| Bot Worker   | internal                 | none | `bot/omo_bot/`  |
 
-The web application lives in [website/README.md](website/README.md), which documents:
+All services share a PostgreSQL database at `192.168.88.35` and run on a single Coolify server behind Nginx Proxy Manager.
 
-- the modular Flask app structure
-- local development and deployment notes
-- secure admin dashboard and content management
-- JSON-LD schema generation
-- content, template, CSS, and background customization
+## Quick Start
 
-Environment variables for the website, embedded control room, and planned bot worker are documented in [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md).
+### Website
 
-Discord bot worker startup now has a direct module command from the repo root:
-
-```powershell
-.venv\Scripts\python.exe -m bot.omo_bot
+```bash
+cd website
+pip install -r requirements.txt
+flask run
 ```
 
-Worker-specific local run notes live in [bot/README.md](bot/README.md).
+### Control Room
 
-Testing strategy for the website, control room, and bot scaffold is documented in [docs/TESTING.md](docs/TESTING.md).
+```bash
+cd control_room
+pip install -r requirements.txt
+flask run
+```
 
-Deployment guidance for the website, embedded control room, and planned split-service bot topology is documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+### Bot API
 
-The website will include the following content:
+```bash
+cd bot_api
+pip install -r requirements.txt
+flask run
+```
+
+### Bot Worker
+
+```bash
+python -m bot.omo_bot
+```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — system design, topology, ADRs
+- [Deployment](docs/DEPLOYMENT.md) — Coolify + Nginx setup steps
+- [Environment](docs/ENVIRONMENT.md) — per-service env var reference
+- [Nginx](docs/NGINX.md) — proxy host configuration
+- [Testing](docs/TESTING.md) — test strategy and coverage
 
 > from [Google Docs](https://docs.google.com/document/d/1T9QmXg7GLwMNTnOL72V16Ry0WEPrJj3ahbCa4TjS6HQ/edit?tab=t.0#heading=h.flei6gybekyw)
 
@@ -99,18 +118,14 @@ Route points are stored in website/static/data/map_data.json (649 GPS coordinate
 
 ## Coolify Deployment
 
-Deploy the Flask app to Coolify using Nixpacks. Full steps are in [.github/instructions/DEPLOYMENT_COOLIFY.md](.github/instructions/DEPLOYMENT_COOLIFY.md).
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment steps. Quick reference:
 
-For the broader split-service deployment view, including the embedded control room and planned bot worker, use [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-### Build settings
-
-| Setting        | Value                                              |
-| -------------- | -------------------------------------------------- |
-| Build pack     | Nixpacks                                           |
-| Base directory | `website` (this repo) or `/` (mirror repo)         |
-| Start command  | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` |
-| Port           | `8000`                                             |
+| Service      | Base Dir        | Start Command                                      | Port |
+| ------------ | --------------- | -------------------------------------------------- | ---- |
+| Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 |
+| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 |
+| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 |
+| Bot Worker   | `/`             | `python -m bot.omo_bot`                            | none |
 
 ### Environment variables
 
@@ -122,14 +137,6 @@ Minimum website deployment set:
 - `DATABASE_URL`
 - `SECRET_KEY`
 - `ADMIN_PASSWORD_HASH`
-
-Common optional website values:
-
-- `ADMIN_USERNAME`
-- `MAPBOX_ACCESS_TOKEN`
-- `CURRENT_YEAR`
-
-If you enable the embedded control room or the future bot worker, use the Discord and bot-specific variables from [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) instead of extending this README with a second matrix.
 
 Generate a `SECRET_KEY`:
 

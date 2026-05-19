@@ -35,12 +35,17 @@ def test_db_pool_is_app_scoped_and_releases_connections(monkeypatch):
         assert dsn
         return fake_pool
 
-    monkeypatch.setattr(db, 'SimpleConnectionPool', build_pool)
+    # Patch both shared.db and website.movie_site.db to cover all import paths
+    monkeypatch.setattr('shared.db.SimpleConnectionPool', build_pool)
+    monkeypatch.setattr(
+        'website.movie_site.db.SimpleConnectionPool', build_pool)
 
     app = create_app()
     app.config['TESTING'] = True
 
     with app.app_context():
+        # Clear any cached pool from previous tests
+        app.extensions.pop(db.DB_POOL_EXTENSION_KEY, None)
         pool = db.get_db_pool()
         assert pool is fake_pool
         assert db.get_db_pool() is fake_pool
