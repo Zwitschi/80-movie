@@ -36,20 +36,12 @@ endblock %} {% block bot_content %}
     <label for="mileage-tier">Tier</label>
     <select id="mileage-tier" name="tier_id">
       <option value="">All tiers</option>
-      {% for tier in mileage_snapshot.tiers %}
-      <option
-        value="{{ tier.tier_id }}"
-        {%
-        if
-        mileage_snapshot.selected_tier_id=""
-        ="tier.tier_id"
-        %}selected{%
-        endif
-        %}
-      >
-        {{ tier.name }}
-      </option>
-      {% endfor %}
+      {% for tier in mileage_snapshot.tiers %} {% if
+      mileage_snapshot.selected_tier_id==tier.tier_id %}
+      <option value="{{ tier.tier_id }}" selected>{{ tier.name }}</option>
+      {% else %}
+      <option value="{{ tier.tier_id }}">{{ tier.name }}</option>
+      {% endif %} {% endfor %}
     </select>
     <button type="submit">Apply</button>
   </form>

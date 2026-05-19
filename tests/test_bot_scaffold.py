@@ -232,6 +232,36 @@ def test_build_runtime_uses_postgres_repository_with_database_url():
                       PostgresSyndicationSourceRepository)
 
 
+def test_build_runtime_falls_back_to_env_config_when_managed_config_load_fails(monkeypatch):
+    config = BotConfig.from_env(
+        {
+            "OMO_DISCORD_TOKEN": "token-value",
+            "OMO_DISCORD_GUILD_ID": "111",
+            "OMO_DISCORD_CHANNEL_MAP": "announcements:200",
+            "DATABASE_URL": "postgresql://user:pass@localhost/omo",
+            "OMO_SYNDICATION_SOURCES": "youtube",
+        }
+    )
+
+    class FailingRepository:
+        def load_runtime_config(self, **kwargs):
+            raise RuntimeError("managed config unavailable")
+
+    monkeypatch.setattr(
+        "bot.omo_bot.main.build_postgres_bot_config_repository",
+        lambda database_url: FailingRepository(),
+    )
+
+    runtime = build_runtime(config, __import__(
+        "logging").getLogger("test-bot"))
+
+    snapshot = runtime.health_snapshot()
+    assert snapshot["guild_id"] == 111
+    assert snapshot["configured_channels"] == ["announcements"]
+    assert isinstance(runtime.syndication_repository,
+                      PostgresSyndicationSourceRepository)
+
+
 def test_build_runtime_uses_discord_delivery_sink_when_channels_configured():
     config = BotConfig.from_env(
         {

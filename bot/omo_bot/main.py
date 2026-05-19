@@ -69,13 +69,21 @@ def build_effective_bot_config(config: BotConfig) -> BotConfig:
     if not config.database_url:
         return config
 
-    managed_config = build_postgres_bot_config_repository(
-        config.database_url,
-    ).load_runtime_config(
-        default_guild_id=config.guild_id,
-        default_channel_map=config.channel_map,
-        default_role_map=config.role_map,
-    )
+    try:
+        managed_config = build_postgres_bot_config_repository(
+            config.database_url,
+        ).load_runtime_config(
+            default_guild_id=config.guild_id,
+            default_channel_map=config.channel_map,
+            default_role_map=config.role_map,
+        )
+    except Exception:
+        logging.getLogger("omo_bot").warning(
+            "Falling back to env-backed bot config because managed config could not be loaded",
+            exc_info=True,
+        )
+        return config
+
     return BotConfig(
         discord_token=config.discord_token,
         guild_id=managed_config.guild_id,
