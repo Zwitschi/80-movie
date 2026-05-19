@@ -544,6 +544,7 @@ Confirmed near-term product decision:
 - Keep Discord OAuth as the control-room operator authentication path through the embedded-first phase and the first extracted control-room phase.
 - Keep authorization local through explicit operator scopes rather than Discord guild membership alone.
 - Do not converge control-room auth with the editorial CMS credential model.
+- Keep onboarding and role-automation operator workflows on the same Discord-OAuth-backed operator boundary instead of introducing a second auth system first.
 
 ### Deployment Relationship
 
@@ -551,6 +552,12 @@ Confirmed near-term product decision:
 - Current bot scaffold can already run as a separate process, and the future bot should mature into a long-lived worker/service process.
 - Future control room may be separate SPA or separate Flask/API surface, but should deploy independently from public website shell when possible.
 - Shared database migrations must preserve subsystem ownership to avoid one surface breaking another during deploy.
+
+Post-stability revisit outcome:
+
+- Keep the control room embedded through the next onboarding and role-automation phase.
+- Do not extract a separate control-room deployment until onboarding and operator workflows create clear pressure for independent release cadence, richer realtime UX, or a different auth model.
+- Preserve `/admin/bot/api/*` as the extraction seam so later separation is incremental instead of a rewrite.
 
 ### Current Bot Status And Planned Discord Bot
 
@@ -619,6 +626,12 @@ Reason:
 - Assign and revoke configured Discord roles
 - Gate flows by guild-specific configuration
 - Support future welcome messaging and newcomer guidance
+
+Current revisit decision:
+
+- Build onboarding and role automation as bot-owned domain logic, not as editorial-CMS behavior.
+- Keep the embedded control room limited to configuration, inspection, retries, and privileged overrides for onboarding flows.
+- Treat onboarding configuration as repository/service state with explicit audit coverage, following the same pattern now used for config, queue, and mileage.
 
 #### Queue And Event Operations
 
