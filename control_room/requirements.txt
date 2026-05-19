@@ -1,0 +1,6 @@
+# Control room dependencies
+Flask
+flask-login
+gunicorn
+python-dotenv
+psycopg2-binary

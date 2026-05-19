@@ -64,48 +64,17 @@ Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `websi
 
 ### Current System Context
 
-```txt
-┌──────────────────────┐       HTTPS        ┌──────────────────────────┐
-│ Public visitors      │◄──────────────────►│ Flask website             │
-│ Admin editors        │                    │ openmicodyssey.com       │
-│ Bot operators        │                    ├──────────────────────────┤
-└──────────────────────┘                    │ Public pages              │
-                                            │ Admin CMS                 │
-                                            │ Embedded /admin/bot       │
-                                            │ Schema / SEO generation   │
-                                            │ Static export pipeline    │
-                                            └─────────────┬────────────┘
-                                                          │
-                                                          ▼
-                                               ┌────────────────────────┐
-                                               │ PostgreSQL content DB   │
-                                               └─────────────┬──────────┘
-                                                             │
-                                                             ▼
-                                               ┌────────────────────────┐
-                                               │ Bot scaffold runtime    │
-                                               │ config + syndication    │
-                                               └────────────────────────┘
-```
+Public visitors, admin editors, and bot operators interact with a single Flask website deployed at openmicodyssey.com. The website serves public pages, the editorial admin CMS, and the embedded `/admin/bot` control room. All three surfaces share a PostgreSQL database. The bot scaffold runtime runs as a separate process for config validation and syndication polling seams.
 
 ### Future-State Context
 
-```txt
-┌──────────────────────┐                       ┌──────────────────────────┐
-│ Public visitors      │◄────────────────────►│ Flask website             │
-└──────────────────────┘                       └─────────────┬────────────┘
-                                                            │
-                                                            │ shared data / APIs
-                                                            ▼
-┌──────────────────────┐ Discord API   ┌──────────────────────────┐
-│ Discord community    │◄────────────►│ Planned Discord bot       │
-└──────────────────────┘               └─────────────┬────────────┘
-                                                     │
-                                                     ▼
-                                          ┌──────────────────────────┐
-                                          │ Planned control room      │
-                                          └──────────────────────────┘
-```
+Three independent services share one PostgreSQL database:
+
+- **Website** (openmicodyssey.com) serves public pages and editorial CMS on port 8880.
+- **Control Room** (admin.openmicodyssey.com) provides operator login, health/config views, and syndication control on port 8480.
+- **Bot API** (api.openmicodyssey.com) exposes health, syndication, and bot management endpoints on port 8787.
+
+All traffic routes through Nginx Proxy Manager on the Coolify server. The Discord bot worker connects to Discord's gateway API and reads/writes bot-owned tables in the shared database.
 
 ## 4. Technology Baseline
 
@@ -276,23 +245,23 @@ Current code reality:
 
 ## 6. Runtime View
 
-### Scenario: Public Page Render
+### Scenario: Public Page Render (Website)
 
-1. Request reaches Flask app.
+1. Request reaches Flask website on port 8880.
 2. `main_blueprint` route selects page template.
 3. `build_page_context()` asks `movie_data.py` for aggregated content.
 4. Content store reads structured data from PostgreSQL-backed layer.
 5. View computes SEO metadata and JSON-LD payloads.
 6. Jinja template renders final HTML with shared layout and schema script blocks.
 
-### Scenario: Schema Generation
+### Scenario: Schema Generation (Website)
 
 1. `movie_data.py` combines core movie data, people, organizations, reviews, offers, social links, connect content, FAQ, and media assets into unified payload.
 2. `schema.py` asks `schema_parts/graph.py` for schema.org graph structure.
 3. Schema helpers render node-level data for `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 4. Final JSON-LD is serialized and injected into shared base template.
 
-### Scenario: Admin Login
+### Scenario: Admin Login (Website)
 
 1. Editor requests `/admin` or child route.
 2. `before_request` guard redirects unauthenticated user to `/admin/login`.
@@ -300,7 +269,7 @@ Current code reality:
 4. Password is verified against `ADMIN_PASSWORD_HASH` via Werkzeug.
 5. Flask-Login stores session and redirects back to requested admin route.
 
-### Scenario: Admin Content Edit
+### Scenario: Admin Content Edit (Website)
 
 1. Authenticated editor submits form to admin route.
 2. `admin.py` delegates to handler in `admin_content.py`.
@@ -308,13 +277,13 @@ Current code reality:
 4. Content writer persists updates to PostgreSQL-backed content tables.
 5. User is redirected back to editor with success or rendered with validation/save error.
 
-### Scenario: Sitemap / Robots Generation
+### Scenario: Sitemap / Robots Generation (Website)
 
 1. Request hits `/robots.txt` or `/sitemap.xml`.
 2. `views.py` returns app-generated metadata response.
 3. Sitemap enumerates public routes plus static asset paths discovered from structured movie data.
 
-### Scenario: Static Export
+### Scenario: Static Export (Website)
 
 1. Static generator builds Flask app in-process.
 2. Test client requests explicit public routes.
@@ -323,38 +292,87 @@ Current code reality:
 5. Output is validated for HTML structure and JSON-LD envelope shape.
 6. Files are written into `website/dist`.
 
-### Scenario: Hidden Map Page
+### Scenario: Hidden Map Page (Website)
 
 1. Request hits `/map` directly; route is intentionally excluded from normal sitemap page list.
 2. View renders dedicated map template with standard movie page context.
 3. Client-side map code reads route data from `website/static/data/map_data.json`.
 4. Map rendering depends on configured `MAPBOX_ACCESS_TOKEN`.
 
+### Scenario: Operator Login (Control Room)
+
+1. Operator requests `/admin/bot/login` on control room service (port 8480).
+2. Control room renders Discord OAuth start button.
+3. Operator authorizes via Discord; callback returns to `/oauth/discord/callback`.
+4. Control room validates OAuth state, fetches Discord identity, resolves local operator record.
+5. Operator session created with scoped permissions (`ops.read`, `queue.write`, etc.).
+6. Operator redirected to control room overview.
+
+### Scenario: Bot Health Check (Control Room / Bot API)
+
+1. Operator opens Health screen on control room (port 8480).
+2. Control room calls `GET /admin/bot/api/health` on bot API service (port 8787).
+3. Bot API returns runtime state, DB reachability, job freshness, config presence.
+4. Control room renders health dashboard with status indicators.
+
+### Scenario: Syndication Polling (Bot Worker)
+
+1. Bot worker starts, loads config from env and DB.
+2. Syndication polling job runs on configured interval (default 300s).
+3. Job queries YouTube adapter for new content since last checkpoint.
+4. New items are normalized and posted to configured Discord channels.
+5. Checkpoint updated in `bot_syndication_checkpoint` table.
+6. Control room can inspect source status and trigger retries via bot API.
+
+### Scenario: Queue Management (Control Room + Bot API)
+
+1. Moderator opens Queue screen on control room (port 8480).
+2. Control room fetches queue list from bot API (port 8787).
+3. Moderator advances queue via `POST /admin/bot/api/queues/{queue_id}/advance`.
+4. Bot API validates scope (`queue.write`), updates queue state, emits audit entry.
+5. Control room refreshes queue detail view with updated state.
+
 ## 7. Deployment View
 
-### Current Deployment
+### Infrastructure
 
-Current documented deployment targets Coolify via Nixpacks.
+All services deploy on a single Coolify server at `coolify.allucanget.biz` (internal IP `192.168.88.18`). Nginx Proxy Manager handles TLS termination and domain routing. PostgreSQL runs on a separate internal host at `192.168.88.35`.
 
-| Setting        | Value                                              |
-| -------------- | -------------------------------------------------- |
-| Base directory | `website`                                          |
-| Start command  | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` |
-| Port           | `8000`                                             |
+### Service Routing
 
-### Current Infrastructure
+| Domain                                         | Internal Target             | Port | Service      |
+| ---------------------------------------------- | --------------------------- | ---- | ------------ |
+| `openmicodyssey.com`, `www.openmicodyssey.com` | `http://192.168.88.18:8880` | 8880 | Website      |
+| `admin.openmicodyssey.com`                     | `http://192.168.88.18:8480` | 8480 | Control Room |
+| `api.openmicodyssey.com`                       | `http://192.168.88.18:8787` | 8787 | Bot API      |
 
-```txt
-┌──────────────────────┐      HTTPS       ┌──────────────────────────┐
-│ Public internet      │◄────────────────►│ Coolify web app          │
-└──────────────────────┘                  │ Gunicorn + Flask         │
-                                          └─────────────┬────────────┘
-                                                        │
-                                                        ▼
-                                             ┌────────────────────────┐
-                                             │ PostgreSQL             │
-                                             └────────────────────────┘
-```
+### Database
+
+PostgreSQL is always available at `192.168.88.35`. All three services connect to the same database instance with separate table ownership:
+
+- Website owns editorial tables (`movie`, `gallery_item`, `faq_item`, etc.)
+- Bot owns operational tables (`bot_guild_config`, `bot_queue`, `bot_mileage_event`, `bot_syndication_source`, etc.)
+- Shared integration tables exist for cross-surface read models
+
+### Coolify Deployment
+
+Each service deploys as an independent Coolify Application resource:
+
+| Service      | Base Directory  | Start Command                                      | Port | Health Check                |
+| ------------ | --------------- | -------------------------------------------------- | ---- | --------------------------- |
+| Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | `GET /robots.txt`           |
+| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | `GET /admin/bot/api/health` |
+| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | `GET /health`               |
+| Bot Worker   | `/` (repo root) | `python -m bot.omo_bot`                            | none | process alive               |
+
+### Nginx Proxy Manager
+
+Nginx Proxy Manager is pre-configured with proxy hosts for all three domains. Each proxy host:
+
+- Routes to the corresponding internal IP and port
+- Handles TLS via Let's Encrypt (managed by NPM)
+- Forwards `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto` headers
+- No additional Nginx configuration needed in this project
 
 ### Static Export Support
 
@@ -366,7 +384,7 @@ Repository also supports generating static HTML output from same public routes. 
 - `CURRENT_YEAR` feeds shared page/footer context.
 - `MAPBOX_ACCESS_TOKEN` is only required for hidden map experience.
 - `SECRET_KEY`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` govern admin session auth.
-- `DATABASE_URL` controls PostgreSQL connection pool target.
+- `DATABASE_URL` controls PostgreSQL connection pool target (points to `192.168.88.35`).
 - `DATA_SOURCE` is present in config surface, but does not currently switch runtime away from DB-backed content store.
 
 ### Required Environment Variables
@@ -374,14 +392,18 @@ Repository also supports generating static HTML output from same public routes. 
 - `SECRET_KEY`
 - `ADMIN_PASSWORD_HASH`
 - `SITE_URL`
+- `DATABASE_URL`
 
 ### Optional Environment Variables
 
 - `ADMIN_USERNAME`
 - `MAPBOX_ACCESS_TOKEN`
 - `CURRENT_YEAR`
-- `DATABASE_URL`
 - `DATA_SOURCE` (documented, but currently not effective as runtime switch)
+
+### Testing Notes
+
+Tests should not rely on a live database connection. Use in-memory repositories or mocked DB layers for test execution. The PostgreSQL instance at `192.168.88.35` is for production/runtime use only.
 
 ## 8. Security And Operations
 

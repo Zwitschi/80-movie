@@ -1,43 +1,14 @@
+"""Movie data aggregation.
+
+Uses local content_store import so tests can monkeypatch get_content_reader.
+Shared helpers come from shared.movie_data.
+"""
+
+from shared.movie_data import _build_cast_people, PRODUCTION_COMPANY_NAME as _SHARED_PRODUCTION_COMPANY_NAME
 from .content_store import get_content_reader
 
+# Local override for the production company name
 PRODUCTION_COMPANY_NAME = 'Open Mic Odyssey Productions'
-
-
-def _build_cast_people(
-    credits_people: list[dict[str, object]],
-    people: dict[str, dict[str, object]],
-) -> list[dict[str, object]]:
-    cast_entries: list[dict[str, object]] = []
-    cast_by_name: dict[str, dict[str, object]] = {}
-
-    for credit in credits_people:
-        if not isinstance(credit, dict):
-            continue
-
-        name = str(credit.get('name') or '').strip()
-        if not name:
-            continue
-
-        role = str(credit.get('role') or '').strip().capitalize()
-        person = people.get(name, {}) if isinstance(people, dict) else {}
-        description = str(person.get('credit_note') or '').strip()
-
-        entry = cast_by_name.get(name)
-        if entry is None:
-            entry = {
-                'name': name,
-                'roles': [],
-                'description': description,
-            }
-            cast_by_name[name] = entry
-            cast_entries.append(entry)
-        elif not entry['description'] and description:
-            entry['description'] = description
-
-        if role and role not in entry['roles']:
-            entry['roles'].append(role)
-
-    return cast_entries
 
 
 def get_movie_data():
@@ -99,3 +70,11 @@ def get_movie_page_context(current_year):
         'release_status': movie['release_status'],
         'current_year': current_year,
     }
+
+
+__all__ = [
+    'PRODUCTION_COMPANY_NAME',
+    'get_movie_data',
+    'get_movie_page_context',
+    'get_content_reader',
+]

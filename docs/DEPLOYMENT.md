@@ -1,276 +1,78 @@
 # Deployment Guide
 
-This document is the source of truth for deployment across the current Flask website, the embedded `/admin/bot` control room, and the planned Discord bot worker.
-
-## Current reality
-
-- The website is deployable today and is the only production-ready runtime in this repository.
-- The control room currently ships inside the same Flask app under `/admin/bot`; it is not a separate deployable service yet.
-- The bot worker has a Python scaffold and startup entrypoint, but it is still a planned operational surface rather than a production-ready runtime.
-
-Use this guide to keep deployment planning aligned with the code that exists now, while still documenting the intended split-service topology.
+This document is the source of truth for deploying the three OMO services: website, control room, and bot API.
 
 ## Service matrix
 
-| Surface                       | Current status       | Source path                | Runtime entrypoint                                 | Public port / route | Notes                                                          |
-| ----------------------------- | -------------------- | -------------------------- | -------------------------------------------------- | ------------------- | -------------------------------------------------------------- |
-| Website                       | Deployable now       | `website/`                 | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` | `8000`              | Current production baseline                                    |
-| Embedded control room         | Deploys with website | `website/`                 | same Flask process as website                      | `/admin/bot`        | Separate operator auth, same web resource                      |
-| Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot`                            | none                | Long-running worker, no public HTTP surface documented yet     |
-| Extracted control-room UI/API | Future only          | not implemented            | not implemented                                    | not implemented     | Revisit after onboarding or live ops justify a separate deploy |
-
-## Deployment path map
-
-Use this section when choosing the deploy base directory or tracing an entrypoint back to code.
-
-### Website paths
-
-| Deploy shape                        | Base directory | Startup target                                             | Code path                                            | Notes                                                |
-| ----------------------------------- | -------------- | ---------------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------- |
-| Current repo, website subdir deploy | `website/`     | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`         | `website/app.py` -> `website/movie_site/__init__.py` | Current documented Coolify path                      |
-| Current repo, repo-root deploy      | `/`            | `gunicorn website.app:app --bind 0.0.0.0:8000 --workers 2` | `website/app.py` -> `website/movie_site/__init__.py` | Use this only if the platform deploys from repo root |
-| Mirror repo rooted at Flask app     | `/`            | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`         | `app.py` -> `movie_site/__init__.py`                 | Matches the mirror-repo layout                       |
-
-HTTP surface shipped by the website process today:
-
-- public site under `/`
-- editorial admin under `/admin`
-- embedded bot control room under `/admin/bot`
-- Discord OAuth callback alias under `/oauth/discord/callback`
-
-### Bot worker paths
-
-| Deploy shape               | Base directory | Startup target               | Code path                                          | Notes                                   |
-| -------------------------- | -------------- | ---------------------------- | -------------------------------------------------- | --------------------------------------- |
-| Current repo worker deploy | `/`            | `python -m bot.omo_bot`      | `bot/omo_bot/__main__.py` -> `bot/omo_bot/main.py` | Preferred worker command                |
-| Direct module fallback     | `/`            | `python -m bot.omo_bot.main` | `bot/omo_bot/main.py`                              | Backup command for local debugging only |
-
-The bot worker does not expose a public HTTP route today. Deploy it as a background worker process only.
-
-## Recommended topology
-
-### Phase 1: current recommended deployment
-
-Deploy one web resource for the website and embedded control room.
-
-```txt
-┌──────────────────────┐      HTTPS       ┌──────────────────────────────┐
-│ Public visitors      │◄────────────────►│ Website web resource         │
-│ Editors              │                  │ Flask + Gunicorn             │
-│ Bot operators        │                  │ public pages + /admin +      │
-└──────────────────────┘                  │ /admin/bot                   │
-                                          └──────────────┬───────────────┘
-                                                         │
-                                                         ▼
-                                              ┌─────────────────────────┐
-                                              │ PostgreSQL              │
-                                              └─────────────────────────┘
-```
-
-This is the only deployment mode that matches the repo’s implemented surfaces today.
-
-### Phase 2: planned split-service topology
-
-When the bot worker matures beyond the current scaffold, deploy it independently from the website.
-
-```txt
-┌──────────────────────┐      HTTPS       ┌──────────────────────────────┐
-│ Public visitors      │◄────────────────►│ Website web resource         │
-│ Editors              │                  │ Flask + Gunicorn             │
-│ Bot operators        │                  │ public pages + /admin +      │
-└──────────────────────┘                  │ /admin/bot (embedded first) │
-                                          └──────────────┬───────────────┘
-                                                         │
-                                                         │ shared DB
-                                                         ▼
-                                              ┌─────────────────────────┐
-                                              │ PostgreSQL              │
-                                              └─────────────┬───────────┘
-                                                            │
-                                                            ▼
-                                              ┌─────────────────────────┐
-                                              │ Bot worker resource     │
-                                              │ python -m bot.omo_bot   │
-                                              └─────────────────────────┘
-```
-
-### Phase 3: optional extracted control room
-
-If `/admin/bot` outgrows the embedded-first phase, extract the operator UI/API into its own resource later. That surface is still future work and should not be documented as current runtime fact.
-
-## Website deployment
-
-The website supports two deploy modes:
-
-1. **`website/` subdirectory deploy** (Coolify default): bot imports degrade gracefully when `bot/` is not on the Python path. The control room renders but bot-specific features (syndication, queue, mileage) require the bot module.
-2. **Repo-root deploy**: `bot/` is on the Python path, so the full control room is available.
-
-### Coolify resource settings
-
-- Resource type: `Application`
-- Base directory: `website`
-- Build pack: `Nixpacks`
-- Build command: leave empty
-- Port: `8880` (choose a port that does not conflict with other deployments on the same server)
-- Suggested health check: `/robots.txt`
-
-Path-specific command mapping:
-
-- Base directory `website`: `gunicorn app:app --bind 0.0.0.0:8880 --workers 2`
-
-**Important**: When deploying from `website/`, the `bot/` package at repo root is not on the Python path. The application handles this gracefully — the website and editorial admin work normally, but bot control-room features that depend on `bot.omo_bot` modules will report missing configuration. To enable the full control room, either:
-
-- Deploy from repo root with `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`, or
-- Add the repo root to `PYTHONPATH` in your Coolify environment variables: `PYTHONPATH=/app`
-
-### Website environment
-
-Use the website and control-room sections in [ENVIRONMENT.md](/docs/ENVIRONMENT.md).
-
-Minimum production set:
-
-- `SITE_URL`
-- `DATABASE_URL`
-- `SECRET_KEY`
-- `ADMIN_PASSWORD_HASH`
-
-Add these when operator login is enabled in the embedded control room:
-
-- `OMO_DISCORD_CLIENT_ID`
-- `OMO_DISCORD_CLIENT_SECRET`
-- `OMO_DISCORD_REDIRECT_URI`
-
-### Website deployment checklist
-
-- Set a real `SECRET_KEY` (generate with `python -c "import secrets; print(secrets.token_hex(32))"`)
-- Set a strong `ADMIN_PASSWORD_HASH` (generate with `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`)
-- Set `SITE_URL` to the live canonical URL
-- Confirm `DATABASE_URL` points at the intended PostgreSQL instance
-- Verify `/`, `/admin`, and `/admin/bot` all respond as expected after deploy
-
-## Embedded control room deployment
-
-The embedded control room is not a second web service today. It deploys automatically with the website because it is registered in the same Flask app.
-
-Operational implications:
-
-- No separate build or release step is needed today
-- Operator auth depends on the website’s Flask session secret and the control-room Discord OAuth env vars
-- `/admin/bot` failures should be treated as website-web-resource regressions, not separate service incidents
-
-Suggested post-deploy checks:
-
-- `/admin/bot/login` renders
-- `/oauth/discord/callback` is routed by the website process at the deployed domain
-- `/admin/bot/api/health` returns the expected shape when authenticated or the expected auth error when not
-- Discord OAuth callback configuration matches the deployed domain
-
-## Bot worker deployment
-
-The bot worker is not production-ready yet, but the planned runtime command already exists.
-
-### Planned worker command
-
-From the repository root:
-
-```powershell
-python -m bot.omo_bot
-```
-
-### Planned worker resource shape
-
-| Setting        | Recommended value                  |
-| -------------- | ---------------------------------- |
-| Resource type  | Long-running application or worker |
-| Base directory | `/`                                |
-| Start command  | `python -m bot.omo_bot`            |
-| Public port    | none required                      |
-| Restart policy | enabled                            |
-
-### Worker environment
-
-Use the bot-worker section in [ENVIRONMENT.md](/docs/ENVIRONMENT.md).
-
-Minimum worker set:
-
-- `OMO_DISCORD_TOKEN`
-- `DATABASE_URL` or `OMO_DATABASE_URL`
-
-Recommended additions when the worker becomes operational:
-
-- `OMO_DISCORD_GUILD_ID`
-- `OMO_DISCORD_CHANNEL_MAP`
-- `OMO_SYNDICATION_SOURCES`
-- `OMO_SYNDICATION_POLL_SECONDS`
-- `OMO_LOG_LEVEL`
-
-### Current limitation
-
-Do not describe the worker as production-ready in operational docs yet. The scaffold has config and startup lifecycle coverage, but it does not yet represent a feature-complete Discord automation service.
-
-### Coolify bot worker deployment
-
-When deploying the bot worker to Coolify:
-
-- Resource type: `Application` (long-running)
-- Base directory: `/` (repo root)
-- Build pack: `Nixpacks`
-- Start command: `python -m bot.omo_bot`
-- Port: leave empty (no HTTP surface)
-- Restart policy: enabled
-
-## Deployment independence rules
-
-These rules matter once the bot worker is deployed separately, and they already apply to migration planning now.
-
-- Website deploys must remain possible without a simultaneous bot rollout.
-- Bot deploys must not require a same-minute website rollout.
-- Shared PostgreSQL migrations must preserve compatibility windows between website-owned and bot-owned surfaces.
-- The public website must not depend on bot-owned tables for correctness.
-- The embedded control room may read bot-owned operational data later, but website page rendering should stay independent of worker availability.
-
-## Release order guidance
-
-### Current repo state
-
-1. Deploy database changes first when they are additive and backward compatible.
-2. Deploy the website resource.
-3. Verify public pages, admin login, and `/admin/bot` health/auth paths.
-
-### Future split-service state
-
-1. Deploy additive database changes first.
-2. Deploy the website resource.
-3. Deploy the bot worker resource.
-4. Verify worker startup and website/control-room compatibility.
-5. If a separate control-room service exists later, deploy it last.
-
-## Post-deploy smoke checks
-
-### Website
-
-- `GET /` returns `200`
-- `GET /robots.txt` returns `200`
-- `GET /sitemap.xml` returns `200`
-- `/admin/login` renders
-
-### Embedded control room
-
-- `/admin/bot/login` renders
-- OAuth start route redirects when configured
-- Operator-only health pages and APIs behave as expected
-
-### Bot worker
-
-- Process starts without config parsing errors
-- Logs show runtime startup completed
-- Process remains alive under the supervisor or platform restart policy
-
-## Related docs
-
-- [ARCHITECTURE.md](/docs/ARCHITECTURE.md)
-- [ENVIRONMENT.md](/docs/ENVIRONMENT.md)
-- [TESTING.md](/docs/TESTING.md)
-- [DEPLOYMENT_COOLIFY.md](/.github/instructions/DEPLOYMENT_COOLIFY.md)
-
-Current CI workflow already prints sanitized response snippets for deploy failures and tries auth/method fallback variants in `.gitea/workflows/ci-cd.yml`.
+| Surface      | Status     | Source path     | Runtime entrypoint                                 | Port | Domain                   |
+| ------------ | ---------- | --------------- | -------------------------------------------------- | ---- | ------------------------ |
+| Website      | Deployable | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | openmicodyssey.com       |
+| Control Room | Deployable | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | admin.openmicodyssey.com |
+| Bot API      | Deployable | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | api.openmicodyssey.com   |
+| Bot Worker   | Scaffold   | `bot/omo_bot/`  | `python -m bot.omo_bot`                            | none | internal                 |
+
+## Infrastructure
+
+All services run on a single Coolify server at `coolify.allucanget.biz` (internal IP `192.168.88.18`). Nginx Proxy Manager handles TLS termination and domain routing. PostgreSQL runs on `192.168.88.35`.
+
+## Deployment steps
+
+### 1. Website (openmicodyssey.com)
+
+1. In Coolify, create new Application resource
+2. Set base directory: `website/`
+3. Build pack: Nixpacks
+4. Start command: `gunicorn app:app --bind 0.0.0.0:8880 --workers 2`
+5. Port: `8880`
+6. Health check: `GET /robots.txt`
+7. Set environment variables (see `.env.website.example`)
+8. In Nginx Proxy Manager, create proxy host: `openmicodyssey.com` → `http://192.168.88.18:8880`
+
+### 2. Control Room (admin.openmicodyssey.com)
+
+1. In Coolify, create new Application resource
+2. Set base directory: `control_room/`
+3. Build pack: Nixpacks
+4. Start command: `gunicorn app:app --bind 0.0.0.0:8480 --workers 2`
+5. Port: `8480`
+6. Health check: `GET /admin/bot/api/health`
+7. Set environment variables (see `.env.control_room.example`)
+8. In Nginx Proxy Manager, create proxy host: `admin.openmicodyssey.com` → `http://192.168.88.18:8480`
+
+### 3. Bot API (api.openmicodyssey.com)
+
+1. In Coolify, create new Application resource
+2. Set base directory: `bot_api/`
+3. Build pack: Nixpacks
+4. Start command: `gunicorn app:app --bind 0.0.0.0:8787 --workers 2`
+5. Port: `8787`
+6. Health check: `GET /health`
+7. Set environment variables (see `.env.bot_api.example`)
+8. In Nginx Proxy Manager, create proxy host: `api.openmicodyssey.com` → `http://192.168.88.18:8787`
+
+### 4. Bot Worker (internal)
+
+1. In Coolify, create new Application or Worker resource
+2. Set base directory: `/` (repo root)
+3. Start command: `python -m bot.omo_bot`
+4. No public port needed
+5. Enable restart policy
+6. Set environment variables (see bot worker section in ENVIRONMENT.md)
+
+## Deployment checklist
+
+- [ ] Generate `SECRET_KEY` for each service: `python -c "import secrets; print(secrets.token_hex(32))"`
+- [ ] Generate `ADMIN_PASSWORD_HASH`: `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`
+- [ ] Set `SITE_URL` to live canonical URL (no trailing slash)
+- [ ] Confirm `DATABASE_URL` points to `192.168.88.35`
+- [ ] Configure Discord OAuth app with correct redirect URIs
+- [ ] Verify all 3 domains respond correctly after deploy
+- [ ] Verify bot worker connects to Discord and starts polling
+
+## Detailed Coolify configs
+
+See `deploy/` directory for per-service Coolify configuration files:
+
+- `deploy/website-coolify.md`
+- `deploy/control-room-coolify.md`
+- `deploy/bot-api-coolify.md`
