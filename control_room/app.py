@@ -46,7 +46,9 @@ def create_app() -> Flask:
     # Import and register admin_bot blueprint from website
     # This will be replaced with native control_room blueprints in Phase 2
     from movie_site.admin_bot import admin_bot_blueprint, oauth_callback
+    from movie_site.admin import admin_blueprint
 
+    app.register_blueprint(admin_blueprint)
     app.register_blueprint(admin_bot_blueprint)
     app.add_url_rule(
         '/oauth/discord/callback',
