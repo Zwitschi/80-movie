@@ -79,15 +79,15 @@ def get_control_room_config_values() -> dict:
     return {
         "DATABASE_URL": get_env_str("DATABASE_URL", "postgresql://user:password@localhost/omo"),
         "SECRET_KEY": get_env_str("SECRET_KEY", "dev-secret-key-change-in-production"),
-        "DISCORD_CLIENT_ID": get_env_str(
+        "BOT_OPS_DISCORD_CLIENT_ID": get_env_str(
             "OMO_DISCORD_CLIENT_ID",
             get_env_str("DISCORD_CLIENT_ID", ""),
         ),
-        "DISCORD_CLIENT_SECRET": get_env_str(
+        "BOT_OPS_DISCORD_CLIENT_SECRET": get_env_str(
             "OMO_DISCORD_CLIENT_SECRET",
             get_env_str("DISCORD_CLIENT_SECRET", ""),
         ),
-        "DISCORD_REDIRECT_URI": get_env_str(
+        "BOT_OPS_DISCORD_REDIRECT_URI": get_env_str(
             "OMO_DISCORD_REDIRECT_URI",
             get_env_str("DISCORD_REDIRECT_URI", ""),
         ),
