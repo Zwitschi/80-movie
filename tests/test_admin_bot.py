@@ -1,16 +1,20 @@
+from bot.omo_bot.services import MileageService, QueueService
+from bot.omo_bot.models import SyndicationSourceState
+from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryBotConfigRepository, InMemoryMileageRepository, InMemoryQueueRepository, InMemorySyndicationSourceRepository
+from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem
+from bot.omo_bot.config import BotRuntimeSettings
+import movie_site.bot_operator_service as bot_operator_service
+import movie_site.bot_operator_repo as bot_operator_repo
+import movie_site.admin_bot as admin_bot
 from datetime import datetime, timedelta, timezone
 from typing import cast
 from urllib.parse import parse_qs, urlparse
 
-from website.app import create_app
-from website.movie_site import admin_bot
-from website.movie_site import bot_operator_repo
-from website.movie_site import bot_operator_service
-from bot.omo_bot.config import BotRuntimeSettings
-from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem
-from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryBotConfigRepository, InMemoryMileageRepository, InMemoryQueueRepository, InMemorySyndicationSourceRepository
-from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.services import MileageService, QueueService
+from control_room.app import create_app
+
+# admin_bot imports these via movie_site.* (not website.movie_site.*)
+import sys
+sys.path.insert(0, 'website')
 
 
 class _FailingAuditRepository:

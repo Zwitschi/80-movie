@@ -1,0 +1,158 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Reviews{% endblock
+%} {% block admin_content %} {% if save_success %}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %} {# ── Individual reviews ─────────────────────────────────────── #}
+<section>
+  <h2>Reviews</h2>
+  {% if reviews %}
+  <table>
+    <thead>
+      <tr>
+        <th>Author</th>
+        <th>Name</th>
+        <th>Rating</th>
+        <th>Date</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for review in reviews %}
+      <tr>
+        <td>{{ review.author_name }}</td>
+        <td>{{ review.name }}</td>
+        <td>{{ review.review_rating }}</td>
+        <td>{{ review.date_published }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+            <input type="hidden" name="action" value="remove_review" />
+            <input
+              type="hidden"
+              name="review_index"
+              value="{{ loop.index0 }}"
+            />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No reviews yet.</p>
+  {% endif %}
+
+  <h3>Add Review</h3>
+  <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+    <input type="hidden" name="action" value="add_review" />
+
+    <label for="review_author_name"
+      >Author name <span aria-hidden="true">*</span></label
+    >
+    <input
+      id="review_author_name"
+      name="review_author_name"
+      type="text"
+      required
+    />
+
+    <label for="review_author_url">Author URL</label>
+    <input id="review_author_url" name="review_author_url" type="url" />
+
+    <label for="review_name">Review headline</label>
+    <input id="review_name" name="review_name" type="text" />
+
+    <label for="review_review_body"
+      >Review body <span aria-hidden="true">*</span></label
+    >
+    <textarea
+      id="review_review_body"
+      name="review_review_body"
+      rows="4"
+      required
+    ></textarea>
+
+    <label for="review_review_rating">Rating (0–5)</label>
+    <input
+      id="review_review_rating"
+      name="review_review_rating"
+      type="number"
+      min="0"
+      max="5"
+      step="0.1"
+    />
+
+    <label for="review_date_published">Date published (YYYY-MM-DD)</label>
+    <input
+      id="review_date_published"
+      name="review_date_published"
+      type="text"
+      placeholder="2026-03-20"
+    />
+
+    <button type="submit">Add Review</button>
+  </form>
+</section>
+
+{# ── Aggregate rating ───────────────────────────────────────── #}
+<section>
+  <h2>Aggregate Rating</h2>
+  <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+    <input type="hidden" name="action" value="save_aggregate" />
+
+    <label for="agg_rating_value">Rating value</label>
+    <input
+      id="agg_rating_value"
+      name="agg_rating_value"
+      type="number"
+      min="0"
+      max="10"
+      step="0.1"
+      value="{{ aggregate.get('rating_value', '') if aggregate.get('rating_value') is not none else '' }}"
+    />
+
+    <label for="agg_best_rating">Best rating</label>
+    <input
+      id="agg_best_rating"
+      name="agg_best_rating"
+      type="number"
+      min="0"
+      max="10"
+      step="0.1"
+      value="{{ aggregate.get('best_rating', '') if aggregate.get('best_rating') is not none else '' }}"
+    />
+
+    <label for="agg_worst_rating">Worst rating</label>
+    <input
+      id="agg_worst_rating"
+      name="agg_worst_rating"
+      type="number"
+      min="0"
+      max="10"
+      step="0.1"
+      value="{{ aggregate.get('worst_rating', '') if aggregate.get('worst_rating') is not none else '' }}"
+    />
+
+    <label for="agg_rating_count">Rating count</label>
+    <input
+      id="agg_rating_count"
+      name="agg_rating_count"
+      type="number"
+      min="0"
+      value="{{ aggregate.get('rating_count', '') if aggregate.get('rating_count') is not none else '' }}"
+    />
+
+    <label for="agg_review_count">Review count</label>
+    <input
+      id="agg_review_count"
+      name="agg_review_count"
+      type="number"
+      min="0"
+      value="{{ aggregate.get('review_count', '') if aggregate.get('review_count') is not none else '' }}"
+    />
+
+    <button type="submit">Save Aggregate Rating</button>
+  </form>
+</section>
+{% endblock %}

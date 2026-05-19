@@ -1,0 +1,153 @@
+{% extends 'admin/bot/_bot_base.html' %} {% block admin_title %}Bot
+Syndication{% endblock %} {% block bot_content %}
+<section>
+  <h2>Syndication</h2>
+  <p>Current bot syndication configuration and persisted polling state.</p>
+  {% if save_success == 'retry' %}
+  <p>Manual retry completed.</p>
+  {% elif save_success == 'checkpoint-reset' %}
+  <p>Checkpoint reset completed.</p>
+  {% endif %} {% if error == 'operator-scope-required' %}
+  <p>
+    Syndication write scope is required for manual retry and checkpoint reset.
+  </p>
+  {% elif error == 'invalid-syndication-config' %}
+  <p>
+    Manual syndication actions require valid runtime settings and a
+    database-backed repository.
+  </p>
+  {% elif error == 'source-not-found' %}
+  <p>That syndication source is not configured anymore.</p>
+  {% elif error == 'retry-failed' %}
+  <p>Manual retry failed. Check runtime logs and source status.</p>
+  {% endif %}
+  <ul>
+    <li><strong>Status:</strong> {{ syndication.status }}</li>
+    <li><strong>Generated at:</strong> {{ syndication.generated_at }}</li>
+    <li>
+      <strong>Repository backend:</strong> {{
+      syndication.bot_runtime.repository_backend }}
+    </li>
+    <li>
+      <strong>Discord token configured:</strong> {{ 'yes' if
+      syndication.bot_runtime.discord_token_configured else 'no' }}
+    </li>
+    <li>
+      <strong>Database configured:</strong> {{ 'yes' if
+      syndication.bot_runtime.database_configured else 'no' }}
+    </li>
+    <li>
+      <strong>Poll interval:</strong> {{
+      syndication.bot_runtime.syndication_poll_seconds }} seconds
+    </li>
+    <li>
+      <strong>Manual actions:</strong> {{ 'enabled' if
+      syndication.bot_runtime.manual_actions_supported else 'unavailable' }}
+    </li>
+    <li>
+      <strong>Operator write scope:</strong> {{ 'present' if
+      syndication.bot_runtime.operator_can_write else 'missing' }}
+    </li>
+  </ul>
+  {% if syndication.bot_runtime.repository_error %}
+  <p>Repository error: {{ syndication.bot_runtime.repository_error }}</p>
+  {% endif %} {% if syndication.error %}
+  <p>Configuration error: {{ syndication.error }}</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Status Summary</h2>
+  <ul>
+    <li>
+      <strong>Configured sources:</strong> {{ syndication.summary.source_count
+      }}
+    </li>
+    <li>
+      <strong>Due sources:</strong> {{ syndication.summary.due_source_count }}
+    </li>
+    <li>
+      <strong>Attention sources:</strong> {{
+      syndication.summary.attention_source_count }}
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>Configured Sources</h2>
+  {% if syndication.sources %}
+  <ul>
+    {% for source in syndication.sources %}
+    <li>
+      <strong>{{ source.source_key }}</strong>
+      <br />Status: {{ source.status }} <br />Last poll result: {{
+      source.last_poll_result }} <br />Enabled: {{ 'yes' if source.enabled else
+      'no' }} <br />Due now: {{ 'yes' if source.due_now else 'no' }}
+      <br />Checkpoint: {{ source.checkpoint or 'none' }} <br />Last polled: {{
+      source.last_polled_at or 'never' }} <br />Last succeeded: {{
+      source.last_succeeded_at or 'never' }} <br />Last failed: {{
+      source.last_failed_at or 'never' }}
+      <div>
+        {% if source.actions.manual_actions_supported and
+        source.actions.can_write %}
+        <form method="post" action="{{ source.actions.retry_page }}">
+          <button type="submit">Retry poll</button>
+        </form>
+        <form method="post" action="{{ source.actions.reset_checkpoint_page }}">
+          <button type="submit">Reset checkpoint</button>
+        </form>
+        {% elif not source.actions.manual_actions_supported %}
+        <p>
+          Manual retry and checkpoint reset require a database-backed
+          repository.
+        </p>
+        {% else %}
+        <p>Manual retry and checkpoint reset require `syndication.write`.</p>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No syndication sources are configured yet.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Channel Bindings</h2>
+  {% if syndication.channel_bindings %}
+  <ul>
+    {% for binding in syndication.channel_bindings %}
+    <li>
+      <strong>{{ binding.binding_key }}</strong>: {{ binding.channel_id }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No bot channel bindings are configured yet.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>API Links</h2>
+  <ul>
+    <li>
+      <a href="{{ url_for('admin_bot.syndication_api') }}">Syndication JSON</a>
+    </li>
+    <li>
+      <a href="{{ url_for('admin_bot.syndication_sources_api') }}"
+        >Sources JSON</a
+      >
+    </li>
+    <li>
+      <a href="{{ url_for('admin_bot.syndication_channels_api') }}"
+        >Channel Bindings JSON</a
+      >
+    </li>
+    <li>
+      Retry API and checkpoint reset API are exposed per source in the source
+      action metadata.
+    </li>
+  </ul>
+</section>
+{% endblock %}

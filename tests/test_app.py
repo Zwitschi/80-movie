@@ -7,6 +7,7 @@ from website.movie_site import views
 from website.movie_site.content_store import get_content_reader
 from website.movie_site import movie_data
 from website.movie_site.movie_data import get_movie_data, get_movie_page_context
+from control_room.app import create_app as create_control_room_app
 
 
 @pytest.fixture
@@ -291,7 +292,7 @@ class TestAdminFlows:
 
     @staticmethod
     def _admin_app():
-        app = create_app()
+        app = create_control_room_app()
         app.config.update(
             TESTING=False,
             ADMIN_USERNAME='editor',
@@ -386,10 +387,11 @@ class TestAdminFlows:
                 self.calls.append((logical_file, payload))
 
         fake_writer = FakeWriter()
+        from control_room import admin_content as cr_admin_content
         monkeypatch.setattr(
-            admin_content, 'get_content_reader', lambda: FakeReader())
+            cr_admin_content, 'get_content_reader', lambda: FakeReader())
         monkeypatch.setattr(
-            admin_content, 'get_content_writer', lambda: fake_writer)
+            cr_admin_content, 'get_content_writer', lambda: fake_writer)
 
         login_response = self._login(client)
         assert login_response.status_code == 302

@@ -22,36 +22,6 @@ def _env_config_values() -> dict[str, object]:
         'CURRENT_YEAR': current_year,
         'MAPBOX_ACCESS_TOKEN': os.getenv('MAPBOX_ACCESS_TOKEN', ''),
         'SECRET_KEY': os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production'),
-        'ADMIN_USERNAME': os.getenv('ADMIN_USERNAME', 'admin'),
-        'ADMIN_PASSWORD_HASH': os.getenv(
-            'ADMIN_PASSWORD_HASH',
-            generate_password_hash('admin')
-        ),
-        'BOT_OPS_DISCORD_CLIENT_ID': os.getenv(
-            'OMO_DISCORD_CLIENT_ID',
-            os.getenv('DISCORD_CLIENT_ID', ''),
-        ),
-        'BOT_OPS_DISCORD_CLIENT_SECRET': os.getenv(
-            'OMO_DISCORD_CLIENT_SECRET',
-            os.getenv('DISCORD_CLIENT_SECRET', ''),
-        ),
-        'BOT_OPS_DISCORD_REDIRECT_URI': os.getenv(
-            'OMO_DISCORD_REDIRECT_URI',
-            os.getenv('DISCORD_REDIRECT_URI', ''),
-        ),
-        'BOT_OPS_ALLOWED_USER_IDS': tuple(
-            value.strip()
-            for value in os.getenv('OMO_BOT_OPS_ALLOWED_USER_IDS', '').split(',')
-            if value.strip()
-        ),
-        'BOT_OPS_DEFAULT_SCOPES': tuple(
-            value.strip()
-            for value in os.getenv('OMO_BOT_OPS_DEFAULT_SCOPES', 'ops.read').split(',')
-            if value.strip()
-        ),
-        'BOT_OPS_SESSION_IDLE_MINUTES': int(
-            os.getenv('OMO_BOT_OPS_SESSION_IDLE_MINUTES', '60')
-        ),
     }
 
 
@@ -73,12 +43,3 @@ class DefaultConfig:
     MAPBOX_ACCESS_TOKEN = _DEFAULT_ENV_VALUES['MAPBOX_ACCESS_TOKEN']
     SCHEMA_ORG_VERSION_URL = 'https://schema.org/docs/releases.html#v30.0'
     SECRET_KEY = _DEFAULT_ENV_VALUES['SECRET_KEY']
-    ADMIN_USERNAME = _DEFAULT_ENV_VALUES['ADMIN_USERNAME']
-    # Default password is "admin", overridden by env var ADMIN_PASSWORD_HASH
-    ADMIN_PASSWORD_HASH = _DEFAULT_ENV_VALUES['ADMIN_PASSWORD_HASH']
-    BOT_OPS_DISCORD_CLIENT_ID = _DEFAULT_ENV_VALUES['BOT_OPS_DISCORD_CLIENT_ID']
-    BOT_OPS_DISCORD_CLIENT_SECRET = _DEFAULT_ENV_VALUES['BOT_OPS_DISCORD_CLIENT_SECRET']
-    BOT_OPS_DISCORD_REDIRECT_URI = _DEFAULT_ENV_VALUES['BOT_OPS_DISCORD_REDIRECT_URI']
-    BOT_OPS_ALLOWED_USER_IDS = _DEFAULT_ENV_VALUES['BOT_OPS_ALLOWED_USER_IDS']
-    BOT_OPS_DEFAULT_SCOPES = _DEFAULT_ENV_VALUES['BOT_OPS_DEFAULT_SCOPES']
-    BOT_OPS_SESSION_IDLE_MINUTES = _DEFAULT_ENV_VALUES['BOT_OPS_SESSION_IDLE_MINUTES']

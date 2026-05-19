@@ -1,0 +1,252 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Events
+&amp; Offers{% endblock %} {% block admin_content %} {% if save_success %}
+<p class="alert alert-success">Saved successfully.</p>
+{% endif %} {% if save_error %}
+<p class="alert alert-error">Error: {{ save_error }}</p>
+{% endif %} {# ── Screenings ──────────────────────────────────────────────── #}
+<section>
+  <h2>Screenings</h2>
+  {% if events %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Venue</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events %}
+      <tr>
+        <td>{{ event.name }}</td>
+        <td>{{ event.start_date }}</td>
+        <td>{{ event.end_date }}</td>
+        <td>{{ event.location.name if event.location else '' }}</td>
+        <td>{{ event.event_status.replace('https://schema.org/', '') }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_events') }}">
+            <input type="hidden" name="action" value="remove_event" />
+            <input type="hidden" name="event_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No screenings yet.</p>
+  {% endif %}
+
+  <h3>Add Screening</h3>
+  <form method="post" action="{{ url_for('admin.edit_events') }}">
+    <input type="hidden" name="action" value="add_event" />
+
+    <label for="event_name">Name <span aria-hidden="true">*</span></label>
+    <input id="event_name" name="event_name" type="text" required />
+
+    <label for="event_description">Description</label>
+    <textarea
+      id="event_description"
+      name="event_description"
+      rows="3"
+    ></textarea>
+
+    <label for="event_start_date">Start date (YYYY-MM-DDTHH:MM:SS±HH:MM)</label>
+    <input
+      id="event_start_date"
+      name="event_start_date"
+      type="text"
+      placeholder="2026-06-12T19:00:00-07:00"
+    />
+
+    <label for="event_end_date">End date (YYYY-MM-DDTHH:MM:SS±HH:MM)</label>
+    <input
+      id="event_end_date"
+      name="event_end_date"
+      type="text"
+      placeholder="2026-06-12T21:30:00-07:00"
+    />
+
+    <label for="event_status">Event status</label>
+    <select id="event_status" name="event_status">
+      {% for status in event_statuses %}
+      <option value="{{ status }}">
+        {{ status.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="event_attendance_mode">Attendance mode</label>
+    <select id="event_attendance_mode" name="event_attendance_mode">
+      {% for mode in event_attendance_modes %}
+      <option value="{{ mode }}">
+        {{ mode.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <fieldset>
+      <legend>Venue</legend>
+      <label for="event_location_name">Venue name</label>
+      <input id="event_location_name" name="event_location_name" type="text" />
+
+      <label for="event_location_url">Venue URL</label>
+      <input id="event_location_url" name="event_location_url" type="url" />
+
+      <label for="event_street_address">Street address</label>
+      <input
+        id="event_street_address"
+        name="event_street_address"
+        type="text"
+      />
+
+      <label for="event_address_locality">City</label>
+      <input
+        id="event_address_locality"
+        name="event_address_locality"
+        type="text"
+      />
+
+      <label for="event_address_region">State / Region</label>
+      <input
+        id="event_address_region"
+        name="event_address_region"
+        type="text"
+      />
+
+      <label for="event_postal_code">Postal code</label>
+      <input id="event_postal_code" name="event_postal_code" type="text" />
+
+      <label for="event_address_country">Country code (e.g. US)</label>
+      <input
+        id="event_address_country"
+        name="event_address_country"
+        type="text"
+        maxlength="2"
+      />
+    </fieldset>
+
+    <label for="event_video_format">Video format</label>
+    <input
+      id="event_video_format"
+      name="event_video_format"
+      type="text"
+      placeholder="HD"
+    />
+
+    <label for="event_subtitle_language">Subtitle language (BCP-47)</label>
+    <input
+      id="event_subtitle_language"
+      name="event_subtitle_language"
+      type="text"
+      placeholder="en"
+    />
+
+    <button type="submit">Add Screening</button>
+  </form>
+</section>
+
+{# ── Global Offers ────────────────────────────────────────────── #}
+<section>
+  <h2>Global Offers</h2>
+  {% if offers %}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price</th>
+        <th>Currency</th>
+        <th>Availability</th>
+        <th>Valid from</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for offer in offers %}
+      <tr>
+        <td>{{ offer.name }}</td>
+        <td>{{ offer.category }}</td>
+        <td>{{ offer.price }}</td>
+        <td>{{ offer.price_currency }}</td>
+        <td>{{ offer.availability.replace('https://schema.org/', '') }}</td>
+        <td>{{ offer.valid_from }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.edit_events') }}">
+            <input type="hidden" name="action" value="remove_offer" />
+            <input type="hidden" name="offer_index" value="{{ loop.index0 }}" />
+            <button type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No global offers yet.</p>
+  {% endif %}
+
+  <h3>Add Offer</h3>
+  <form method="post" action="{{ url_for('admin.edit_events') }}">
+    <input type="hidden" name="action" value="add_offer" />
+
+    <label for="offer_name">Name <span aria-hidden="true">*</span></label>
+    <input id="offer_name" name="offer_name" type="text" required />
+
+    <label for="offer_url">URL</label>
+    <input id="offer_url" name="offer_url" type="url" />
+
+    <label for="offer_category">Category</label>
+    <input id="offer_category" name="offer_category" type="text" />
+
+    <label for="offer_availability">Availability</label>
+    <select id="offer_availability" name="offer_availability">
+      {% for avail in offer_availabilities %}
+      <option value="{{ avail }}">
+        {{ avail.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="offer_price">Price</label>
+    <input
+      id="offer_price"
+      name="offer_price"
+      type="number"
+      min="0"
+      step="0.01"
+      value="0"
+    />
+
+    <label for="offer_price_currency">Currency</label>
+    <input
+      id="offer_price_currency"
+      name="offer_price_currency"
+      type="text"
+      value="USD"
+      maxlength="3"
+    />
+
+    <label for="offer_valid_from">Valid from (YYYY-MM-DD)</label>
+    <input
+      id="offer_valid_from"
+      name="offer_valid_from"
+      type="text"
+      placeholder="2026-01-01"
+    />
+
+    <label for="offer_description">Description</label>
+    <textarea
+      id="offer_description"
+      name="offer_description"
+      rows="2"
+    ></textarea>
+
+    <button type="submit">Add Offer</button>
+  </form>
+</section>
+{% endblock %}

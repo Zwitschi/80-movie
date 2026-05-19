@@ -1,6 +1,5 @@
 from flask import Flask
 
-from .admin import admin_blueprint
 from .admin_bot import admin_bot_blueprint, oauth_callback
 from .auth import login_manager
 from .config import DefaultConfig, apply_runtime_env_overrides
@@ -21,7 +20,6 @@ def create_app(config_object=DefaultConfig):
     init_db_app(app)
 
     app.register_blueprint(main_blueprint)
-    app.register_blueprint(admin_blueprint)
     app.register_blueprint(admin_bot_blueprint)
     app.add_url_rule(
         '/oauth/discord/callback',
