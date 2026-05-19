@@ -1282,7 +1282,8 @@ def test_admin_bot_disable_syndication_source_api_succeeds_when_audit_is_degrade
         ),
     )
     repository = InMemorySyndicationSourceRepository(
-        [SyndicationSourceState(source_key='youtube', enabled=True, checkpoint='video-123')]
+        [SyndicationSourceState(source_key='youtube',
+                                enabled=True, checkpoint='video-123')]
     )
     monkeypatch.setattr(
         admin_bot,

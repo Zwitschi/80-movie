@@ -148,7 +148,8 @@ def _record_bot_audit_event(
 
 @admin_bot_blueprint.after_request
 def add_bot_audit_status_header(response):
-    audit_status = str(request.environ.get(_BOT_AUDIT_STATUS_ENV_KEY, '')).strip()
+    audit_status = str(request.environ.get(
+        _BOT_AUDIT_STATUS_ENV_KEY, '')).strip()
     if audit_status:
         response.headers[BOT_AUDIT_STATUS_HEADER] = audit_status
     return response
