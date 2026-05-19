@@ -100,22 +100,28 @@ If `/admin/bot` outgrows the embedded-first phase, extract the operator UI/API i
 
 ## Website deployment
 
-The current website deployment path remains Coolify + Nixpacks.
+The website supports two deploy modes:
+
+1. **`website/` subdirectory deploy** (Coolify default): bot imports degrade gracefully when `bot/` is not on the Python path. The control room renders but bot-specific features (syndication, queue, mileage) require the bot module.
+2. **Repo-root deploy**: `bot/` is on the Python path, so the full control room is available.
 
 ### Coolify resource settings
 
 - Resource type: `Application`
-- Base directory: `website` or `/`
+- Base directory: `website`
 - Build pack: `Nixpacks`
 - Build command: leave empty
-- Port: `8000`
+- Port: `8880` (choose a port that does not conflict with other deployments on the same server)
 - Suggested health check: `/robots.txt`
 
 Path-specific command mapping:
 
-- Base directory `website`: `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`
-- Mirror repo rooted at Flask app: `gunicorn app:app --bind 0.0.0.0:8000 --workers 2`
-- Current repo deployed from repo root: `gunicorn website.app:app --bind 0.0.0.0:8000 --workers 2`
+- Base directory `website`: `gunicorn app:app --bind 0.0.0.0:8880 --workers 2`
+
+**Important**: When deploying from `website/`, the `bot/` package at repo root is not on the Python path. The application handles this gracefully — the website and editorial admin work normally, but bot control-room features that depend on `bot.omo_bot` modules will report missing configuration. To enable the full control room, either:
+
+- Deploy from repo root with `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`, or
+- Add the repo root to `PYTHONPATH` in your Coolify environment variables: `PYTHONPATH=/app`
 
 ### Website environment
 
@@ -201,6 +207,17 @@ Recommended additions when the worker becomes operational:
 ### Current limitation
 
 Do not describe the worker as production-ready in operational docs yet. The scaffold has config and startup lifecycle coverage, but it does not yet represent a feature-complete Discord automation service.
+
+### Coolify bot worker deployment
+
+When deploying the bot worker to Coolify:
+
+- Resource type: `Application` (long-running)
+- Base directory: `/` (repo root)
+- Build pack: `Nixpacks`
+- Start command: `python -m bot.omo_bot`
+- Port: leave empty (no HTTP surface)
+- Restart policy: enabled
 
 ## Deployment independence rules
 

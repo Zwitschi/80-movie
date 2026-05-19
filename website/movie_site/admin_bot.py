@@ -10,33 +10,79 @@ from urllib.request import Request, urlopen
 
 from flask import Blueprint, current_app, has_app_context, has_request_context, jsonify, redirect, render_template, request, session, url_for
 
-from bot.omo_bot.config import BotConfig
-from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
-from bot.omo_bot.jobs import SyndicationPollingJob
-from bot.omo_bot.main import build_syndication_adapters
-from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
-from bot.omo_bot.repositories import (
-    build_postgres_bot_audit_log_repository,
-    build_postgres_bot_config_repository,
-    build_postgres_mileage_repository,
-    build_postgres_queue_repository,
-    build_postgres_syndication_repository,
-)
-from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
-from bot.omo_bot.services.mileage_service import (
-    MileageConflictError,
-    MileageNotFoundError,
-    MileageService,
-    MileageValidationError,
-)
-from bot.omo_bot.services.queue_service import (
-    QueueConflictError,
-    QueueEntryNotFoundError,
-    QueueNotFoundError,
-    QueuePausedError,
-    QueueService,
-    QueueValidationError,
-)
+# Bot imports are deferred so the website can start even when deployed
+# from the website/ subdirectory (where bot/ is not on the Python path).
+# When bot/ is available (repo-root deploy or PYTHONPATH includes root),
+# these imports resolve normally.
+try:
+    from bot.omo_bot.config import BotConfig
+    from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
+    from bot.omo_bot.jobs import SyndicationPollingJob
+    from bot.omo_bot.main import build_syndication_adapters
+    from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
+    from bot.omo_bot.repositories import (
+        build_postgres_bot_audit_log_repository,
+        build_postgres_bot_config_repository,
+        build_postgres_mileage_repository,
+        build_postgres_queue_repository,
+        build_postgres_syndication_repository,
+    )
+    from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
+    from bot.omo_bot.services.mileage_service import (
+        MileageConflictError,
+        MileageNotFoundError,
+        MileageService,
+        MileageValidationError,
+    )
+    from bot.omo_bot.services.queue_service import (
+        QueueConflictError,
+        QueueEntryNotFoundError,
+        QueueNotFoundError,
+        QueuePausedError,
+        QueueService,
+        QueueValidationError,
+    )
+    BOT_MODULE_AVAILABLE = True
+except ModuleNotFoundError:
+    BOT_MODULE_AVAILABLE = False
+    BotConfig = None  # type: ignore[misc,assignment]
+    BotRuntimeSettings = None  # type: ignore[misc,assignment]
+    ConfigError = RuntimeError  # type: ignore[misc,assignment]
+    SyndicationPollingJob = None  # type: ignore[misc,assignment]
+    build_syndication_adapters = None  # type: ignore[misc,assignment]
+    MileageEvent = None  # type: ignore[misc,assignment]
+    MileageTierStat = None  # type: ignore[misc,assignment]
+    MileageTotal = None  # type: ignore[misc,assignment]
+    MileageUserDetail = None  # type: ignore[misc,assignment]
+    QueueEntry = None  # type: ignore[misc,assignment]
+    QueueEvent = None  # type: ignore[misc,assignment]
+    QueueSnapshot = None  # type: ignore[misc,assignment]
+    QueueSummary = None  # type: ignore[misc,assignment]
+    SyndicationSourceState = None  # type: ignore[misc,assignment]
+    # type: ignore[misc,assignment]
+    build_postgres_bot_audit_log_repository = None
+    # type: ignore[misc,assignment]
+    build_postgres_bot_config_repository = None
+    build_postgres_mileage_repository = None  # type: ignore[misc,assignment]
+    build_postgres_queue_repository = None  # type: ignore[misc,assignment]
+    # type: ignore[misc,assignment]
+    build_postgres_syndication_repository = None
+    BotAuditService = None  # type: ignore[misc,assignment]
+    NullSyndicationDeliverySink = None  # type: ignore[misc,assignment]
+    SyndicationPlanningService = None  # type: ignore[misc,assignment]
+    MileageConflictError = RuntimeError  # type: ignore[misc,assignment]
+    MileageNotFoundError = RuntimeError  # type: ignore[misc,assignment]
+    MileageService = None  # type: ignore[misc,assignment]
+    MileageValidationError = RuntimeError  # type: ignore[misc,assignment]
+    QueueConflictError = RuntimeError  # type: ignore[misc,assignment]
+    QueueEntryNotFoundError = RuntimeError  # type: ignore[misc,assignment]
+    QueueNotFoundError = RuntimeError  # type: ignore[misc,assignment]
+    QueuePausedError = RuntimeError  # type: ignore[misc,assignment]
+    QueueService = None  # type: ignore[misc,assignment]
+    QueueValidationError = RuntimeError  # type: ignore[misc,assignment]
+
+    def read_runtime_settings(env=None):  # type: ignore[misc]
+        raise RuntimeError('Bot module not available on this deployment path.')
 
 from . import bot_operator_repo
 from . import bot_operator_service
