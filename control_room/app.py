@@ -6,6 +6,7 @@ from website/movie_site for backward compatibility.
 """
 
 from flask import Flask
+from flask_login import LoginManager
 
 from shared.config import load_dotenv_files, get_control_room_config_values
 from shared.db import init_app as init_db_app
@@ -42,6 +43,16 @@ def create_app() -> Flask:
 
     # Initialize DB
     init_db_app(app)
+
+    # Initialize Flask-Login (required by admin_blueprint)
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'admin.login'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        from movie_site.auth import AdminUser
+        return AdminUser(user_id)
 
     # Import and register admin_bot blueprint from website
     # This will be replaced with native control_room blueprints in Phase 2
