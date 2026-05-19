@@ -9,6 +9,7 @@ from .adapters import SyndicationAdapter, YouTubeSyndicationAdapter
 from .config import BotConfig
 from .jobs import SyndicationPollingJob
 from .repositories import (
+    build_postgres_bot_config_repository,
     InMemorySyndicationSourceRepository,
     SyndicationSourceRepository,
     build_postgres_syndication_repository,
@@ -16,7 +17,11 @@ from .repositories import (
 from .runtime.client import BotRuntime
 from .runtime.shutdown import shutdown_runtime
 from .runtime.startup import startup_runtime
-from .services import NullSyndicationDeliverySink, SyndicationPlanningService
+from .services import (
+    DiscordApiSyndicationDeliverySink,
+    NullSyndicationDeliverySink,
+    SyndicationPlanningService,
+)
 
 
 def configure_logging(level: str = "INFO") -> logging.Logger:
@@ -50,21 +55,64 @@ def build_syndication_adapters(config: BotConfig) -> dict[str, SyndicationAdapte
     return adapters
 
 
+def build_syndication_delivery_sink(config: BotConfig):
+    if config.channel_map:
+        return DiscordApiSyndicationDeliverySink(
+            bot_token=config.discord_token,
+            channel_map=config.channel_map,
+        )
+
+    return NullSyndicationDeliverySink()
+
+
+def build_effective_bot_config(config: BotConfig) -> BotConfig:
+    if not config.database_url:
+        return config
+
+    try:
+        managed_config = build_postgres_bot_config_repository(
+            config.database_url,
+        ).load_runtime_config(
+            default_guild_id=config.guild_id,
+            default_channel_map=config.channel_map,
+            default_role_map=config.role_map,
+        )
+    except Exception:
+        logging.getLogger("omo_bot").warning(
+            "Falling back to env-backed bot config because managed config could not be loaded",
+            exc_info=True,
+        )
+        return config
+
+    return BotConfig(
+        discord_token=config.discord_token,
+        guild_id=managed_config.guild_id,
+        channel_map=managed_config.channel_map,
+        database_url=config.database_url,
+        syndication_sources=config.syndication_sources,
+        syndication_poll_seconds=config.syndication_poll_seconds,
+        role_map=managed_config.role_map,
+        log_level=config.log_level,
+    )
+
+
 def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
-    syndication_repository = build_syndication_repository(config)
+    effective_config = build_effective_bot_config(config)
+    syndication_repository = build_syndication_repository(effective_config)
     syndication_planning_service = SyndicationPlanningService(
-        config=config,
+        config=effective_config,
         repository=syndication_repository,
     )
-    syndication_delivery_sink = NullSyndicationDeliverySink()
+    syndication_delivery_sink = build_syndication_delivery_sink(
+        effective_config)
     syndication_polling_job = SyndicationPollingJob(
         planning_service=syndication_planning_service,
         repository=syndication_repository,
-        adapters=build_syndication_adapters(config),
+        adapters=build_syndication_adapters(effective_config),
         delivery_sink=syndication_delivery_sink,
     )
     return BotRuntime(
-        config=config,
+        config=effective_config,
         logger=logger,
         syndication_repository=syndication_repository,
         syndication_planning_service=syndication_planning_service,

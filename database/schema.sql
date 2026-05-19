@@ -345,6 +345,186 @@ CREATE TABLE bot_syndication_checkpoint (
 );
 
 -- ============================================================
+-- BOT RUNTIME CONFIGURATION
+-- ============================================================
+
+CREATE TABLE bot_guild_config (
+    guild_id         BIGINT PRIMARY KEY,
+    is_active        BOOLEAN NOT NULL DEFAULT true,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_bot_guild_config_single_active
+    ON bot_guild_config (is_active)
+    WHERE is_active = true;
+
+CREATE TABLE bot_channel_binding (
+    guild_id         BIGINT NOT NULL REFERENCES bot_guild_config(guild_id) ON DELETE CASCADE,
+    binding_key      TEXT NOT NULL,
+    channel_id       BIGINT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (guild_id, binding_key)
+);
+
+CREATE TABLE bot_role_binding (
+    guild_id         BIGINT NOT NULL REFERENCES bot_guild_config(guild_id) ON DELETE CASCADE,
+    binding_key      TEXT NOT NULL,
+    role_id          BIGINT NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (guild_id, binding_key)
+);
+
+-- ============================================================
+-- BOT QUEUES
+-- ============================================================
+
+CREATE TABLE bot_queue (
+    queue_id         TEXT PRIMARY KEY,
+    guild_id         BIGINT NOT NULL,
+    label            TEXT NOT NULL,
+    is_paused        BOOLEAN NOT NULL DEFAULT false,
+    paused_reason    TEXT NOT NULL DEFAULT '',
+    active_entry_id  UUID,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE bot_queue_entry (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    queue_id         TEXT NOT NULL REFERENCES bot_queue(queue_id) ON DELETE CASCADE,
+    discord_user_id  TEXT NOT NULL,
+    display_name     TEXT NOT NULL,
+    state            TEXT NOT NULL,
+    position         INTEGER NOT NULL,
+    note             TEXT NOT NULL DEFAULT '',
+    joined_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    started_at       TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT bot_queue_entry_state_check CHECK (state IN ('active', 'waiting'))
+);
+
+ALTER TABLE bot_queue
+    ADD CONSTRAINT bot_queue_active_entry_fkey
+    FOREIGN KEY (active_entry_id)
+    REFERENCES bot_queue_entry(id)
+    ON DELETE SET NULL;
+
+CREATE UNIQUE INDEX idx_bot_queue_one_active_entry
+    ON bot_queue_entry (queue_id, state)
+    WHERE state = 'active';
+
+CREATE UNIQUE INDEX idx_bot_queue_user_current_entry
+    ON bot_queue_entry (queue_id, discord_user_id);
+
+CREATE INDEX idx_bot_queue_entry_order
+    ON bot_queue_entry (queue_id, position, joined_at);
+
+CREATE TABLE bot_queue_event (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    queue_id         TEXT NOT NULL REFERENCES bot_queue(queue_id) ON DELETE CASCADE,
+    entry_id         UUID,
+    event_type       TEXT NOT NULL,
+    actor_user_id    TEXT,
+    payload          JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bot_queue_event_queue_created_at
+    ON bot_queue_event (queue_id, created_at DESC, id DESC);
+
+-- ============================================================
+-- BOT MILEAGE
+-- ============================================================
+
+CREATE TABLE bot_mileage_tier (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    guild_id         BIGINT NOT NULL,
+    name             TEXT NOT NULL,
+    points_required  INTEGER NOT NULL,
+    role_id          BIGINT,
+    sort_order       INTEGER NOT NULL DEFAULT 0,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT bot_mileage_tier_points_required_check CHECK (points_required >= 0)
+);
+
+CREATE UNIQUE INDEX idx_bot_mileage_tier_guild_name
+    ON bot_mileage_tier (guild_id, name);
+
+CREATE INDEX idx_bot_mileage_tier_threshold
+    ON bot_mileage_tier (guild_id, points_required DESC, sort_order ASC);
+
+CREATE TABLE bot_mileage_total (
+    guild_id          BIGINT NOT NULL,
+    discord_user_id   TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    total_points      INTEGER NOT NULL DEFAULT 0,
+    current_tier_id   UUID,
+    current_tier_name TEXT,
+    last_event_id     UUID,
+    last_event_at     TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (guild_id, discord_user_id),
+    CONSTRAINT bot_mileage_total_current_tier_fkey
+        FOREIGN KEY (current_tier_id)
+        REFERENCES bot_mileage_tier(id)
+        ON DELETE SET NULL
+);
+
+CREATE INDEX idx_bot_mileage_total_points
+    ON bot_mileage_total (guild_id, total_points DESC, last_event_at DESC);
+
+CREATE TABLE bot_mileage_event (
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    guild_id          BIGINT NOT NULL,
+    discord_user_id   TEXT NOT NULL,
+    display_name      TEXT NOT NULL,
+    event_type        TEXT NOT NULL,
+    points_delta      INTEGER NOT NULL,
+    reason            TEXT NOT NULL DEFAULT '',
+    actor_user_id     TEXT,
+    correlation_id    TEXT,
+    reversed_event_id UUID REFERENCES bot_mileage_event(id) ON DELETE RESTRICT,
+    metadata          JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_bot_mileage_event_reversal_once
+    ON bot_mileage_event (reversed_event_id)
+    WHERE reversed_event_id IS NOT NULL;
+
+CREATE INDEX idx_bot_mileage_event_user_created_at
+    ON bot_mileage_event (guild_id, discord_user_id, created_at DESC, id DESC);
+
+-- ============================================================
+-- BOT AUDIT LOG
+-- ============================================================
+
+CREATE TABLE bot_audit_log (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_user_id    TEXT,
+    actor_session_id TEXT,
+    action_key       TEXT NOT NULL,
+    target_type      TEXT NOT NULL,
+    target_key       TEXT NOT NULL,
+    request_id       TEXT,
+    before_state     JSONB,
+    after_state      JSONB,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bot_audit_log_created_at
+    ON bot_audit_log (created_at DESC);
+
+CREATE INDEX idx_bot_audit_log_target
+    ON bot_audit_log (target_type, target_key, created_at DESC);
+
+-- ============================================================
 -- UPDATED_AT TRIGGER HELPER
 -- ============================================================
 
@@ -374,4 +554,32 @@ CREATE TRIGGER bot_syndication_source_updated_at
 
 CREATE TRIGGER bot_syndication_checkpoint_updated_at
     BEFORE UPDATE ON bot_syndication_checkpoint
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_guild_config_updated_at
+    BEFORE UPDATE ON bot_guild_config
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_channel_binding_updated_at
+    BEFORE UPDATE ON bot_channel_binding
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_role_binding_updated_at
+    BEFORE UPDATE ON bot_role_binding
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_queue_updated_at
+    BEFORE UPDATE ON bot_queue
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_queue_entry_updated_at
+    BEFORE UPDATE ON bot_queue_entry
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_mileage_tier_updated_at
+    BEFORE UPDATE ON bot_mileage_tier
+    FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TRIGGER bot_mileage_total_updated_at
+    BEFORE UPDATE ON bot_mileage_total
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();

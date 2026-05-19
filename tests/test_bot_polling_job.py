@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import json
+from io import BytesIO
 
 import pytest
 
@@ -8,6 +10,7 @@ from bot.omo_bot.jobs import SyndicationPollingJob
 from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem, SyndicationSourceState
 from bot.omo_bot.repositories import InMemorySyndicationSourceRepository
 from bot.omo_bot.services import SyndicationDeliveryBatch, SyndicationPlanningService
+from bot.omo_bot.services import DiscordApiSyndicationDeliverySink
 
 
 class RecordingDeliverySink:
@@ -133,3 +136,56 @@ def test_build_runtime_wires_polling_job_and_delivery_contract():
     snapshot = runtime.health_snapshot()
     assert snapshot["syndication_polling_job"] == "SyndicationPollingJob"
     assert snapshot["syndication_delivery_backend"] == "NullSyndicationDeliverySink"
+
+
+def test_discord_delivery_sink_posts_items_to_configured_channel(monkeypatch):
+    captured: list[tuple[str, dict[str, str], dict[str, object]]] = []
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b"{}"
+
+    def fake_urlopen(request, timeout=10):
+        captured.append(
+            (
+                request.full_url,
+                dict(request.header_items()),
+                json.loads(request.data.decode("utf-8")),
+            )
+        )
+        return FakeResponse()
+
+    monkeypatch.setattr("bot.omo_bot.services.delivery.urlopen", fake_urlopen)
+    sink = DiscordApiSyndicationDeliverySink(
+        bot_token="token-value",
+        channel_map={"announcements": 200},
+    )
+    batch = SyndicationDeliveryBatch(
+        source_key="youtube",
+        items=(
+            SyndicationItem(
+                source_key="youtube",
+                external_id="video-200",
+                title="Fresh clip",
+                canonical_url="https://www.youtube.com/watch?v=video-200",
+                published_at=datetime(2026, 5, 18, 12, 0, tzinfo=timezone.utc),
+                summary="New upload",
+            ),
+        ),
+    )
+
+    sink.deliver(batch)
+
+    assert len(captured) == 1
+    url, headers, payload = captured[0]
+    assert url.endswith("/channels/200/messages")
+    assert headers["Authorization"] == "Bot token-value"
+    assert payload["allowed_mentions"] == {"parse": []}
+    assert "Fresh clip" in payload["content"]
+    assert "https://www.youtube.com/watch?v=video-200" in payload["content"]

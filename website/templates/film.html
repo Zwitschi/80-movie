@@ -68,7 +68,9 @@ block page_content %}
 
         <div class="stack-panel stack-lg">
           <div class="content-card side-panel panel-card stack-md">
-            <span class="eyebrow eyebrow-small">{{ page_content.themes_eyebrow }}</span>
+            <span class="eyebrow eyebrow-small"
+              >{{ page_content.themes_eyebrow }}</span
+            >
             <ul class="bullet-list">
               {% for theme in page_content.themes %}
               <li>{{ theme }}</li>
@@ -76,7 +78,9 @@ block page_content %}
             </ul>
           </div>
           <div class="content-card side-panel panel-card stack-md">
-            <span class="eyebrow eyebrow-small">{{ page_content.audience_eyebrow }}</span>
+            <span class="eyebrow eyebrow-small"
+              >{{ page_content.audience_eyebrow }}</span
+            >
             <p>{{ page_content.audience_body }}</p>
           </div>
         </div>
@@ -120,23 +124,30 @@ block page_content %}
       </div>
     </section>
 
+    {% if movie.cast_section_visible %}
     <section id="cast">
       <div class="section-header">
         <h2>Cast</h2>
       </div>
       <div class="grid-4 credits-grid">
-        {% for person in movie.credits_people %}
+        {% for person in movie.cast_people %}
         <article class="feature feature-credit card-lite stack-sm">
           <h3>{{ person.name }}</h3>
           <p>{{ person.roles | join(', ') }}</p>
+          {% if person.description %}
+          <p>{{ person.description }}</p>
+          {% endif %}
         </article>
         {% endfor %}
       </div>
     </section>
+    {% endif %}
 
     <section id="tickets">
       <div class="content-card side-panel panel-card stack-md">
-        <span class="eyebrow eyebrow-small">{{ page_content.tickets_eyebrow }}</span>
+        <span class="eyebrow eyebrow-small"
+          >{{ page_content.tickets_eyebrow }}</span
+        >
         <h2>{{ movie.offers[0].name }}</h2>
         <p>{{ movie.offers[0].description }}</p>
         <a href="{{ url_for('main.connect') }}" class="btn btn-secondary"

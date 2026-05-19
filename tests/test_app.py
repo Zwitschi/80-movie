@@ -3,7 +3,9 @@ from werkzeug.security import generate_password_hash
 
 from website.app import create_app
 from website.movie_site import admin_content
+from website.movie_site import views
 from website.movie_site.content_store import get_content_reader
+from website.movie_site import movie_data
 from website.movie_site.movie_data import get_movie_data, get_movie_page_context
 
 
@@ -86,6 +88,62 @@ class TestMovieData:
         assert isinstance(payload['movie'], dict)
         assert payload['movie']['title']
 
+    def test_get_movie_data_builds_distinct_cast_entries(self, app, monkeypatch):
+        class FakeReader:
+            def read_all(self):
+                return {
+                    'movies.json': {'movie': {'title': 'Open Mic Odyssey'}},
+                    'media_assets.json': {'media': {}},
+                    'reviews.json': {},
+                    'offers.json': {},
+                    'people.json': {
+                        'people': {
+                            'Alpha': {
+                                'name': 'Alpha',
+                                'credit_note': 'A touring comic finding her voice.',
+                            },
+                            'Beta': {
+                                'name': 'Beta',
+                                'credit_note': '',
+                            },
+                        },
+                        'contributors': {},
+                        'credits_people': [
+                            {'name': 'Alpha', 'role': 'actor'},
+                            {'name': 'Alpha', 'role': 'producer'},
+                            {'name': 'Alpha', 'role': 'actor'},
+                            {'name': 'Beta', 'role': 'actor'},
+                        ],
+                    },
+                    'organizations.json': {'organizations': {}},
+                    'events.json': {'events': []},
+                    'faq.json': {'faq': []},
+                    'gallery.json': {'gallery': []},
+                    'social.json': {'social': []},
+                    'connect.json': {'connect': {'page': {}, 'links': {}}},
+                    'content.json': {'pages': {}},
+                }
+
+        monkeypatch.setattr(
+            movie_data, 'get_content_reader', lambda: FakeReader())
+
+        with app.app_context():
+            data = get_movie_data()
+
+        assert data['cast_section_visible'] is True
+        assert data['cast_people'] == [
+            {
+                'name': 'Alpha',
+                'roles': ['actor', 'producer'],
+                'description': 'A touring comic finding her voice.',
+            },
+            {
+                'name': 'Beta',
+                'roles': ['actor'],
+                'description': '',
+            },
+        ]
+
 
 class TestFlaskApp:
     """Test Flask application functionality."""
@@ -101,6 +159,62 @@ class TestFlaskApp:
         response = client.get('/film')
         assert response.status_code == 200
         assert b'Open Mic Odyssey' in response.data
+
+    def test_film_page_renders_distinct_cast_entries_with_descriptions(self, app, monkeypatch):
+        with app.app_context():
+            context = views.build_page_context('film')
+
+        context['movie'] = dict(context['movie'])
+        context['movie']['cast_section_visible'] = True
+        context['movie']['cast_people'] = [
+            {
+                'name': 'Alpha',
+                'roles': ['actor', 'producer'],
+                'description': 'A touring comic finding her voice.',
+            },
+            {
+                'name': 'Beta',
+                'roles': ['actor'],
+                'description': '',
+            },
+        ]
+
+        monkeypatch.setattr(views, 'build_page_context',
+                            lambda page_key='film': context)
+        client = app.test_client()
+
+        response = client.get('/film')
+
+        assert response.status_code == 200
+        body = response.get_data(as_text=True)
+        assert '<h2>Cast</h2>' in body
+        assert body.count('<h3>Alpha</h3>') == 1
+        assert 'actor, producer' in body
+        assert 'A touring comic finding her voice.' in body
+
+    def test_film_page_hides_cast_section_when_no_descriptions_are_available(self, app, monkeypatch):
+        with app.app_context():
+            context = views.build_page_context('film')
+
+        context['movie'] = dict(context['movie'])
+        context['movie']['cast_section_visible'] = False
+        context['movie']['cast_people'] = [
+            {
+                'name': 'Alpha',
+                'roles': ['actor'],
+                'description': '',
+            },
+        ]
+
+        monkeypatch.setattr(views, 'build_page_context',
+                            lambda page_key='film': context)
+        client = app.test_client()
+
+        response = client.get('/film')
+
+        assert response.status_code == 200
+        body = response.get_data(as_text=True)
+        assert '<h2>Cast</h2>' not in body
 
     def test_media_page(self, client):
         """Test that media page loads successfully."""

@@ -12,12 +12,12 @@ Use this guide to keep deployment planning aligned with the code that exists now
 
 ## Service matrix
 
-| Surface                       | Current status       | Source path                | Runtime entrypoint                                 | Public port / route | Notes                                                      |
-| ----------------------------- | -------------------- | -------------------------- | -------------------------------------------------- | ------------------- | ---------------------------------------------------------- |
-| Website                       | Deployable now       | `website/`                 | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` | `8000`              | Current production baseline                                |
-| Embedded control room         | Deploys with website | `website/`                 | same Flask process as website                      | `/admin/bot`        | Separate operator auth, same web resource                  |
-| Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot`                            | none                | Long-running worker, no public HTTP surface documented yet |
-| Extracted control-room UI/API | Future only          | not implemented            | not implemented                                    | not implemented     | Keep as planned topology, not current runtime fact         |
+| Surface                       | Current status       | Source path                | Runtime entrypoint                                 | Public port / route | Notes                                                          |
+| ----------------------------- | -------------------- | -------------------------- | -------------------------------------------------- | ------------------- | -------------------------------------------------------------- |
+| Website                       | Deployable now       | `website/`                 | `gunicorn app:app --bind 0.0.0.0:8000 --workers 2` | `8000`              | Current production baseline                                    |
+| Embedded control room         | Deploys with website | `website/`                 | same Flask process as website                      | `/admin/bot`        | Separate operator auth, same web resource                      |
+| Bot worker                    | Scaffold only        | repo root + `bot/omo_bot/` | `python -m bot.omo_bot`                            | none                | Long-running worker, no public HTTP surface documented yet     |
+| Extracted control-room UI/API | Future only          | not implemented            | not implemented                                    | not implemented     | Revisit after onboarding or live ops justify a separate deploy |
 
 ## Deployment path map
 
@@ -136,8 +136,8 @@ Add these when operator login is enabled in the embedded control room:
 
 ### Website deployment checklist
 
-- Set a real `SECRET_KEY`
-- Set a strong `ADMIN_PASSWORD_HASH`
+- Set a real `SECRET_KEY` (generate with `python -c "import secrets; print(secrets.token_hex(32))"`)
+- Set a strong `ADMIN_PASSWORD_HASH` (generate with `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`)
 - Set `SITE_URL` to the live canonical URL
 - Confirm `DATABASE_URL` points at the intended PostgreSQL instance
 - Verify `/`, `/admin`, and `/admin/bot` all respond as expected after deploy
