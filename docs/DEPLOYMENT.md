@@ -136,8 +136,8 @@ Add these when operator login is enabled in the embedded control room:
 
 ### Website deployment checklist
 
-- Set a real `SECRET_KEY`
-- Set a strong `ADMIN_PASSWORD_HASH`
+- Set a real `SECRET_KEY` (generate with `python -c "import secrets; print(secrets.token_hex(32))"`)
+- Set a strong `ADMIN_PASSWORD_HASH` (generate with `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`)
 - Set `SITE_URL` to the live canonical URL
 - Confirm `DATABASE_URL` points at the intended PostgreSQL instance
 - Verify `/`, `/admin`, and `/admin/bot` all respond as expected after deploy
