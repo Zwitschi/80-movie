@@ -14,13 +14,22 @@ from bot.omo_bot.config import BotConfig
 from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
 from bot.omo_bot.jobs import SyndicationPollingJob
 from bot.omo_bot.main import build_syndication_adapters
-from bot.omo_bot.models import SyndicationSourceState
+from bot.omo_bot.models import QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
 from bot.omo_bot.repositories import (
     build_postgres_bot_audit_log_repository,
     build_postgres_bot_config_repository,
+    build_postgres_queue_repository,
     build_postgres_syndication_repository,
 )
 from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
+from bot.omo_bot.services.queue_service import (
+    QueueConflictError,
+    QueueEntryNotFoundError,
+    QueueNotFoundError,
+    QueuePausedError,
+    QueueService,
+    QueueValidationError,
+)
 
 from . import bot_operator_repo
 from . import bot_operator_service
@@ -454,6 +463,13 @@ def _parse_binding_key(raw_value: object, field_name: str = 'binding_key') -> st
     return binding_key
 
 
+def _parse_required_text(raw_value: object, field_name: str) -> str:
+    value = str(raw_value or '').strip()
+    if not value:
+        raise ConfigError(f'{field_name} is required.')
+    return value
+
+
 def _parse_required_int(raw_value: object, field_name: str) -> int:
     text = str(raw_value or '').strip()
     if not text:
@@ -518,6 +534,32 @@ def _page_commands_scope_error() -> Any:
 
 def _page_commands_error() -> Any:
     return redirect(url_for('admin_bot.commands_page', error='invalid-syndication-config'))
+
+
+def _queue_page_redirect(queue_id: str | None = None, **params: str) -> Any:
+    if queue_id:
+        return redirect(url_for('admin_bot.queue_detail_page', queue_id=queue_id, **params))
+    return redirect(url_for('admin_bot.queues_page', **params))
+
+
+def _page_queue_scope_error(queue_id: str | None = None) -> Any:
+    return _queue_page_redirect(queue_id, error='operator-scope-required')
+
+
+def _page_queue_config_error(queue_id: str | None = None) -> Any:
+    return _queue_page_redirect(queue_id, error='invalid-queue-config')
+
+
+def _page_queue_action_error(queue_id: str | None = None) -> Any:
+    return _queue_page_redirect(queue_id, error='invalid-queue-action')
+
+
+def _page_queue_not_found_error(queue_id: str | None = None) -> Any:
+    return _queue_page_redirect(queue_id, error='queue-not-found')
+
+
+def _page_queue_confirmation_error(queue_id: str | None = None) -> Any:
+    return _queue_page_redirect(queue_id, error='queue-clear-confirmation-required')
 
 
 def _serialize_syndication_state(
@@ -733,6 +775,314 @@ def build_bot_commands_snapshot() -> dict[str, object]:
         'role_bindings': config_snapshot['role_bindings'],
         'permissions': config_snapshot['permissions'],
     }
+
+
+def _build_queue_service_from_settings(settings: BotRuntimeSettings) -> QueueService:
+    if not settings.database_url:
+        raise ConfigError(
+            'Queue operations require a configured database-backed repository.'
+        )
+    return QueueService(build_postgres_queue_repository(settings.database_url))
+
+
+def _serialize_queue_summary(summary: QueueSummary, *, can_write: bool) -> dict[str, object]:
+    return {
+        'queue_id': summary.queue_id,
+        'guild_id': summary.guild_id,
+        'label': summary.label,
+        'is_paused': summary.is_paused,
+        'paused_reason': summary.paused_reason,
+        'active_entry_id': summary.active_entry_id,
+        'waiting_count': summary.waiting_count,
+        'total_entries': summary.total_entries,
+        'updated_at': summary.updated_at.isoformat() if summary.updated_at else None,
+        'detail_api': url_for('admin_bot.queue_detail_api', queue_id=summary.queue_id),
+        'detail_page': url_for('admin_bot.queue_detail_page', queue_id=summary.queue_id),
+        'events_api': url_for('admin_bot.queue_events_api', queue_id=summary.queue_id),
+        'advance_api': url_for('admin_bot.advance_queue_api', queue_id=summary.queue_id),
+        'advance_page': url_for('admin_bot.advance_queue_page_action', queue_id=summary.queue_id),
+        'pause_api': url_for('admin_bot.pause_queue_api', queue_id=summary.queue_id),
+        'pause_page': url_for('admin_bot.pause_queue_page_action', queue_id=summary.queue_id),
+        'resume_api': url_for('admin_bot.resume_queue_api', queue_id=summary.queue_id),
+        'resume_page': url_for('admin_bot.resume_queue_page_action', queue_id=summary.queue_id),
+        'clear_api': url_for('admin_bot.clear_queue_api', queue_id=summary.queue_id),
+        'clear_page': url_for('admin_bot.clear_queue_page_action', queue_id=summary.queue_id),
+        'editable': can_write,
+    }
+
+
+def _serialize_queue_entry(entry: QueueEntry, *, can_write: bool) -> dict[str, object]:
+    return {
+        'entry_id': entry.entry_id,
+        'queue_id': entry.queue_id,
+        'discord_user_id': entry.discord_user_id,
+        'display_name': entry.display_name,
+        'state': entry.state,
+        'position': entry.position,
+        'note': entry.note,
+        'joined_at': entry.joined_at.isoformat(),
+        'started_at': entry.started_at.isoformat() if entry.started_at else None,
+        'remove_api': url_for('admin_bot.remove_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'remove_page': url_for('admin_bot.remove_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'move_api': url_for('admin_bot.move_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'move_page': url_for('admin_bot.move_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'editable': can_write,
+    }
+
+
+def _serialize_queue_event(event: QueueEvent) -> dict[str, object]:
+    return {
+        'event_id': event.event_id,
+        'queue_id': event.queue_id,
+        'event_type': event.event_type,
+        'actor_user_id': event.actor_user_id,
+        'entry_id': event.entry_id,
+        'payload': cast(dict[str, object], _serialize_audit_value(event.payload)),
+        'created_at': event.created_at.isoformat(),
+    }
+
+
+def _serialize_queue_snapshot(snapshot: QueueSnapshot, *, can_write: bool) -> dict[str, object]:
+    return {
+        'summary': _serialize_queue_summary(snapshot.summary, can_write=can_write),
+        'entries': [
+            _serialize_queue_entry(entry, can_write=can_write)
+            for entry in snapshot.entries
+        ],
+        'last_event': _serialize_queue_event(snapshot.last_event) if snapshot.last_event else None,
+    }
+
+
+def build_queue_index_snapshot() -> dict[str, object]:
+    generated_at = _utcnow().isoformat()
+    can_write = _operator_can('queue.write')
+    try:
+        settings = _load_bot_runtime_settings()
+    except ConfigError as exc:
+        return {
+            'status': 'missing_config',
+            'generated_at': generated_at,
+            'queues': [],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': str(exc),
+            'create_api': url_for('admin_bot.create_queue_api'),
+            'create_page': url_for('admin_bot.create_queue_page_action'),
+        }
+
+    if not settings.database_url:
+        return {
+            'status': 'missing_config',
+            'generated_at': generated_at,
+            'queues': [],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': 'Queue operations require a configured database-backed repository.',
+            'create_api': url_for('admin_bot.create_queue_api'),
+            'create_page': url_for('admin_bot.create_queue_page_action'),
+        }
+
+    try:
+        summaries = _build_queue_service_from_settings(settings).list_queues()
+        return {
+            'status': 'ok',
+            'generated_at': generated_at,
+            'queues': [_serialize_queue_summary(summary, can_write=can_write) for summary in summaries],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': None,
+            'create_api': url_for('admin_bot.create_queue_api'),
+            'create_page': url_for('admin_bot.create_queue_page_action'),
+        }
+    except Exception as exc:
+        return {
+            'status': 'error',
+            'generated_at': generated_at,
+            'queues': [],
+            'permissions': {'operator_can_write': can_write},
+            'repository_error': str(exc),
+            'create_api': url_for('admin_bot.create_queue_api'),
+            'create_page': url_for('admin_bot.create_queue_page_action'),
+        }
+
+
+def build_queue_detail_snapshot(queue_id: str) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    queue_snapshot = queue_service.get_queue(queue_id)
+    queue_events = queue_service.list_events(queue_id, limit=20)
+    can_write = _operator_can('queue.write')
+    return {
+        'status': 'ok',
+        'generated_at': _utcnow().isoformat(),
+        'queue': _serialize_queue_snapshot(queue_snapshot, can_write=can_write),
+        'events': [_serialize_queue_event(event) for event in queue_events],
+        'permissions': {'operator_can_write': can_write},
+    }
+
+
+def _queue_before_state(queue_service: QueueService, queue_id: str) -> dict[str, object] | None:
+    try:
+        snapshot = queue_service.get_queue(queue_id)
+    except QueueNotFoundError:
+        return None
+    return _serialize_queue_snapshot(snapshot, can_write=_operator_can('queue.write'))
+
+
+def _create_queue(queue_id: str, guild_id: int, label: str) -> dict[str, object]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot = queue_service.ensure_queue(
+        queue_id=queue_id, guild_id=guild_id, label=label)
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    _record_bot_audit_event(
+        action_key='queue.created' if before_state is None else 'queue.updated',
+        target_type='queue',
+        target_key=queue_id,
+        before_state=before_state,
+        after_state=after_state,
+    )
+    return after_state
+
+
+def _advance_queue(queue_id: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.advance_queue(
+        queue_id=queue_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.advanced',
+        target_type='queue',
+        target_key=queue_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _remove_queue_entry(queue_id: str, entry_id: str, reason: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.remove_entry(
+        queue_id=queue_id,
+        entry_id=entry_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        reason=reason,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.entry.removed',
+        target_type='queue_entry',
+        target_key=entry_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _move_queue_entry(queue_id: str, entry_id: str, target_position: int, reason: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.move_entry(
+        queue_id=queue_id,
+        entry_id=entry_id,
+        target_position=target_position,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        reason=reason,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.entry.moved',
+        target_type='queue_entry',
+        target_key=entry_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _pause_queue(queue_id: str, reason: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.pause_queue(
+        queue_id=queue_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        reason=reason,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.paused',
+        target_type='queue',
+        target_key=queue_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _resume_queue(queue_id: str) -> tuple[dict[str, object], dict[str, object]]:
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.resume_queue(
+        queue_id=queue_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.resumed',
+        target_type='queue',
+        target_key=queue_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
+
+
+def _clear_queue(queue_id: str, reason: str, confirmation: str) -> tuple[dict[str, object], dict[str, object]]:
+    if confirmation.strip().lower() != 'clear':
+        raise QueueValidationError('Queue clear requires confirm=clear.')
+    settings = _load_bot_runtime_settings()
+    queue_service = _build_queue_service_from_settings(settings)
+    before_state = _queue_before_state(queue_service, queue_id)
+    snapshot, event = queue_service.clear_queue(
+        queue_id=queue_id,
+        actor_user_id=str(session.get(
+            BOT_OPS_SESSION_KEY, '')).strip() or None,
+        reason=reason,
+    )
+    after_state = _serialize_queue_snapshot(
+        snapshot, can_write=_operator_can('queue.write'))
+    event_payload = _serialize_queue_event(event)
+    _record_bot_audit_event(
+        action_key='queue.cleared',
+        target_type='queue',
+        target_key=queue_id,
+        before_state=before_state,
+        after_state={'queue': after_state, 'event': event_payload},
+    )
+    return after_state, event_payload
 
 
 def _set_active_guild_id(guild_id: int) -> dict[str, object]:
@@ -1321,6 +1671,33 @@ def commands_page():
     )
 
 
+@admin_bot_blueprint.get('/queues')
+def queues_page():
+    return render_template(
+        'admin/bot/queues.html',
+        queue_index_snapshot=build_queue_index_snapshot(),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
+@admin_bot_blueprint.get('/queues/<path:queue_id>')
+def queue_detail_page(queue_id: str):
+    try:
+        queue_detail_snapshot = build_queue_detail_snapshot(queue_id)
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+
+    return render_template(
+        'admin/bot/queue_detail.html',
+        queue_detail_snapshot=queue_detail_snapshot,
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
 @admin_bot_blueprint.get('/api/operators')
 def operators_api():
     return jsonify({'data': bot_operator_repo.list_bot_operators()})
@@ -1495,6 +1872,298 @@ def delete_role_binding_page_action(binding_key: str):
 @admin_bot_blueprint.get('/api/commands')
 def commands_api():
     return jsonify({'data': build_bot_commands_snapshot()})
+
+
+@admin_bot_blueprint.get('/api/queues')
+def queues_api():
+    snapshot = build_queue_index_snapshot()
+    return jsonify({'data': snapshot['queues'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/queues/<path:queue_id>')
+def queue_detail_api(queue_id: str):
+    try:
+        snapshot = build_queue_detail_snapshot(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+
+    return jsonify({'data': snapshot['queue'], 'meta': {'events_count': len(snapshot['events']), 'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/queues/<path:queue_id>/events')
+def queue_events_api(queue_id: str):
+    try:
+        snapshot = build_queue_detail_snapshot(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+
+    return jsonify({'data': snapshot['events'], 'meta': {'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.post('/api/queues')
+def create_queue_api():
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        queue = _create_queue(
+            _parse_required_text(payload.get('queue_id'), 'queue_id'),
+            _parse_required_int(payload.get('guild_id'), 'guild_id'),
+            _parse_required_text(payload.get('label'), 'label'),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue})
+
+
+@admin_bot_blueprint.post('/queues')
+def create_queue_page_action():
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error()
+
+    try:
+        queue = _create_queue(
+            _parse_required_text(request.form.get('queue_id'), 'queue_id'),
+            _parse_required_int(request.form.get('guild_id'), 'guild_id'),
+            _parse_required_text(request.form.get('label'), 'label'),
+        )
+    except ConfigError:
+        return _page_queue_config_error()
+
+    return _queue_page_redirect(str(cast(dict[str, object], queue['summary'])['queue_id']), saved='queue-created')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/advance')
+def advance_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        queue, event = _advance_queue(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except (QueuePausedError, QueueConflictError) as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/advance')
+def advance_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _advance_queue(queue_id)
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except (QueuePausedError, QueueConflictError):
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-advanced')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/entries/<entry_id>/remove')
+def remove_queue_entry_api(queue_id: str, entry_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        queue, event = _remove_queue_entry(
+            queue_id, entry_id, str(payload.get('reason') or '').strip())
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueEntryNotFoundError:
+        return jsonify({'error': {'code': 'queue_entry_not_found', 'message': 'Queue entry was not found.'}}), 404
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/entries/<entry_id>/remove')
+def remove_queue_entry_page_action(queue_id: str, entry_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _remove_queue_entry(queue_id, entry_id, str(
+            request.form.get('reason') or '').strip())
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueEntryNotFoundError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='entry-removed')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/entries/<entry_id>/move')
+def move_queue_entry_api(queue_id: str, entry_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        queue, event = _move_queue_entry(
+            queue_id,
+            entry_id,
+            _parse_required_int(payload.get(
+                'target_position'), 'target_position'),
+            str(payload.get('reason') or '').strip(),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueEntryNotFoundError:
+        return jsonify({'error': {'code': 'queue_entry_not_found', 'message': 'Queue entry was not found.'}}), 404
+    except QueueValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_action', 'message': str(exc)}}), 400
+    except QueuePausedError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/entries/<entry_id>/move')
+def move_queue_entry_page_action(queue_id: str, entry_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _move_queue_entry(
+            queue_id,
+            entry_id,
+            _parse_required_int(request.form.get(
+                'target_position'), 'target_position'),
+            str(request.form.get('reason') or '').strip(),
+        )
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except (QueueEntryNotFoundError, QueueValidationError, QueuePausedError):
+        return _page_queue_action_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    return _queue_page_redirect(queue_id, saved='entry-moved')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/pause')
+def pause_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    payload = _request_data()
+    try:
+        queue, event = _pause_queue(queue_id, str(
+            payload.get('reason') or '').strip())
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueConflictError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/pause')
+def pause_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _pause_queue(queue_id, str(request.form.get('reason') or '').strip())
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueConflictError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-paused')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/resume')
+def resume_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    try:
+        queue, event = _resume_queue(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueConflictError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/resume')
+def resume_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _resume_queue(queue_id)
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueConflictError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-resumed')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/clear')
+def clear_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    payload = _request_data()
+    try:
+        queue, event = _clear_queue(
+            queue_id,
+            str(payload.get('reason') or '').strip(),
+            str(payload.get('confirm') or '').strip(),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_action', 'message': str(exc)}}), 400
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/clear')
+def clear_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _clear_queue(
+            queue_id,
+            str(request.form.get('reason') or '').strip(),
+            str(request.form.get('confirm') or '').strip(),
+        )
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueValidationError:
+        return _page_queue_confirmation_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-cleared')
 
 
 @admin_bot_blueprint.get('/api/syndication/sources')

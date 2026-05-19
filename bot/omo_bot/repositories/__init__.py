@@ -17,6 +17,12 @@ from .website_content_repo import (
     InMemoryWebsiteContentRepository,
     WebsiteContentRepository,
 )
+from .queue_repo import (
+    InMemoryQueueRepository,
+    PostgresQueueRepository,
+    QueueRepository,
+    build_postgres_queue_repository,
+)
 from .syndication_repo import (
     InMemorySyndicationSourceRepository,
     PostgresSyndicationSourceRepository,
@@ -32,11 +38,15 @@ __all__ = [
     "build_postgres_bot_audit_log_repository",
     "BotManagedRuntimeConfig",
     "InMemoryBotConfigRepository",
+    "InMemoryQueueRepository",
     "InMemoryWebsiteContentRepository",
     "PostgresBotConfigRepository",
+    "PostgresQueueRepository",
     "build_postgres_bot_config_repository",
+    "build_postgres_queue_repository",
     "InMemorySyndicationSourceRepository",
     "PostgresSyndicationSourceRepository",
+    "QueueRepository",
     "SyndicationSourceRepository",
     "WebsiteContentRepository",
     "build_postgres_syndication_repository",

@@ -7,12 +7,14 @@ from .delivery import (
     SyndicationDeliveryBatch,
     SyndicationDeliverySink,
 )
+from .queue_service import QueueService
 from .syndication_service import SyndicationPlanningService
 
 __all__ = [
     "BotAuditService",
     "DiscordApiSyndicationDeliverySink",
     "NullSyndicationDeliverySink",
+    "QueueService",
     "SyndicationDeliveryBatch",
     "SyndicationDeliverySink",
     "SyndicationPlanningService",
