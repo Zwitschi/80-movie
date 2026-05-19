@@ -8,7 +8,7 @@ from typing import Any, cast
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, has_app_context, has_request_context, jsonify, redirect, render_template, request, session, url_for
 
 from bot.omo_bot.config import BotConfig
 from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
@@ -43,6 +43,9 @@ from . import bot_operator_service
 
 
 admin_bot_blueprint = Blueprint('admin_bot', __name__, url_prefix='/admin/bot')
+
+BOT_AUDIT_STATUS_HEADER = 'X-OMO-Bot-Audit-Status'
+_BOT_AUDIT_STATUS_ENV_KEY = 'omo.bot.audit_status'
 
 BOT_OPS_SESSION_KEY = 'bot_ops_user_id'
 BOT_OPS_SESSION_ID_KEY = 'bot_ops_session_id'
@@ -103,6 +106,11 @@ def _build_bot_audit_service() -> BotAuditService | None:
     return BotAuditService(build_postgres_bot_audit_log_repository(database_url))
 
 
+def _mark_bot_audit_degraded() -> None:
+    if has_request_context():
+        request.environ[_BOT_AUDIT_STATUS_ENV_KEY] = 'degraded'
+
+
 def _record_bot_audit_event(
     *,
     action_key: str,
@@ -111,21 +119,39 @@ def _record_bot_audit_event(
     before_state: object,
     after_state: object,
 ) -> None:
-    audit_service = _build_bot_audit_service()
-    if audit_service is None:
-        return
-    audit_service.record(
-        actor_user_id=str(session.get(
-            BOT_OPS_SESSION_KEY, '')).strip() or None,
-        actor_session_id=str(session.get(
-            BOT_OPS_SESSION_ID_KEY, '')).strip() or None,
-        action_key=action_key,
-        target_type=target_type,
-        target_key=target_key,
-        request_id=request.headers.get('X-Request-Id') or token_urlsafe(8),
-        before_state=_serialize_audit_state(before_state),
-        after_state=_serialize_audit_state(after_state),
-    )
+    try:
+        audit_service = _build_bot_audit_service()
+        if audit_service is None:
+            return
+        audit_service.record(
+            actor_user_id=str(session.get(
+                BOT_OPS_SESSION_KEY, '')).strip() or None,
+            actor_session_id=str(session.get(
+                BOT_OPS_SESSION_ID_KEY, '')).strip() or None,
+            action_key=action_key,
+            target_type=target_type,
+            target_key=target_key,
+            request_id=request.headers.get('X-Request-Id') or token_urlsafe(8),
+            before_state=_serialize_audit_state(before_state),
+            after_state=_serialize_audit_state(after_state),
+        )
+    except Exception:
+        _mark_bot_audit_degraded()
+        if has_app_context():
+            current_app.logger.warning(
+                'Bot audit logging degraded for %s:%s',
+                target_type,
+                target_key,
+                exc_info=True,
+            )
+
+
+@admin_bot_blueprint.after_request
+def add_bot_audit_status_header(response):
+    audit_status = str(request.environ.get(_BOT_AUDIT_STATUS_ENV_KEY, '')).strip()
+    if audit_status:
+        response.headers[BOT_AUDIT_STATUS_HEADER] = audit_status
+    return response
 
 
 def _bool_status(configured: bool) -> str:

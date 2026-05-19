@@ -13,6 +13,11 @@ from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.services import MileageService, QueueService
 
 
+class _FailingAuditRepository:
+    def append(self, entry):
+        raise RuntimeError('audit unavailable')
+
+
 def test_admin_bot_overview_renders_in_testing_mode():
     app = create_app()
     app.config['TESTING'] = True
@@ -1095,6 +1100,58 @@ def test_admin_bot_upsert_channel_binding_api_updates_repository(monkeypatch):
     ]
 
 
+def test_admin_bot_upsert_channel_binding_api_succeeds_when_audit_is_degraded(monkeypatch):
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    with client.session_transaction() as flask_session:
+        flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
+        flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = [
+            'syndication.write']
+
+    monkeypatch.setattr(
+        admin_bot,
+        '_load_bot_runtime_settings',
+        lambda: BotRuntimeSettings(
+            discord_token='token-value',
+            guild_id=222,
+            channel_map={},
+            database_url='postgresql://user:pass@localhost/omo',
+            syndication_sources=('youtube',),
+            syndication_poll_seconds=300,
+            log_level='INFO',
+        ),
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_syndication_repository',
+        lambda database_url: InMemorySyndicationSourceRepository(),
+    )
+    repository = InMemoryBotConfigRepository(guild_id=222)
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_config_repository',
+        lambda database_url: repository,
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_audit_log_repository',
+        lambda database_url: _FailingAuditRepository(),
+    )
+
+    response = client.post(
+        '/admin/bot/api/config/channels',
+        json={'binding_key': 'announcements', 'channel_id': 200},
+    )
+
+    assert response.status_code == 200
+    assert response.headers[admin_bot.BOT_AUDIT_STATUS_HEADER] == 'degraded'
+    assert repository.list_channel_bindings(222) == [
+        {'guild_id': 222, 'binding_key': 'announcements', 'channel_id': 200}
+    ]
+
+
 def test_admin_bot_disable_syndication_source_api_updates_enabled_state(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
@@ -1199,6 +1256,51 @@ def test_admin_bot_disable_syndication_source_api_emits_audit_entry(monkeypatch)
         'last_succeeded_at': None,
         'last_failed_at': None,
     }
+
+
+def test_admin_bot_disable_syndication_source_api_succeeds_when_audit_is_degraded(monkeypatch):
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    with client.session_transaction() as flask_session:
+        flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
+        flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = [
+            'syndication.write']
+
+    monkeypatch.setattr(
+        admin_bot,
+        '_load_bot_runtime_settings',
+        lambda: BotRuntimeSettings(
+            discord_token='token-value',
+            guild_id=None,
+            channel_map={'announcements': 200},
+            database_url='postgresql://user:pass@localhost/omo',
+            syndication_sources=('youtube',),
+            syndication_poll_seconds=300,
+            log_level='INFO',
+        ),
+    )
+    repository = InMemorySyndicationSourceRepository(
+        [SyndicationSourceState(source_key='youtube', enabled=True, checkpoint='video-123')]
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_syndication_repository',
+        lambda database_url: repository,
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_audit_log_repository',
+        lambda database_url: _FailingAuditRepository(),
+    )
+
+    response = client.post('/admin/bot/api/config/sources/youtube/disable')
+
+    assert response.status_code == 200
+    assert response.headers[admin_bot.BOT_AUDIT_STATUS_HEADER] == 'degraded'
+    assert repository.get_by_source_key('youtube') is not None
+    assert repository.get_by_source_key('youtube').enabled is False
 
 
 def test_admin_bot_commands_page_renders_poll_all_command(monkeypatch):
@@ -1527,6 +1629,43 @@ def test_admin_bot_disable_operator_api_emits_audit_entry(monkeypatch):
     assert entry.before_state['is_active'] is True
     assert entry.after_state is not None
     assert entry.after_state['is_active'] is False
+
+
+def test_admin_bot_disable_operator_api_succeeds_when_audit_is_degraded(monkeypatch):
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    with client.session_transaction() as flask_session:
+        flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
+        flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = ['ops.admin']
+
+    monkeypatch.setattr(
+        bot_operator_repo,
+        'set_bot_operator_active',
+        lambda user_id, is_active: {
+            'discord_user_id': user_id,
+            'username': 'operator',
+            'global_name': 'Operator Name',
+            'avatar_url': None,
+            'scopes': ['ops.read'],
+            'is_active': is_active,
+            'last_login_at': None,
+        },
+    )
+    monkeypatch.setattr(
+        admin_bot,
+        'build_postgres_bot_audit_log_repository',
+        lambda database_url: _FailingAuditRepository(),
+    )
+
+    response = client.post('/admin/bot/api/operators/123456/disable')
+
+    assert response.status_code == 200
+    assert response.headers[admin_bot.BOT_AUDIT_STATUS_HEADER] == 'degraded'
+    payload = response.get_json()
+    assert payload['data']['discord_user_id'] == '123456'
+    assert payload['data']['is_active'] is False
 
 
 def test_admin_bot_disable_operator_api_rejects_missing_scope(monkeypatch):
