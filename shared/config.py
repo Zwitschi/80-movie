@@ -63,11 +63,13 @@ def get_current_year() -> int:
 def get_website_config_values() -> dict:
     """Get website-specific configuration values from environment."""
     return {
+        "SITE_NAME": "Open Mic Odyssey",
         "SITE_URL": get_env_str("SITE_URL", "https://www.openmicodyssey.com"),
         "DATABASE_URL": get_env_str("DATABASE_URL", "postgresql://user:password@localhost/omo"),
         "DATA_SOURCE": get_env_str("DATA_SOURCE", "DB"),
         "CURRENT_YEAR": get_current_year(),
         "MAPBOX_ACCESS_TOKEN": get_env_str("MAPBOX_ACCESS_TOKEN", ""),
+        "SCHEMA_ORG_VERSION_URL": "https://schema.org/docs/releases.html#v30.0",
         "SECRET_KEY": get_env_str("SECRET_KEY", "dev-secret-key-change-in-production"),
     }
 

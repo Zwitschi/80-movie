@@ -13,6 +13,15 @@ from .repositories import (
     InMemorySyndicationSourceRepository,
     SyndicationSourceRepository,
     build_postgres_syndication_repository,
+    InMemoryQueueRepository,
+    QueueRepository,
+    build_postgres_queue_repository,
+    InMemoryMileageRepository,
+    MileageRepository,
+    build_postgres_mileage_repository,
+    BotAuditLogRepository,
+    InMemoryBotAuditLogRepository,
+    build_postgres_bot_audit_log_repository,
 )
 from .runtime.client import BotRuntime
 from .runtime.shutdown import shutdown_runtime
@@ -21,6 +30,9 @@ from .services import (
     DiscordApiSyndicationDeliverySink,
     NullSyndicationDeliverySink,
     SyndicationPlanningService,
+    QueueService,
+    MileageService,
+    BotAuditService,
 )
 
 
@@ -43,6 +55,27 @@ def build_syndication_repository(config: BotConfig) -> SyndicationSourceReposito
         return build_postgres_syndication_repository(config.database_url)
 
     return InMemorySyndicationSourceRepository()
+
+
+def build_queue_repository(config: BotConfig) -> QueueRepository:
+    if config.database_url:
+        return build_postgres_queue_repository(config.database_url)
+
+    return InMemoryQueueRepository()
+
+
+def build_mileage_repository(config: BotConfig) -> MileageRepository:
+    if config.database_url:
+        return build_postgres_mileage_repository(config.database_url)
+
+    return InMemoryMileageRepository()
+
+
+def build_audit_repository(config: BotConfig) -> BotAuditLogRepository:
+    if config.database_url:
+        return build_postgres_bot_audit_log_repository(config.database_url)
+
+    return InMemoryBotAuditLogRepository()
 
 
 def build_syndication_adapters(config: BotConfig) -> dict[str, SyndicationAdapter]:
@@ -111,6 +144,15 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
         adapters=build_syndication_adapters(effective_config),
         delivery_sink=syndication_delivery_sink,
     )
+    queue_repository = build_queue_repository(effective_config)
+    queue_service = QueueService(repository=queue_repository)
+
+    mileage_repository = build_mileage_repository(effective_config)
+    mileage_service = MileageService(repository=mileage_repository)
+
+    audit_repository = build_audit_repository(effective_config)
+    audit_service = BotAuditService(repository=audit_repository)
+
     return BotRuntime(
         config=effective_config,
         logger=logger,
@@ -118,6 +160,12 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
         syndication_planning_service=syndication_planning_service,
         syndication_polling_job=syndication_polling_job,
         syndication_delivery_sink=syndication_delivery_sink,
+        queue_repository=queue_repository,
+        queue_service=queue_service,
+        mileage_repository=mileage_repository,
+        mileage_service=mileage_service,
+        audit_repository=audit_repository,
+        audit_service=audit_service,
     )
 
 

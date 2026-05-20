@@ -116,6 +116,42 @@ def test_mileage_service_filters_user_summaries_and_rejects_invalid_adjustments(
     else:
         raise AssertionError('Zero-delta mileage adjustment should fail')
 
+    try:
+        service.adjust_user_mileage(
+            guild_id=1,
+            discord_user_id='gamma-3',
+            display_name='Gamma',
+            points_delta=0,
+            reason='Zero points',
+        )
+    except MileageValidationError:
+        pass
+    else:
+        raise AssertionError('Adjustments with zero delta should be rejected')
+
+
+def test_mileage_service_record_engagement():
+    service = MileageService(InMemoryMileageRepository())
+
+    # Test message engagement
+    detail, event = service.record_engagement(
+        guild_id=1,
+        discord_user_id='u1',
+        display_name='Alpha',
+        engagement_type='message'
+    )
+    assert event.event_type == 'engagement_message'
+    assert detail.total.total_points == 1  # Default for message
+
+    # Test unknown engagement
+    result = service.record_engagement(
+        guild_id=1,
+        discord_user_id='u1',
+        display_name='Alpha',
+        engagement_type='unknown'
+    )
+    assert result is None
+
 
 def test_mileage_command_handlers_drive_adjust_and_reverse():
     service = MileageService(InMemoryMileageRepository())

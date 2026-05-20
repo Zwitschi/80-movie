@@ -9,8 +9,8 @@ from datetime import datetime, timezone
 
 from ..jobs import SyndicationPollingJob
 from ..config import BotConfig
-from ..repositories import SyndicationSourceRepository
-from ..services import SyndicationDeliverySink, SyndicationPlanningService
+from ..repositories import SyndicationSourceRepository, QueueRepository, MileageRepository, BotAuditLogRepository
+from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService
 
 
 @dataclass
@@ -23,6 +23,12 @@ class BotRuntime:
     syndication_planning_service: SyndicationPlanningService
     syndication_polling_job: SyndicationPollingJob
     syndication_delivery_sink: SyndicationDeliverySink
+    queue_repository: QueueRepository
+    queue_service: QueueService
+    mileage_repository: MileageRepository
+    mileage_service: MileageService
+    audit_repository: BotAuditLogRepository
+    audit_service: BotAuditService
     state: str = field(default="created", init=False)
     last_started_at: datetime | None = field(default=None, init=False)
     last_poll_started_at: datetime | None = field(default=None, init=False)
@@ -74,6 +80,9 @@ class BotRuntime:
             "syndication_repository_backend": self.syndication_repository.__class__.__name__,
             "syndication_polling_job": self.syndication_polling_job.__class__.__name__,
             "syndication_delivery_backend": self.syndication_delivery_sink.__class__.__name__,
+            "queue_repository_backend": self.queue_repository.__class__.__name__,
+            "mileage_repository_backend": self.mileage_repository.__class__.__name__,
+            "audit_repository_backend": self.audit_repository.__class__.__name__,
             "database_configured": bool(self.config.database_url),
             "last_started_at": self.last_started_at.isoformat() if self.last_started_at else None,
             "polling_task_state": self.polling_task_state,

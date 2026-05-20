@@ -33,7 +33,31 @@ Current repository contains a standalone control room for editorial CMS routes u
 | Audience                  | Fast public pages, clear calls to watch/support/connect  |
 | Future community ops team | Path to add Discord automation without replacing website |
 
-## 2. Scope
+## 2. Service Boundaries
+
+The codebase is split into three primary services with distinct responsibilities:
+
+### Website (`website/`)
+
+- **Role**: Public Frontend.
+- **Responsibility**: Page rendering, SEO/schema output, static site export, and robots/sitemap generation.
+- **Data Access**: Read-only access to content via `shared/`.
+- **Authentication**: None. All routes are public (except internal/hidden map route).
+
+### Control Room (`control_room/`)
+
+- **Role**: Administrative Backend & CMS.
+- **Responsibility**: Editorial CRUD, operator dashboards, bot management, background tasks, and privileged JSON APIs.
+- **Data Access**: Read-write access to content and bot-specific data.
+- **Authentication**: Flask-Login with local user hash and Discord OAuth for operators.
+
+### Bot (`bot/`)
+
+- **Role**: Automation Worker.
+- **Responsibility**: Discord gateway interaction, event polling, mileage/queue logic, and content syndication.
+- **Data Access**: Read-write access to bot-specific tables and read-only access to movie content.
+
+## 3. Scope
 
 ### Current In Scope
 
@@ -61,7 +85,7 @@ Current repository contains a standalone control room for editorial CMS routes u
 
 Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `website/movie_site/content_store.py` factory always returns DB-backed reader/writer. Architecture must treat DB-backed content as current implemented path.
 
-## 3. Context
+## 4. Context
 
 ### Current System Context
 
@@ -76,40 +100,6 @@ Three independent services share one PostgreSQL database:
 - **Bot API** (api.openmicodyssey.com) exposes health, syndication, and bot management endpoints on port 8787.
 
 All traffic routes through Nginx Proxy Manager on the Coolify server. The Discord bot worker connects to Discord's gateway API and reads/writes bot-owned tables in the shared database.
-
-## 4. Technology Baseline
-
-| Area             | Current Choice                                       | Notes                                       |
-| ---------------- | ---------------------------------------------------- | ------------------------------------------- |
-| Web framework    | Flask                                                | App factory plus blueprints                 |
-| Templates        | Jinja2                                               | Shared layout and page templates            |
-| Auth             | Flask-Login + username/password hash + Discord OAuth | Control room owns editorial + operator auth |
-| Persistence      | PostgreSQL via `psycopg2`                            | Content tables back site/CMS                |
-| Content assembly | Python dict aggregation                              | `movie_data.py` composes page payload       |
-| SEO/schema       | schema.org JSON-LD                                   | Built in Python, rendered into templates    |
-| Static export    | Python generator + BeautifulSoup + jsonschema        | Renders routes into `dist`                  |
-| Deployment       | Coolify + Nixpacks + Gunicorn                        | Base directory `website`, port `8000`       |
-
-### Configuration Surface
-
-Current website config is driven by environment variables in `website/movie_site/config.py`:
-
-- `SITE_URL`
-- `DATABASE_URL`
-- `DATA_SOURCE`
-- `CURRENT_YEAR`
-- `MAPBOX_ACCESS_TOKEN`
-- `SECRET_KEY`
-
-Current control-room config is driven by shared config helpers plus control-room app wiring:
-
-- `DATABASE_URL`
-- `SECRET_KEY`
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD_HASH`
-- `OMO_DISCORD_CLIENT_ID` / `DISCORD_CLIENT_ID`
-- `OMO_DISCORD_CLIENT_SECRET` / `DISCORD_CLIENT_SECRET`
-- `OMO_DISCORD_REDIRECT_URI` / `DISCORD_REDIRECT_URI`
 
 ## 5. Building Block View
 
@@ -128,22 +118,19 @@ Current control-room config is driven by shared config helpers plus control-room
 │ Public web surface                                          │
 │  └─ movie_site/views.py                                    │
 │                                                            │
-│ Admin CMS surface                                           │
-│  ├─ movie_site/admin.py                                    │
-│  ├─ movie_site/admin_content.py                            │
-│  └─ movie_site/auth.py                                     │
+│ Configuration                                               │
+│  └─ movie_site/config.py                                   │
 │                                                            │
-│ Content + SEO                                               │
-│  ├─ movie_site/movie_data.py                               │
-│  ├─ movie_site/content_store.py                            │
-│  ├─ movie_site/content_store_db.py                         │
-│  ├─ movie_site/schema.py                                   │
-│  └─ movie_site/schema_parts/                               │
+│ Data / Logic (Delegated to shared/)                         │
+│  ├─ shared/movie_data.py                                   │
+│  ├─ shared/content_store.py                                │
+│  ├─ shared/schema.py                                       │
+│  └─ shared/db.py                                           │
 │                                                            │
 │ Export + assets                                             │
-│  ├─ generate_static_site.py                                │
-│  ├─ templates/                                             │
-│  └─ static/                                                │
+│  ├─ website/export_static.py                               │
+│  ├─ website/templates/                                     │
+│  └─ website/static/                                        │
 └───────────────────────────────┬────────────────────────────┘
                                 │
                                 ▼
@@ -154,23 +141,22 @@ Current control-room config is driven by shared config helpers plus control-room
 
 ### Current Building Blocks
 
-| Building Block                                   | Responsibility                                                                        |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `website/app.py`                                 | Thin WSGI entrypoint exposing `app`                                                   |
-| `website/movie_site/__init__.py`                 | Public website app factory, config loading, public blueprint registration             |
-| `website/movie_site/views.py`                    | Public routes, page context, meta tags, sitemap, robots, hidden map page              |
-| `website/movie_site/config.py`                   | Environment-driven defaults and secrets/config                                        |
-| `website/movie_site/content_store.py`            | Content store factory abstraction                                                     |
-| `website/movie_site/content_store_db.py`         | PostgreSQL-backed content read/write implementation                                   |
-| `website/movie_site/db.py`                       | Connection-pool helper functions using `psycopg2`                                     |
-| `website/movie_site/movie_data.py`               | Aggregates content records into page-ready data model                                 |
-| `website/movie_site/schema.py` + `schema_parts/` | Builds JSON-LD graph for SEO/schema.org output                                        |
-| `control_room/app.py`                            | Control-room app factory, auth wiring, blueprint registration                         |
-| `control_room/admin.py`                          | Editorial CMS routes, login gate, dashboard entry, route delegation                   |
-| `control_room/admin_content.py`                  | CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, assets |
-| `control_room/auth.py`                           | Flask-Login manager and admin user loader for editorial CMS                           |
-| `control_room/admin_bot.py`                      | Operator routes, Discord OAuth flow, health/config/queue/mileage/syndication views    |
-| `website/generate_static_site.py`                | Renders public routes into static HTML and validates output                           |
+| Building Block                   | Responsibility                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------- |
+| `website/app.py`                 | Thin WSGI entrypoint exposing `app`                                                   |
+| `website/movie_site/__init__.py` | Public website app factory, config loading, public blueprint registration             |
+| `website/movie_site/views.py`    | Public routes, page context, meta tags, sitemap, robots, hidden map page              |
+| `website/movie_site/config.py`   | Environment-driven defaults and secrets/config                                        |
+| `control_room/app.py`            | Control-room app factory, auth wiring, blueprint registration                         |
+| `control_room/admin.py`          | Editorial CMS routes, login gate, dashboard entry, route delegation                   |
+| `control_room/admin_content.py`  | CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, assets |
+| `control_room/auth.py`           | Flask-Login manager and admin user loader for editorial CMS                           |
+| `control_room/admin_bot.py`      | Operator routes, Discord OAuth flow, health/config/queue/mileage/syndication views    |
+| `shared/db.py`                   | Connection-pool helper functions using `psycopg2`                                     |
+| `shared/content_store.py`        | Content store factory abstraction and read/write implementations                      |
+| `shared/movie_data.py`           | Aggregates content records into page-ready data model                                 |
+| `shared/schema.py` + `parts/`    | Builds JSON-LD graph for SEO/schema.org output                                        |
+| `website/export_static.py`       | Renders public routes into static HTML and validates output                           |
 
 ### Implemented Route Surface
 

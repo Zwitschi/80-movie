@@ -20,7 +20,8 @@ from .auth import AdminUser
 from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
 from .admin_content import _ctx
 
-admin_blueprint = Blueprint('admin', __name__, url_prefix='/admin')
+admin_blueprint = Blueprint(
+    'admin', __name__, url_prefix='/admin', static_folder='static')
 
 
 @admin_blueprint.before_request
@@ -63,7 +64,7 @@ def login():
 @admin_blueprint.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('main.index'))
+    return redirect(url_for('admin.login'))
 
 
 @admin_blueprint.get('/')

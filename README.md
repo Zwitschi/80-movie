@@ -6,8 +6,8 @@ This project contains materials and code for the "Open Mic Odyssey" movie projec
 
 ```text
 shared/            # Shared modules (db, content store, schema, config, utils)
-website/           # Flask web application (public site + admin CMS)
-control_room/      # Flask app for bot operator login + health/config views
+website/           # Flask web application (public site only)
+control_room/      # Flask app for editorial CMS, bot operator login, and ops dashboard
 bot_api/           # Flask app for bot health + config endpoints
 bot/               # Discord bot worker runtime (scaffold)
 deploy/            # Coolify deployment configs per service

@@ -1,12 +1,12 @@
 import pytest
+from flask import url_for
 from werkzeug.security import generate_password_hash
 
 from website.app import create_app
-from website.movie_site import admin_content
 from website.movie_site import views
-from website.movie_site.content_store import get_content_reader
-from website.movie_site import movie_data
-from website.movie_site.movie_data import get_movie_data, get_movie_page_context
+from shared import movie_data
+from shared.movie_data import get_movie_data, get_movie_page_context
+from shared.content_store import get_content_reader
 from control_room.app import create_app as create_control_room_app
 
 
@@ -22,6 +22,57 @@ def app():
 def client(app):
     """A test client for the app."""
     return app.test_client()
+
+
+@pytest.fixture
+def control_room_app():
+    """Create and configure a test control room app instance."""
+    app = create_control_room_app()
+    app.config['TESTING'] = True
+    return app
+
+
+@pytest.fixture
+def control_room_client(control_room_app):
+    """A test client for the control room app."""
+    return control_room_app.test_client()
+
+
+class TestServiceSeparation:
+    """Test that routes are correctly separated between website and control room."""
+
+    def test_website_no_admin_routes(self, client):
+        """Test that website does not serve admin routes."""
+        # Flask-Login might redirect to login if not authenticated,
+        # but we want to ensure the routes aren't even registered or behave as public-only.
+        # In our new structure, /admin isn't registered in website.
+        response = client.get('/admin/')
+        assert response.status_code == 404
+
+        response = client.get('/admin/login')
+        assert response.status_code == 404
+
+    def test_control_room_has_admin_routes(self, control_room_client):
+        """Test that control room serves admin routes."""
+        response = control_room_client.get('/admin/login')
+        assert response.status_code == 200
+        assert b'Login' in response.data
+
+    def test_website_public_routes(self, client):
+        """Test that website public routes work."""
+        response = client.get('/')
+        assert response.status_code == 200
+
+        response = client.get('/film')
+        assert response.status_code == 200
+
+    def test_control_room_no_public_frontend_routes(self, control_room_client):
+        """Test that control room does not serve public frontend routes."""
+        response = control_room_client.get('/')
+        assert response.status_code == 404
+
+        response = control_room_client.get('/film')
+        assert response.status_code == 404
 
 
 class TestMovieData:
@@ -126,7 +177,7 @@ class TestMovieData:
                 }
 
         monkeypatch.setattr(
-            movie_data, 'get_content_reader', lambda: FakeReader())
+            movie_data, 'get_content_reader', lambda _=None: FakeReader())
 
         with app.app_context():
             data = get_movie_data()

@@ -13,9 +13,11 @@ from bot.omo_bot.repositories import (
     InMemoryBotConfigRepository,
     InMemorySyndicationSourceRepository,
     PostgresSyndicationSourceRepository,
+    InMemoryQueueRepository,
+    InMemoryMileageRepository,
 )
 from bot.omo_bot.runtime.client import BotRuntime
-from bot.omo_bot.services import BotAuditService, SyndicationPlanningService
+from bot.omo_bot.services import BotAuditService, SyndicationPlanningService, QueueService, MileageService
 
 
 class FakeSyndicationCursor:
@@ -348,6 +350,9 @@ def test_bot_runtime_polling_loop_updates_health_snapshot():
             "OMO_SYNDICATION_POLL_SECONDS": "60",
         }
     )
+    queue_repository = InMemoryQueueRepository()
+    mileage_repository = InMemoryMileageRepository()
+    audit_repository = InMemoryBotAuditLogRepository()
     runtime = BotRuntime(
         config=config,
         logger=__import__("logging").getLogger("test-bot"),
@@ -358,6 +363,12 @@ def test_bot_runtime_polling_loop_updates_health_snapshot():
         ),
         syndication_polling_job=RecordingPollingJob(),
         syndication_delivery_sink=object(),
+        queue_repository=queue_repository,
+        queue_service=QueueService(repository=queue_repository),
+        mileage_repository=mileage_repository,
+        mileage_service=MileageService(repository=mileage_repository),
+        audit_repository=audit_repository,
+        audit_service=BotAuditService(repository=audit_repository),
     )
 
     async def scenario():

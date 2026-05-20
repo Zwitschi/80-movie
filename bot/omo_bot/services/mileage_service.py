@@ -26,6 +26,13 @@ class MileageValidationError(MileageError):
     pass
 
 
+# Default points for automated triggers
+POINTS_ENGAGEMENT_MESSAGE = 1
+POINTS_ENGAGEMENT_REACTION = 1
+POINTS_ENGAGEMENT_JOIN = 10
+POINTS_ENGAGEMENT_VOICE_MINUTE = 2
+
+
 class MileageService:
     def __init__(self, repository: MileageRepository) -> None:
         self._repository = repository
@@ -108,6 +115,7 @@ class MileageService:
         actor_user_id: str | None = None,
         correlation_id: str | None = None,
         metadata: dict[str, object] | None = None,
+        event_type: str = 'manual_adjustment',
     ) -> tuple[MileageUserDetail, MileageEvent]:
         resolved_reason = reason.strip()
         if points_delta == 0:
@@ -125,7 +133,7 @@ class MileageService:
                 guild_id=guild_id,
                 discord_user_id=resolved_user_id,
                 display_name=display_name.strip() or resolved_user_id,
-                event_type='manual_adjustment',
+                event_type=event_type,
                 points_delta=points_delta,
                 reason=resolved_reason,
                 actor_user_id=actor_user_id,
@@ -139,6 +147,35 @@ class MileageService:
         total = self._apply_event_to_total(event)
         detail = self.get_user_detail(guild_id, resolved_user_id)
         return replace(detail, total=total), event
+
+    def record_engagement(
+        self,
+        *,
+        guild_id: int,
+        discord_user_id: str,
+        display_name: str,
+        engagement_type: str,
+        correlation_id: str | None = None,
+    ) -> tuple[MileageUserDetail, MileageEvent] | None:
+        points_map = {
+            'message': POINTS_ENGAGEMENT_MESSAGE,
+            'reaction': POINTS_ENGAGEMENT_REACTION,
+            'join': POINTS_ENGAGEMENT_JOIN,
+            'voice_minute': POINTS_ENGAGEMENT_VOICE_MINUTE,
+        }
+        points = points_map.get(engagement_type)
+        if points is None:
+            return None
+
+        return self.adjust_user_mileage(
+            guild_id=guild_id,
+            discord_user_id=discord_user_id,
+            display_name=display_name,
+            points_delta=points,
+            reason=f'Engagement: {engagement_type}',
+            event_type=f'engagement_{engagement_type}',
+            correlation_id=correlation_id,
+        )
 
     def reverse_event(
         self,

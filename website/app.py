@@ -1,6 +1,6 @@
 try:
     from .movie_site import create_app
-except ImportError:
+except (ImportError, ValueError):
     from movie_site import create_app
 
 

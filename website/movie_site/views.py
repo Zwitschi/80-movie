@@ -3,8 +3,8 @@ from xml.sax.saxutils import escape
 
 from flask import Blueprint, current_app, redirect, render_template, url_for
 
-from .movie_data import get_movie_data, get_movie_page_context
-from .schema import build_movie_schema_json, build_org_social_schema_json
+from shared.movie_data import get_movie_data, get_movie_page_context
+from shared.schema import build_movie_schema_json, build_org_social_schema_json
 
 
 main_blueprint = Blueprint('main', __name__)

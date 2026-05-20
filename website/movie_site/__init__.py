@@ -1,18 +1,25 @@
+import os
+from pathlib import Path
 from flask import Flask
 
-from .config import DefaultConfig, apply_runtime_env_overrides
-from .db import init_app as init_db_app
+from shared.db import init_app as init_db_app
+from shared.config import load_dotenv_files, get_website_config_values
 from .views import main_blueprint
 
 
-def create_app(config_object=DefaultConfig):
+def create_app():
     app = Flask(
         __name__,
         template_folder='../templates',
         static_folder='../static',
     )
-    app.config.from_object(config_object)
-    apply_runtime_env_overrides(app.config)
+
+    # Load env files
+    repo_root = Path(__file__).resolve().parents[2]
+    load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
+
+    # Apply config
+    app.config.update(get_website_config_values())
 
     init_db_app(app)
 

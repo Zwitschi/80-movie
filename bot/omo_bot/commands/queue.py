@@ -59,6 +59,46 @@ def handle_queue_advance(
     )
 
 
+def handle_queue_pause(
+    service: QueueService,
+    *,
+    queue_id: str,
+    actor_user_id: str | None = None,
+    reason: str = '',
+) -> tuple[QueueSnapshot, QueueEvent]:
+    return service.pause_queue(
+        queue_id=_required_text(queue_id, 'queue_id'),
+        actor_user_id=actor_user_id,
+        reason=reason,
+    )
+
+
+def handle_queue_resume(
+    service: QueueService,
+    *,
+    queue_id: str,
+    actor_user_id: str | None = None,
+) -> tuple[QueueSnapshot, QueueEvent]:
+    return service.resume_queue(
+        queue_id=_required_text(queue_id, 'queue_id'),
+        actor_user_id=actor_user_id,
+    )
+
+
+def handle_queue_clear(
+    service: QueueService,
+    *,
+    queue_id: str,
+    actor_user_id: str | None = None,
+    reason: str = '',
+) -> tuple[QueueSnapshot, QueueEvent]:
+    return service.clear_queue(
+        queue_id=_required_text(queue_id, 'queue_id'),
+        actor_user_id=actor_user_id,
+        reason=reason,
+    )
+
+
 def _required_text(raw_value: object, field_name: str) -> str:
     value = str(raw_value or '').strip()
     if not value:
