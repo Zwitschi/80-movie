@@ -19,6 +19,8 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 
 ### 1. Website (openmicodyssey.com)
 
+This service is public-site only. Do not expect editorial CMS routes or bot operator routes on this domain.
+
 1. In Coolify, create new Application resource
 2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
@@ -29,6 +31,8 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 8. In Nginx Proxy Manager, create proxy host: `openmicodyssey.com` → `http://192.168.88.18:8880`
 
 ### 2. Control Room (admin.openmicodyssey.com)
+
+This service owns both editorial CMS routes under `/admin` and bot/operator routes under `/admin/bot`.
 
 1. In Coolify, create new Application resource
 2. Set base directory: `/` (repo root)
@@ -62,11 +66,13 @@ All services run on a single Coolify server at `coolify.allucanget.biz` (interna
 ## Deployment checklist
 
 - [ ] Generate `SECRET_KEY` for each service: `python -c "import secrets; print(secrets.token_hex(32))"`
-- [ ] Generate `ADMIN_PASSWORD_HASH`: `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`
 - [ ] Set `SITE_URL` to live canonical URL (no trailing slash)
 - [ ] Confirm `DATABASE_URL` points to `192.168.88.35`
+- [ ] Generate `ADMIN_PASSWORD_HASH` for control room only: `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`
+- [ ] Set `ADMIN_USERNAME` and `ADMIN_PASSWORD_HASH` on control room only, not website
 - [ ] Configure Discord OAuth app with correct redirect URIs
 - [ ] Verify all 3 domains respond correctly after deploy
+- [ ] Verify website does not expose `/admin` or `/admin/bot`; use `admin.openmicodyssey.com` for all editorial and operator workflows
 - [ ] Verify bot worker connects to Discord and starts polling
 
 ## Detailed Coolify configs

@@ -2,9 +2,9 @@
 
 ## 1. Overview
 
-Open Mic Odyssey currently ships as Flask website with protected admin CMS, PostgreSQL-backed content store, JSON-LD SEO generation, and static export pipeline. Public site lives at `openmicodyssey.com`.
+Open Mic Odyssey currently ships as three Flask-based service surfaces around one shared PostgreSQL database: public website, control room, and bot API. Public site lives at `openmicodyssey.com`.
 
-Current repository now also contains an embedded `/admin/bot` control-room surface with Discord OAuth operator login, operator/session management, health/config/command views, and syndication control APIs, plus a scaffolded bot worker runtime focused on configuration, startup lifecycle, and YouTube-first syndication polling. The repository still does **not** contain a feature-complete Discord automation worker or a separate operator dashboard SPA.
+Current repository contains a standalone control room for editorial CMS routes under `/admin` plus operator routes under `/admin/bot`, with Discord OAuth operator login, operator/session management, health/config/command views, and syndication control APIs. Repository also contains a scaffolded bot worker runtime focused on configuration, startup lifecycle, and YouTube-first syndication polling. It still does **not** contain a feature-complete Discord gateway automation worker or a separate operator dashboard SPA.
 
 ### Current Product Goals
 
@@ -37,11 +37,12 @@ Current repository now also contains an embedded `/admin/bot` control-room surfa
 
 ### Current In Scope
 
-- Flask application runtime in `website/`
+- Flask website runtime in `website/`
 - Public pages, compatibility redirects, sitemap, robots, and hidden map route
-- Admin login and editorial CMS routes under `/admin`
-- Embedded control-room routes, templates, and ops APIs under `/admin/bot`
-- Discord OAuth operator login for the embedded control room
+- Standalone control room runtime in `control_room/`
+- Editorial CMS routes under `/admin` on the control room service
+- Operator routes, templates, and ops APIs under `/admin/bot` on the control room service
+- Discord OAuth operator login for the control room
 - PostgreSQL-backed content read/write layer
 - JSON-LD schema generation from structured content
 - Static export generation to `website/dist`
@@ -64,13 +65,13 @@ Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `websi
 
 ### Current System Context
 
-Public visitors, admin editors, and bot operators interact with a single Flask website deployed at openmicodyssey.com. The website serves public pages, the editorial admin CMS, and the embedded `/admin/bot` control room. All three surfaces share a PostgreSQL database. The bot scaffold runtime runs as a separate process for config validation and syndication polling seams.
+Public visitors interact with a public Flask website deployed at openmicodyssey.com. Admin editors and bot operators interact with a separate Flask control room deployed at admin.openmicodyssey.com. Website, control room, bot API, and bot worker share one PostgreSQL database. The bot scaffold runtime runs as a separate process for config validation and syndication polling seams.
 
 ### Future-State Context
 
 Three independent services share one PostgreSQL database:
 
-- **Website** (openmicodyssey.com) serves public pages and editorial CMS on port 8880.
+- **Website** (openmicodyssey.com) serves public pages on port 8880.
 - **Control Room** (admin.openmicodyssey.com) provides operator login, health/config views, and syndication control on port 8480.
 - **Bot API** (api.openmicodyssey.com) exposes health, syndication, and bot management endpoints on port 8787.
 
@@ -78,16 +79,16 @@ All traffic routes through Nginx Proxy Manager on the Coolify server. The Discor
 
 ## 4. Technology Baseline
 
-| Area             | Current Choice                                | Notes                                    |
-| ---------------- | --------------------------------------------- | ---------------------------------------- |
-| Web framework    | Flask                                         | App factory plus blueprints              |
-| Templates        | Jinja2                                        | Shared layout and page templates         |
-| Auth             | Flask-Login + username/password hash          | Admin-only session auth                  |
-| Persistence      | PostgreSQL via `psycopg2`                     | Content tables back site/CMS             |
-| Content assembly | Python dict aggregation                       | `movie_data.py` composes page payload    |
-| SEO/schema       | schema.org JSON-LD                            | Built in Python, rendered into templates |
-| Static export    | Python generator + BeautifulSoup + jsonschema | Renders routes into `dist`               |
-| Deployment       | Coolify + Nixpacks + Gunicorn                 | Base directory `website`, port `8000`    |
+| Area             | Current Choice                                       | Notes                                       |
+| ---------------- | ---------------------------------------------------- | ------------------------------------------- |
+| Web framework    | Flask                                                | App factory plus blueprints                 |
+| Templates        | Jinja2                                               | Shared layout and page templates            |
+| Auth             | Flask-Login + username/password hash + Discord OAuth | Control room owns editorial + operator auth |
+| Persistence      | PostgreSQL via `psycopg2`                            | Content tables back site/CMS                |
+| Content assembly | Python dict aggregation                              | `movie_data.py` composes page payload       |
+| SEO/schema       | schema.org JSON-LD                                   | Built in Python, rendered into templates    |
+| Static export    | Python generator + BeautifulSoup + jsonschema        | Renders routes into `dist`                  |
+| Deployment       | Coolify + Nixpacks + Gunicorn                        | Base directory `website`, port `8000`       |
 
 ### Configuration Surface
 
@@ -99,8 +100,16 @@ Current website config is driven by environment variables in `website/movie_site
 - `CURRENT_YEAR`
 - `MAPBOX_ACCESS_TOKEN`
 - `SECRET_KEY`
+
+Current control-room config is driven by shared config helpers plus control-room app wiring:
+
+- `DATABASE_URL`
+- `SECRET_KEY`
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD_HASH`
+- `OMO_DISCORD_CLIENT_ID` / `DISCORD_CLIENT_ID`
+- `OMO_DISCORD_CLIENT_SECRET` / `DISCORD_CLIENT_SECRET`
+- `OMO_DISCORD_REDIRECT_URI` / `DISCORD_REDIRECT_URI`
 
 ## 5. Building Block View
 
@@ -148,17 +157,19 @@ Current website config is driven by environment variables in `website/movie_site
 | Building Block                                   | Responsibility                                                                        |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | `website/app.py`                                 | Thin WSGI entrypoint exposing `app`                                                   |
-| `website/movie_site/__init__.py`                 | Flask app factory, config loading, blueprint registration                             |
+| `website/movie_site/__init__.py`                 | Public website app factory, config loading, public blueprint registration             |
 | `website/movie_site/views.py`                    | Public routes, page context, meta tags, sitemap, robots, hidden map page              |
-| `website/movie_site/admin.py`                    | Admin routes, login gate, dashboard entry, route delegation                           |
-| `website/movie_site/admin_content.py`            | CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, assets |
-| `website/movie_site/auth.py`                     | Flask-Login manager and admin user loader                                             |
 | `website/movie_site/config.py`                   | Environment-driven defaults and secrets/config                                        |
 | `website/movie_site/content_store.py`            | Content store factory abstraction                                                     |
 | `website/movie_site/content_store_db.py`         | PostgreSQL-backed content read/write implementation                                   |
 | `website/movie_site/db.py`                       | Connection-pool helper functions using `psycopg2`                                     |
 | `website/movie_site/movie_data.py`               | Aggregates content records into page-ready data model                                 |
 | `website/movie_site/schema.py` + `schema_parts/` | Builds JSON-LD graph for SEO/schema.org output                                        |
+| `control_room/app.py`                            | Control-room app factory, auth wiring, blueprint registration                         |
+| `control_room/admin.py`                          | Editorial CMS routes, login gate, dashboard entry, route delegation                   |
+| `control_room/admin_content.py`                  | CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, assets |
+| `control_room/auth.py`                           | Flask-Login manager and admin user loader for editorial CMS                           |
+| `control_room/admin_bot.py`                      | Operator routes, Discord OAuth flow, health/config/queue/mileage/syndication views    |
 | `website/generate_static_site.py`                | Renders public routes into static HTML and validates output                           |
 
 ### Implemented Route Surface
@@ -261,18 +272,18 @@ Current code reality:
 3. Schema helpers render node-level data for `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 4. Final JSON-LD is serialized and injected into shared base template.
 
-### Scenario: Admin Login (Website)
+### Scenario: Admin Login (Control Room)
 
-1. Editor requests `/admin` or child route.
+1. Editor requests `/admin` or child route on control room service.
 2. `before_request` guard redirects unauthenticated user to `/admin/login`.
 3. Login form checks submitted username against `ADMIN_USERNAME`.
 4. Password is verified against `ADMIN_PASSWORD_HASH` via Werkzeug.
 5. Flask-Login stores session and redirects back to requested admin route.
 
-### Scenario: Admin Content Edit (Website)
+### Scenario: Admin Content Edit (Control Room)
 
-1. Authenticated editor submits form to admin route.
-2. `admin.py` delegates to handler in `admin_content.py`.
+1. Authenticated editor submits form to control-room admin route.
+2. `control_room/admin.py` delegates to handler in `control_room/admin_content.py`.
 3. Handler normalizes form data and builds logical content payload.
 4. Content writer persists updates to PostgreSQL-backed content tables.
 5. User is redirected back to editor with success or rendered with validation/save error.
@@ -383,23 +394,35 @@ Repository also supports generating static HTML output from same public routes. 
 - `SITE_URL` controls canonical URL generation, metadata URLs, and sitemap roots.
 - `CURRENT_YEAR` feeds shared page/footer context.
 - `MAPBOX_ACCESS_TOKEN` is only required for hidden map experience.
-- `SECRET_KEY`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` govern admin session auth.
+- Website `SECRET_KEY` governs public-site session state.
+- Control room `SECRET_KEY`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` govern editorial CMS session auth.
 - `DATABASE_URL` controls PostgreSQL connection pool target (points to `192.168.88.35`).
 - `DATA_SOURCE` is present in config surface, but does not currently switch runtime away from DB-backed content store.
 
 ### Required Environment Variables
 
 - `SECRET_KEY`
-- `ADMIN_PASSWORD_HASH`
 - `SITE_URL`
 - `DATABASE_URL`
 
 ### Optional Environment Variables
 
-- `ADMIN_USERNAME`
 - `MAPBOX_ACCESS_TOKEN`
 - `CURRENT_YEAR`
 - `DATA_SOURCE` (documented, but currently not effective as runtime switch)
+
+### Control Room Required Environment Variables
+
+- `SECRET_KEY`
+- `DATABASE_URL`
+- `ADMIN_PASSWORD_HASH`
+
+### Control Room Optional Environment Variables
+
+- `ADMIN_USERNAME`
+- `OMO_DISCORD_CLIENT_ID` / `DISCORD_CLIENT_ID`
+- `OMO_DISCORD_CLIENT_SECRET` / `DISCORD_CLIENT_SECRET`
+- `OMO_DISCORD_REDIRECT_URI` / `DISCORD_REDIRECT_URI`
 
 ### Testing Notes
 
