@@ -48,6 +48,7 @@ This document is the source of truth for runtime configuration across all OMO se
 | `DATABASE_URL`                 | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN          |
 | `OMO_DISCORD_GUILD_ID`         | No       | unset                                           | Primary guild ID        |
 | `OMO_DISCORD_CHANNEL_MAP`      | No       | empty                                           | `name:id` pairs         |
+| `OMO_DISCORD_ROLE_MAP`         | No       | empty                                           | `name:id` pairs         |
 | `OMO_SYNDICATION_SOURCES`      | No       | empty                                           | Comma-separated sources |
 | `OMO_SYNDICATION_POLL_SECONDS` | No       | `300`                                           | Poll interval           |
 | `OMO_LOG_LEVEL`                | No       | `INFO`                                          | Log level               |
@@ -70,7 +71,7 @@ This document is the source of truth for runtime configuration across all OMO se
 ### Control Room only
 
 - `DATABASE_URL`, `SECRET_KEY`, `ADMIN_PASSWORD_HASH`
-- - `OMO_DISCORD_CLIENT_ID`, `OMO_DISCORD_CLIENT_SECRET`, `OMO_DISCORD_REDIRECT_URI` (for operator login)
+- `OMO_DISCORD_CLIENT_ID`, `OMO_DISCORD_CLIENT_SECRET`, `OMO_DISCORD_REDIRECT_URI` (for operator login)
 
 ### Bot API
 

@@ -11,6 +11,8 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
+from werkzeug.security import generate_password_hash
+
 
 def find_env_file(start_path: Optional[Path] = None) -> Optional[Path]:
     """Search for .env file starting from start_path, walking up to root."""
@@ -81,7 +83,7 @@ def get_control_room_config_values() -> dict:
         "DATABASE_URL": get_env_str("DATABASE_URL", "postgresql://user:password@localhost/omo"),
         "SECRET_KEY": get_env_str("SECRET_KEY", "dev-secret-key-change-in-production"),
         "ADMIN_USERNAME": get_env_str("ADMIN_USERNAME", "admin"),
-        "ADMIN_PASSWORD_HASH": get_env_str("ADMIN_PASSWORD_HASH", ""),
+        "ADMIN_PASSWORD_HASH": get_env_str("ADMIN_PASSWORD_HASH", generate_password_hash("admin-password")),
         "BOT_OPS_DISCORD_CLIENT_ID": get_env_str(
             "OMO_DISCORD_CLIENT_ID",
             get_env_str("DISCORD_CLIENT_ID", ""),

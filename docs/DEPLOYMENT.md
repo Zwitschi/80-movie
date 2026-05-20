@@ -4,12 +4,12 @@ This document is the source of truth for deploying the three OMO services: websi
 
 ## Service matrix
 
-| Surface      | Status     | Source path     | Runtime entrypoint                                 | Port | Domain                   |
-| ------------ | ---------- | --------------- | -------------------------------------------------- | ---- | ------------------------ |
-| Website      | Deployable | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | openmicodyssey.com       |
-| Control Room | Deployable | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | admin.openmicodyssey.com |
-| Bot API      | Deployable | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | api.openmicodyssey.com   |
-| Bot Worker   | Scaffold   | `bot/omo_bot/`  | `python -m bot.omo_bot`                            | none | internal                 |
+| Surface      | Status     | Source path     | Runtime entrypoint                                              | Port | Domain                   |
+| ------------ | ---------- | --------------- | --------------------------------------------------------------- | ---- | ------------------------ |
+| Website      | Deployable | `website/`      | `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`      | 8880 | openmicodyssey.com       |
+| Control Room | Deployable | `control_room/` | `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | admin.openmicodyssey.com |
+| Bot API      | Deployable | `bot_api/`      | `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`      | 8787 | api.openmicodyssey.com   |
+| Bot Worker   | Deployable | `bot/`          | `python -m bot.omo_bot`                                         | none | internal                 |
 
 ## Infrastructure
 
@@ -56,12 +56,15 @@ This service owns both editorial CMS routes under `/admin` and bot/operator rout
 
 ### 4. Bot Worker (internal)
 
+This service runs the Discord bot worker, including syndication polling, queue management, and mileage tracking.
+
 1. In Coolify, create new Application or Worker resource
 2. Set base directory: `/` (repo root)
-3. Start command: `python -m bot.omo_bot`
-4. No public port needed
-5. Enable restart policy
-6. Set environment variables (see bot worker section in ENVIRONMENT.md)
+3. Build pack: Nixpacks
+4. Start command: `python -m bot.omo_bot`
+5. No public port needed
+6. Enable restart policy
+7. Set environment variables (see bot worker section in ENVIRONMENT.md)
 
 ## Deployment checklist
 
