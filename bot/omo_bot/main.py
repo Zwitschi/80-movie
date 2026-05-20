@@ -37,6 +37,7 @@ from .services import (
     MileageService,
     BotAuditService,
     OnboardingService,
+    ModerationService,
 )
 
 
@@ -170,6 +171,14 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
     onboarding_service = OnboardingService(
         repository=onboarding_repository, logger=logger)
 
+    moderation_service = ModerationService(
+        queue_service=queue_service,
+        mileage_service=mileage_service,
+        onboarding_service=onboarding_service,
+        onboarding_repository=onboarding_repository,
+        logger=logger,
+    )
+
     return BotRuntime(
         config=effective_config,
         logger=logger,
@@ -185,6 +194,7 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
         audit_service=audit_service,
         onboarding_repository=onboarding_repository,
         onboarding_service=onboarding_service,
+        moderation_service=moderation_service,
     )
 
 

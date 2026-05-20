@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from ..jobs import SyndicationPollingJob
 from ..config import BotConfig
 from ..repositories import SyndicationSourceRepository, QueueRepository, MileageRepository, BotAuditLogRepository, OnboardingRepository
-from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService, OnboardingService
+from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService, OnboardingService, ModerationService
 
 
 @dataclass
@@ -31,6 +31,7 @@ class BotRuntime:
     audit_service: BotAuditService
     onboarding_repository: OnboardingRepository
     onboarding_service: OnboardingService
+    moderation_service: ModerationService
     state: str = field(default="created", init=False)
     last_started_at: datetime | None = field(default=None, init=False)
     last_poll_started_at: datetime | None = field(default=None, init=False)

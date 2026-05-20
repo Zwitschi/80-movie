@@ -43,6 +43,7 @@ try:
         QueueService,
         QueueValidationError,
     )
+    from bot.omo_bot.services.moderation_service import ModerationService
     BOT_MODULE_AVAILABLE = True
 except ModuleNotFoundError:
     BOT_MODULE_AVAILABLE = False
@@ -81,6 +82,7 @@ except ModuleNotFoundError:
     QueuePausedError = RuntimeError  # type: ignore[misc,assignment]
     QueueService = None  # type: ignore[misc,assignment]
     QueueValidationError = RuntimeError  # type: ignore[misc,assignment]
+    ModerationService = None  # type: ignore[misc,assignment]
 
     def read_runtime_settings(env=None):  # type: ignore[misc]
         raise RuntimeError('Bot module not available on this deployment path.')
@@ -2280,24 +2282,78 @@ def upsert_onboarding_config_api():
     payload = _request_data()
     guild_id = _parse_required_int(payload.get('guild_id'), 'guild_id')
     welcome_copy = str(payload.get('welcome_copy') or '').strip()
-    starter_channels_raw = str(payload.get('starter_channels') or '').strip()
-    starter_channels = [
-        int(cid.strip()) 
-        for cid in starter_channels_raw.split(',') 
-        if cid.strip() and cid.strip().isdigit()
-    ]
+    starter_channels = payload.get('starter_channels', [])
+    if not isinstance(starter_channels, list):
+        starter_channels = []
 
     try:
         settings = _load_bot_runtime_settings()
         repository = _build_bot_config_repository_from_settings(settings)
-        repository.upsert_onboarding_config(
+        config = repository.upsert_onboarding_config(
             guild_id=guild_id,
             welcome_copy=welcome_copy,
-            starter_channels=tuple(starter_channels)
+            starter_channels=tuple(int(cid) for cid in starter_channels)
         )
         return jsonify({'data': config})
-    except (ConfigError, ValueError):
-        return redirect(url_for('admin_bot.onboarding_page', error='save-failed'))
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
+    except ValueError as exc:
+        return jsonify({'error': {'code': 'invalid_channel_id', 'message': str(exc)}}), 400
+
+
+@admin_bot_blueprint.post('/api/onboarding/users/<user_id>/reset')
+def reset_onboarding_user_api(user_id: str):
+    scope_error = require_operator_scope('ops.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    guild_id = _parse_required_int(payload.get('guild_id'), 'guild_id')
+    reason = str(payload.get('reason') or '').strip()
+
+    try:
+        settings = _load_bot_runtime_settings()
+        onboarding_repo = _build_onboarding_repository_from_settings(settings)
+        queue_service = _build_queue_service_from_settings(settings)
+        mileage_service = _build_mileage_service_from_settings(settings)
+        onboarding_service = OnboardingService(onboarding_repo)
+
+        moderation_service = ModerationService(
+            queue_service=queue_service,
+            mileage_service=mileage_service,
+            onboarding_service=onboarding_service,
+            onboarding_repository=onboarding_repo
+        )
+
+        moderation_service.reset_user_onboarding(
+            guild_id=guild_id,
+            discord_user_id=user_id,
+            actor_user_id=str(session.get(
+                BOT_OPS_SESSION_KEY, '')).strip() or None,
+            reason=reason
+        )
+        return jsonify({'data': {'status': 'reset'}})
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
+
+
+@admin_bot_blueprint.get('/api/moderation/diagnostics')
+def moderation_diagnostics_api():
+    scope_error = require_operator_scope('ops.read')
+    if scope_error is not None:
+        return scope_error
+
+    return jsonify({
+        'data': {
+            'status': 'ok',
+            'checks': [
+                {'name': 'database', 'status': 'pass' if current_app.config.get(
+                    'DATABASE_URL') else 'fail'},
+                {'name': 'bot_token', 'status': 'pass' if current_app.config.get(
+                    'OMO_DISCORD_TOKEN') or current_app.config.get('DISCORD_TOKEN') else 'fail'},
+            ]
+        }
+    })
 
 
 @admin_bot_blueprint.post('/onboarding/users/<user_id>/complete')
@@ -2309,15 +2365,72 @@ def complete_onboarding_page_action(user_id: str):
         settings = _load_bot_runtime_settings()
         guild_id = settings.guild_id
         if guild_id is None:
-             return redirect(url_for('admin_bot.onboarding_page', error='guild-not-configured'))
+            return redirect(url_for('admin_bot.onboarding_page', error='guild-not-configured'))
 
         onboarding_repo = _build_onboarding_repository_from_settings(settings)
         service = OnboardingService(onboarding_repo)
         service.complete_onboarding(guild_id=guild_id, discord_user_id=user_id)
-        
+
         return redirect(url_for('admin_bot.onboarding_page', saved='user-completed'))
     except (ConfigError, OnboardingError):
         return redirect(url_for('admin_bot.onboarding_page', error='action-failed'))
+
+
+@admin_bot_blueprint.get('/moderation')
+def moderation_page():
+    if not _operator_can('ops.read'):
+        return redirect(url_for('admin_bot.overview', error='scope-denied'))
+
+    diagnostics = {
+        'checks': [
+            {'name': 'database', 'status': 'pass' if current_app.config.get(
+                'DATABASE_URL') else 'fail'},
+            {'name': 'bot_token', 'status': 'pass' if current_app.config.get(
+                'OMO_DISCORD_TOKEN') or current_app.config.get('DISCORD_TOKEN') else 'fail'},
+        ]
+    }
+    return render_template('admin/bot/moderation.html', diagnostics=diagnostics)
+
+
+@admin_bot_blueprint.post('/moderation/onboarding/reset')
+def reset_onboarding_page_action():
+    if not _operator_can('ops.write'):
+        return redirect(url_for('admin_bot.moderation_page', error='scope-denied'))
+
+    user_id = str(request.form.get('discord_user_id') or '').strip()
+    reason = str(request.form.get('reason') or '').strip()
+
+    if not user_id:
+        return redirect(url_for('admin_bot.moderation_page', error='user-id-required'))
+
+    try:
+        settings = _load_bot_runtime_settings()
+        guild_id = settings.guild_id
+        if guild_id is None:
+            return redirect(url_for('admin_bot.moderation_page', error='guild-not-configured'))
+
+        onboarding_repo = _build_onboarding_repository_from_settings(settings)
+        queue_service = _build_queue_service_from_settings(settings)
+        mileage_service = _build_mileage_service_from_settings(settings)
+        onboarding_service = OnboardingService(onboarding_repo)
+
+        moderation_service = ModerationService(
+            queue_service=queue_service,
+            mileage_service=mileage_service,
+            onboarding_service=onboarding_service,
+            onboarding_repository=onboarding_repo
+        )
+
+        moderation_service.reset_user_onboarding(
+            guild_id=guild_id,
+            discord_user_id=user_id,
+            actor_user_id=str(session.get(
+                BOT_OPS_SESSION_KEY, '')).strip() or None,
+            reason=reason
+        )
+        return redirect(url_for('admin_bot.moderation_page', saved='onboarding-reset'))
+    except ConfigError:
+        return redirect(url_for('admin_bot.moderation_page', error='action-failed'))
 
 
 def _build_onboarding_repository_from_settings(settings: BotRuntimeSettings) -> OnboardingRepository:

@@ -20,11 +20,15 @@ from .onboarding_service import (
     OnboardingError,
     OnboardingService,
 )
+from .moderation_service import (
+    ModerationService,
+)
 
 __all__ = [
     "BotAuditService",
     "DiscordApiSyndicationDeliverySink",
     "MileageService",
+    "ModerationService",
     "NullSyndicationDeliverySink",
     "OnboardingError",
     "OnboardingService",
