@@ -42,18 +42,16 @@ This document is the source of truth for runtime configuration across all OMO se
 
 ## Bot Worker (internal)
 
-| Variable                          | Required | Default                                         | Notes                       |
-| --------------------------------- | -------- | ----------------------------------------------- | --------------------------- |
-| `OMO_DISCORD_TOKEN`               | Yes      | falls back to `DISCORD_TOKEN`                   | Discord bot token           |
-| `DATABASE_URL`                    | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN              |
-| `OMO_DISCORD_GUILD_ID`            | No       | unset                                           | Primary guild ID            |
-| `OMO_DISCORD_CHANNEL_MAP`         | No       | empty                                           | `name:id` pairs             |
-| `OMO_DISCORD_ROLE_MAP`            | No       | empty                                           | `name:id` pairs             |
-| `OMO_SYNDICATION_SOURCES`         | No       | empty                                           | Comma-separated sources     |
-| `OMO_SYNDICATION_POLL_SECONDS`    | No       | `300`                                           | Poll interval               |
-| `OMO_ONBOARDING_WELCOME_COPY`     | No       | empty                                           | Default welcome text        |
-| `OMO_ONBOARDING_STARTER_CHANNELS` | No       | empty                                           | Comma-separated channel IDs |
-| `OMO_LOG_LEVEL`                   | No       | `INFO`                                          | Log level                   |
+| Variable                       | Required | Default                                         | Notes                   |
+| ------------------------------ | -------- | ----------------------------------------------- | ----------------------- |
+| `OMO_DISCORD_TOKEN`            | Yes      | falls back to `DISCORD_TOKEN`                   | Discord bot token       |
+| `DATABASE_URL`                 | Yes      | `postgresql://user:pass@192.168.88.35:5432/omo` | PostgreSQL DSN          |
+| `OMO_DISCORD_GUILD_ID`         | No       | unset                                           | Primary guild ID        |
+| `OMO_DISCORD_CHANNEL_MAP`      | No       | empty                                           | `name:id` pairs         |
+| `OMO_DISCORD_ROLE_MAP`         | No       | empty                                           | `name:id` pairs         |
+| `OMO_SYNDICATION_SOURCES`      | No       | empty                                           | Comma-separated sources |
+| `OMO_SYNDICATION_POLL_SECONDS` | No       | `300`                                           | Poll interval           |
+| `OMO_LOG_LEVEL`                | No       | `INFO`                                          | Log level               |
 
 ## Local development notes
 

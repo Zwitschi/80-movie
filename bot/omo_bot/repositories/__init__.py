@@ -29,17 +29,17 @@ from .mileage_repo import (
     PostgresMileageRepository,
     build_postgres_mileage_repository,
 )
-from .syndication_repo import (
-    InMemorySyndicationSourceRepository,
-    PostgresSyndicationSourceRepository,
-    SyndicationSourceRepository,
-    build_postgres_syndication_repository,
-)
 from .onboarding_repo import (
     InMemoryOnboardingRepository,
     OnboardingRepository,
     PostgresOnboardingRepository,
     build_postgres_onboarding_repository,
+)
+from .syndication_repo import (
+    InMemorySyndicationSourceRepository,
+    PostgresSyndicationSourceRepository,
+    SyndicationSourceRepository,
+    build_postgres_syndication_repository,
 )
 
 __all__ = [
@@ -54,20 +54,20 @@ __all__ = [
     "InMemoryQueueRepository",
     "InMemoryWebsiteContentRepository",
     "MileageRepository",
-    "OnboardingRepository",
-    "InMemoryOnboardingRepository",
-    "PostgresOnboardingRepository",
-    "build_postgres_onboarding_repository",
     "PostgresBotConfigRepository",
     "PostgresMileageRepository",
     "PostgresQueueRepository",
     "build_postgres_bot_config_repository",
     "build_postgres_mileage_repository",
     "build_postgres_queue_repository",
+    "InMemoryOnboardingRepository",
     "InMemorySyndicationSourceRepository",
+    "OnboardingRepository",
+    "PostgresOnboardingRepository",
     "PostgresSyndicationSourceRepository",
     "QueueRepository",
     "SyndicationSourceRepository",
     "WebsiteContentRepository",
+    "build_postgres_onboarding_repository",
     "build_postgres_syndication_repository",
 ]

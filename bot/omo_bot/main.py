@@ -37,7 +37,6 @@ from .services import (
     MileageService,
     BotAuditService,
     OnboardingService,
-    ModerationService,
 )
 
 
@@ -138,8 +137,6 @@ def build_effective_bot_config(config: BotConfig) -> BotConfig:
         syndication_poll_seconds=config.syndication_poll_seconds,
         role_map=managed_config.role_map,
         log_level=config.log_level,
-        onboarding_welcome_copy=managed_config.onboarding_welcome_copy or config.onboarding_welcome_copy,
-        onboarding_starter_channels=managed_config.onboarding_starter_channels or config.onboarding_starter_channels,
     )
 
 
@@ -169,15 +166,7 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
 
     onboarding_repository = build_onboarding_repository(effective_config)
     onboarding_service = OnboardingService(
-        repository=onboarding_repository, logger=logger)
-
-    moderation_service = ModerationService(
-        queue_service=queue_service,
-        mileage_service=mileage_service,
-        onboarding_service=onboarding_service,
-        onboarding_repository=onboarding_repository,
-        logger=logger,
-    )
+        onboarding_repository=onboarding_repository)
 
     return BotRuntime(
         config=effective_config,
@@ -194,7 +183,6 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
         audit_service=audit_service,
         onboarding_repository=onboarding_repository,
         onboarding_service=onboarding_service,
-        moderation_service=moderation_service,
     )
 
 

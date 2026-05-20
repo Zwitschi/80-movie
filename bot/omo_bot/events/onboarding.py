@@ -1,33 +1,32 @@
-"""Event handlers for onboarding flows."""
+"""Discord member-join event handlers."""
 
 from __future__ import annotations
 
-from ..services.onboarding_service import OnboardingService
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..runtime.client import BotRuntime
 
 
-async def handle_guild_member_add(
-    service: OnboardingService,
-    *,
-    guild_id: int,
-    discord_user_id: str,
-    username: str,
-) -> None:
-    """Handle a new member joining the guild."""
-    service.handle_member_join(
+def handle_member_join(runtime: "BotRuntime", guild_id: int, discord_user_id: str, display_name: str) -> dict:
+    """
+    Called when a new member joins a Discord guild.
+
+    Returns a dict with the events created and whether it was a duplicate.
+    The actual Discord API calls (role assignment, welcome DM) happen in the
+    adapter layer using the returned events as the authoritative source of truth.
+    """
+    events, was_duplicate = runtime.onboarding_service.handle_member_join(
         guild_id=guild_id,
         discord_user_id=discord_user_id,
-        metadata={"username": username},
+        display_name=display_name,
     )
 
-
-async def handle_onboarding_completed(
-    service: OnboardingService,
-    *,
-    guild_id: int,
-    discord_user_id: str,
-) -> None:
-    """Handle completion of the Discord onboarding flow."""
-    service.complete_onboarding(
-        guild_id=guild_id,
-        discord_user_id=discord_user_id,
-    )
+    return {
+        'duplicate': was_duplicate,
+        'events': events,
+        'role_assignments': [
+            e for e in events if e.event_type == 'role_assigned'
+        ],
+        'welcome_sent': any(e.event_type == 'welcome_sent' for e in events),
+    }

@@ -20,15 +20,17 @@ try:
     from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
     from bot.omo_bot.jobs import SyndicationPollingJob
     from bot.omo_bot.main import build_syndication_adapters
-    from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
+    from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, OnboardingConfig, OnboardingEvent, OnboardingRoleBinding, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
     from bot.omo_bot.repositories import (
         build_postgres_bot_audit_log_repository,
         build_postgres_bot_config_repository,
         build_postgres_mileage_repository,
+        build_postgres_onboarding_repository,
         build_postgres_queue_repository,
         build_postgres_syndication_repository,
     )
     from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
+    from bot.omo_bot.services.onboarding_service import OnboardingService
     from bot.omo_bot.services.mileage_service import (
         MileageConflictError,
         MileageNotFoundError,
@@ -43,7 +45,6 @@ try:
         QueueService,
         QueueValidationError,
     )
-    from bot.omo_bot.services.moderation_service import ModerationService
     BOT_MODULE_AVAILABLE = True
 except ModuleNotFoundError:
     BOT_MODULE_AVAILABLE = False
@@ -56,6 +57,9 @@ except ModuleNotFoundError:
     MileageTierStat = None  # type: ignore[misc,assignment]
     MileageTotal = None  # type: ignore[misc,assignment]
     MileageUserDetail = None  # type: ignore[misc,assignment]
+    OnboardingConfig = None  # type: ignore[misc,assignment]
+    OnboardingEvent = None  # type: ignore[misc,assignment]
+    OnboardingRoleBinding = None  # type: ignore[misc,assignment]
     QueueEntry = None  # type: ignore[misc,assignment]
     QueueEvent = None  # type: ignore[misc,assignment]
     QueueSnapshot = None  # type: ignore[misc,assignment]
@@ -66,12 +70,15 @@ except ModuleNotFoundError:
     # type: ignore[misc,assignment]
     build_postgres_bot_config_repository = None
     build_postgres_mileage_repository = None  # type: ignore[misc,assignment]
+    # type: ignore[misc,assignment]
+    build_postgres_onboarding_repository = None
     build_postgres_queue_repository = None  # type: ignore[misc,assignment]
     # type: ignore[misc,assignment]
     build_postgres_syndication_repository = None
     BotAuditService = None  # type: ignore[misc,assignment]
     NullSyndicationDeliverySink = None  # type: ignore[misc,assignment]
     SyndicationPlanningService = None  # type: ignore[misc,assignment]
+    OnboardingService = None  # type: ignore[misc,assignment]
     MileageConflictError = RuntimeError  # type: ignore[misc,assignment]
     MileageNotFoundError = RuntimeError  # type: ignore[misc,assignment]
     MileageService = None  # type: ignore[misc,assignment]
@@ -82,14 +89,33 @@ except ModuleNotFoundError:
     QueuePausedError = RuntimeError  # type: ignore[misc,assignment]
     QueueService = None  # type: ignore[misc,assignment]
     QueueValidationError = RuntimeError  # type: ignore[misc,assignment]
-    ModerationService = None  # type: ignore[misc,assignment]
 
     def read_runtime_settings(env=None):  # type: ignore[misc]
         raise RuntimeError('Bot module not available on this deployment path.')
 
-
 from . import bot_operator_repo
 from . import bot_operator_service
+from .bot_utils import (
+    DISCORD_HTTP_USER_AGENT,
+    _bool_status,
+    _build_bot_config_from_runtime_settings,
+    _configured_syndication_source,
+    _decode_http_error,
+    _default_syndication_state,
+    _discord_avatar_url,
+    _discord_request_headers,
+    _health_components,
+    _manual_syndication_actions_supported,
+    _mileage_active_guild_id,
+    _operator_user_id,
+    _parse_session_timestamp,
+    _serialize_audit_state,
+    _serialize_audit_value,
+    _syndication_last_poll_result,
+    _syndication_source_status,
+    _syndication_summary,
+    _utcnow,
+)
 
 
 admin_bot_blueprint = Blueprint('admin_bot', __name__, url_prefix='/admin/bot')
@@ -108,39 +134,10 @@ BOT_OPS_NEXT_URL_KEY = 'bot_ops_next_url'
 DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize'
 DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token'
 DISCORD_ME_URL = 'https://discord.com/api/users/@me'
-DISCORD_HTTP_USER_AGENT = (
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-    'AppleWebKit/537.36 (KHTML, like Gecko) '
-    'Chrome/136.0.0.0 Safari/537.36'
-)
 
 
 class OperatorAuthError(RuntimeError):
     pass
-
-
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _serialize_audit_value(value: object) -> object:
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, dict):
-        return {str(key): _serialize_audit_value(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_serialize_audit_value(item) for item in value]
-    return value
-
-
-def _serialize_audit_state(state: object) -> dict[str, object] | None:
-    if state is None:
-        return None
-    if isinstance(state, dict):
-        return cast(dict[str, object], _serialize_audit_value(state))
-    if hasattr(state, '__dict__'):
-        return cast(dict[str, object], _serialize_audit_value(vars(state)))
-    return {'value': cast(object, _serialize_audit_value(state))}
 
 
 def _audit_database_url() -> str | None:
@@ -210,10 +207,6 @@ def add_bot_audit_status_header(response):
     return response
 
 
-def _bool_status(configured: bool) -> str:
-    return 'ok' if configured else 'missing_config'
-
-
 def _read_env(*names: str) -> str:
     for name in names:
         value = os.getenv(name, '').strip()
@@ -233,10 +226,6 @@ def _oauth_config() -> dict[str, str]:
 def _oauth_ready() -> bool:
     config = _oauth_config()
     return all(config.values())
-
-
-def _operator_user_id(operator_identity: dict[str, object]) -> str:
-    return str(operator_identity.get('user_id', '')).strip()
 
 
 def _sanitize_next_url(next_url: str | None) -> str:
@@ -267,16 +256,6 @@ def _session_idle_timeout() -> timedelta:
     return timedelta(minutes=max(minutes, 1))
 
 
-def _parse_session_timestamp(raw_value: object) -> datetime | None:
-    if not isinstance(raw_value, str) or not raw_value:
-        return None
-
-    try:
-        return datetime.fromisoformat(raw_value)
-    except ValueError:
-        return None
-
-
 def operator_session_expired() -> bool:
     last_seen_at = _parse_session_timestamp(
         session.get(BOT_OPS_LAST_SEEN_AT_KEY))
@@ -287,32 +266,6 @@ def operator_session_expired() -> bool:
 
 def refresh_operator_session_activity() -> None:
     session[BOT_OPS_LAST_SEEN_AT_KEY] = _utcnow().isoformat()
-
-
-def _discord_avatar_url(discord_user: dict[str, object]) -> str | None:
-    user_id = str(discord_user.get('id', '')).strip()
-    avatar_hash = str(discord_user.get('avatar', '')).strip()
-    if not user_id or not avatar_hash:
-        return None
-    return f'https://cdn.discordapp.com/avatars/{user_id}/{avatar_hash}.png'
-
-
-def _decode_http_error(exc: HTTPError) -> str:
-    try:
-        body = exc.read().decode('utf-8', errors='replace').strip()
-    except Exception:
-        body = ''
-    return body
-
-
-def _discord_request_headers(*, access_token: str | None = None) -> dict[str, str]:
-    headers = {
-        'Accept': 'application/json',
-        'User-Agent': DISCORD_HTTP_USER_AGENT,
-    }
-    if access_token:
-        headers['Authorization'] = f'Bearer {access_token}'
-    return headers
 
 
 def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
@@ -474,69 +427,10 @@ def build_health_snapshot() -> dict[str, object]:
     }
 
 
-def _default_syndication_state(source_key: str) -> SyndicationSourceState:
-    return SyndicationSourceState(source_key=source_key)
-
-
 def _operator_can(*required_scopes: str) -> bool:
     return bot_operator_service.has_operator_scope(
         session.get(BOT_OPS_SCOPES_SESSION_KEY, []),
         *required_scopes,
-    )
-
-
-def _manual_syndication_actions_supported(settings: BotRuntimeSettings) -> bool:
-    return bool(settings.database_url)
-
-
-def _syndication_last_poll_result(state: SyndicationSourceState) -> str:
-    if state.last_failed_at and (
-        state.last_succeeded_at is None or state.last_failed_at >= state.last_succeeded_at
-    ):
-        return 'failed'
-    if state.last_succeeded_at:
-        return 'succeeded'
-    if state.last_polled_at:
-        return 'in_progress'
-    return 'never'
-
-
-def _syndication_source_status(
-    state: SyndicationSourceState,
-    *,
-    due_now: bool,
-) -> str:
-    if not state.enabled:
-        return 'disabled'
-    if _syndication_last_poll_result(state) == 'failed':
-        return 'attention'
-    if due_now:
-        return 'due'
-    if state.last_succeeded_at:
-        return 'healthy'
-    return 'idle'
-
-
-def _syndication_summary(source_states: list[dict[str, object]]) -> dict[str, int]:
-    return {
-        'source_count': len(source_states),
-        'due_source_count': sum(1 for source in source_states if source['status'] == 'due'),
-        'attention_source_count': sum(
-            1 for source in source_states if source['status'] == 'attention'
-        ),
-    }
-
-
-def _build_bot_config_from_runtime_settings(settings: BotRuntimeSettings) -> BotConfig:
-    return BotConfig(
-        discord_token=settings.discord_token or 'control-room-placeholder-token',
-        guild_id=settings.guild_id,
-        channel_map=settings.channel_map,
-        database_url=settings.database_url,
-        syndication_sources=settings.syndication_sources,
-        syndication_poll_seconds=settings.syndication_poll_seconds,
-        role_map=settings.role_map,
-        log_level=settings.log_level,
     )
 
 
@@ -634,10 +528,6 @@ def _build_manual_syndication_polling_job(
         adapters=build_syndication_adapters(config),
         delivery_sink=NullSyndicationDeliverySink(),
     )
-
-
-def _configured_syndication_source(settings: BotRuntimeSettings, source_key: str) -> bool:
-    return source_key in settings.syndication_sources
 
 
 def _page_syndication_scope_error() -> Any:
@@ -1007,21 +897,6 @@ def _serialize_queue_snapshot(snapshot: QueueSnapshot, *, can_write: bool) -> di
     }
 
 
-def _build_mileage_service_from_settings(settings: BotRuntimeSettings) -> MileageService:
-    if not settings.database_url:
-        raise ConfigError(
-            'Mileage operations require a configured database-backed repository.'
-        )
-    return MileageService(build_postgres_mileage_repository(settings.database_url))
-
-
-def _mileage_active_guild_id(settings: BotRuntimeSettings) -> int:
-    if settings.guild_id is None:
-        raise ConfigError(
-            'An active guild id is required for mileage operations.')
-    return settings.guild_id
-
-
 def _serialize_mileage_total(total: MileageTotal, *, can_write: bool) -> dict[str, object]:
     return {
         'guild_id': total.guild_id,
@@ -1083,6 +958,14 @@ def _serialize_mileage_user_detail(detail: MileageUserDetail, *, can_write: bool
             for event in detail.events
         ],
     }
+
+
+def _build_mileage_service_from_settings(settings: BotRuntimeSettings) -> MileageService:
+    if not settings.database_url:
+        raise ConfigError(
+            'Mileage operations require a configured database-backed repository.'
+        )
+    return MileageService(build_postgres_mileage_repository(settings.database_url))
 
 
 def build_mileage_index_snapshot(*, search: str = '', tier_id: str | None = None) -> dict[str, object]:
@@ -1421,8 +1304,8 @@ def _resume_queue(queue_id: str) -> tuple[dict[str, object], dict[str, object]]:
     return after_state, event_payload
 
 
-def _clear_queue(queue_id: str, reason: str, confirmation: str) -> tuple[dict[str, object], dict[str, object]]:
-    if confirmation.strip().lower() != 'clear':
+def _clear_queue(queue_id: str, reason: str, confirmation: str, dry_run: bool = False) -> tuple[dict[str, object], dict[str, object]]:
+    if not dry_run and confirmation.strip().lower() != 'clear':
         raise QueueValidationError('Queue clear requires confirm=clear.')
     settings = _load_bot_runtime_settings()
     queue_service = _build_queue_service_from_settings(settings)
@@ -1432,17 +1315,19 @@ def _clear_queue(queue_id: str, reason: str, confirmation: str) -> tuple[dict[st
         actor_user_id=str(session.get(
             BOT_OPS_SESSION_KEY, '')).strip() or None,
         reason=reason,
+        dry_run=dry_run,
     )
     after_state = _serialize_queue_snapshot(
         snapshot, can_write=_operator_can('queue.write'))
     event_payload = _serialize_queue_event(event)
-    _record_bot_audit_event(
-        action_key='queue.cleared',
-        target_type='queue',
-        target_key=queue_id,
-        before_state=before_state,
-        after_state={'queue': after_state, 'event': event_payload},
-    )
+    if not dry_run:
+        _record_bot_audit_event(
+            action_key='queue.cleared',
+            target_type='queue',
+            target_key=queue_id,
+            before_state=before_state,
+            after_state={'queue': after_state, 'event': event_payload},
+        )
     return after_state, event_payload
 
 
@@ -1705,10 +1590,6 @@ def _run_manual_syndication_poll_all() -> dict[str, object]:
         after_state=result,
     )
     return result
-
-
-def _health_components(health: dict[str, object]) -> dict[str, Any]:
-    return cast(dict[str, Any], health['components'])
 
 
 def _login_redirect_response(expired: bool = False):
@@ -1992,6 +1873,22 @@ def health_jobs_api():
     return jsonify({'data': _health_components(health)['jobs']})
 
 
+@admin_bot_blueprint.get('/onboarding')
+def onboarding_page():
+    return render_template(
+        'admin/bot/onboarding.html',
+        error=request.args.get('error'),
+    )
+
+
+@admin_bot_blueprint.get('/moderation')
+def moderation_page():
+    return render_template(
+        'admin/bot/moderation.html',
+        error=request.args.get('error'),
+    )
+
+
 @admin_bot_blueprint.get('/operators')
 def operators_page():
     return render_template(
@@ -2233,207 +2130,929 @@ def upsert_role_binding_page_action():
 
 @admin_bot_blueprint.post('/api/config/roles/<binding_key>/delete')
 def delete_role_binding_api(binding_key: str):
-    scope_error = require_operator_scope('ops.write')
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        _delete_role_binding(binding_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'binding_not_found', 'message': 'Role binding was not found.'}}), 404
+
+    return jsonify({'data': {'binding_key': binding_key, 'deleted': True}})
+
+
+@admin_bot_blueprint.post('/config/roles/<binding_key>/delete')
+def delete_role_binding_page_action(binding_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _delete_role_binding(binding_key)
+    except (ConfigError, KeyError):
+        return _page_config_binding_error()
+
+    return redirect(url_for('admin_bot.config_page', saved='role-binding-deleted'))
+
+
+@admin_bot_blueprint.get('/api/commands')
+def commands_api():
+    return jsonify({'data': build_bot_commands_snapshot()})
+
+
+@admin_bot_blueprint.get('/api/queues')
+def queues_api():
+    snapshot = build_queue_index_snapshot()
+    return jsonify({'data': snapshot['queues'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/queues/<path:queue_id>')
+def queue_detail_api(queue_id: str):
+    try:
+        snapshot = build_queue_detail_snapshot(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+
+    return jsonify({'data': snapshot['queue'], 'meta': {'events_count': len(snapshot['events']), 'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/queues/<path:queue_id>/events')
+def queue_events_api(queue_id: str):
+    try:
+        snapshot = build_queue_detail_snapshot(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+
+    return jsonify({'data': snapshot['events'], 'meta': {'generated_at': snapshot['generated_at']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users')
+def mileage_users_api():
+    snapshot = build_mileage_index_snapshot(
+        search=str(request.args.get('q') or '').strip(),
+        tier_id=str(request.args.get('tier_id') or '').strip() or None,
+    )
+    return jsonify({'data': snapshot['users'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users/<user_id>')
+def mileage_user_detail_api(user_id: str):
+    try:
+        snapshot = build_mileage_detail_snapshot(user_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage user was not found.'}}), 404
+
+    return jsonify({'data': snapshot['user'], 'meta': {'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/users/<user_id>/events')
+def mileage_user_events_api(user_id: str):
+    try:
+        snapshot = build_mileage_detail_snapshot(user_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage user was not found.'}}), 404
+
+    return jsonify({'data': snapshot['user']['events'], 'meta': {'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.get('/api/mileage/tiers')
+def mileage_tiers_api():
+    snapshot = build_mileage_index_snapshot(
+        search=str(request.args.get('q') or '').strip(),
+        tier_id=str(request.args.get('tier_id') or '').strip() or None,
+    )
+    return jsonify({'data': snapshot['tiers'], 'meta': {'status': snapshot['status'], 'generated_at': snapshot['generated_at'], 'guild_id': snapshot['guild_id']}})
+
+
+@admin_bot_blueprint.post('/api/mileage/users/<user_id>/adjust')
+def adjust_mileage_user_api(user_id: str):
+    scope_error = require_operator_scope('mileage.write')
     if scope_error is not None:
         return scope_error
 
     payload = _request_data()
-    guild_id = _parse_required_int(payload.get('guild_id'), 'guild_id')
+    try:
+        user, event = _adjust_mileage_user(
+            user_id,
+            _parse_required_text(payload.get('display_name')
+                                 or user_id, 'display_name'),
+            _parse_required_int(payload.get('delta'), 'delta'),
+            _parse_required_text(payload.get('reason'), 'reason'),
+            str(payload.get('correlation_id') or '').strip() or None,
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_action', 'message': str(exc)}}), 400
+
+    return jsonify({'data': user, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/mileage/users/<user_id>/adjust')
+def adjust_mileage_user_page_action(user_id: str):
+    if not _operator_can('mileage.write'):
+        return _page_mileage_scope_error(user_id)
 
     try:
-        settings = _load_bot_runtime_settings()
-        repository = _build_bot_config_repository_from_settings(settings)
-        deleted = repository.delete_role_binding(
-            guild_id=guild_id, binding_key=binding_key)
-        if not deleted:
-            return jsonify({'error': {'code': 'binding_not_found', 'message': 'Role binding not found.'}}), 404
-        return jsonify({'data': {'deleted': True}})
-    except ConfigError as exc:
-        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
+        _adjust_mileage_user(
+            user_id,
+            _parse_required_text(request.form.get(
+                'display_name') or user_id, 'display_name'),
+            _parse_required_int(request.form.get('delta'), 'delta'),
+            _parse_required_text(request.form.get('reason'), 'reason'),
+            str(request.form.get('correlation_id') or '').strip() or None,
+        )
+    except ConfigError:
+        return _page_mileage_config_error(user_id)
+    except MileageValidationError:
+        return _page_mileage_action_error(user_id)
+
+    return _mileage_page_redirect(user_id, saved='mileage-adjusted')
 
 
-@admin_bot_blueprint.get('/api/config/onboarding')
-def get_onboarding_config_api():
-    scope_error = require_operator_scope('ops.read')
-    if scope_error is not None:
-        return scope_error
-
-    guild_id = _parse_optional_int(request.args.get('guild_id'), 'guild_id')
-    try:
-        settings = _load_bot_runtime_settings()
-        if guild_id is None:
-            guild_id = settings.guild_id
-        if guild_id is None:
-            return jsonify({'error': {'code': 'guild_id_required', 'message': 'Guild ID is required.'}}), 400
-
-        repository = _build_bot_config_repository_from_settings(settings)
-        config = repository.get_onboarding_config(guild_id)
-        return jsonify({'data': config})
-    except ConfigError as exc:
-        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
-
-
-@admin_bot_blueprint.post('/api/config/onboarding')
-def upsert_onboarding_config_api():
-    scope_error = require_operator_scope('ops.write')
+@admin_bot_blueprint.post('/api/mileage/events/<event_id>/reverse')
+def reverse_mileage_event_api(event_id: str):
+    scope_error = require_operator_scope('mileage.write')
     if scope_error is not None:
         return scope_error
 
     payload = _request_data()
-    guild_id = _parse_required_int(payload.get('guild_id'), 'guild_id')
-    welcome_copy = str(payload.get('welcome_copy') or '').strip()
-    starter_channels = payload.get('starter_channels', [])
-    if not isinstance(starter_channels, list):
-        starter_channels = []
-
     try:
-        settings = _load_bot_runtime_settings()
-        repository = _build_bot_config_repository_from_settings(settings)
-        config = repository.upsert_onboarding_config(
-            guild_id=guild_id,
-            welcome_copy=welcome_copy,
-            starter_channels=tuple(int(cid) for cid in starter_channels)
+        user, event = _reverse_mileage_event(
+            event_id,
+            _parse_required_text(payload.get('reason'), 'reason'),
         )
-        return jsonify({'data': config})
     except ConfigError as exc:
-        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
-    except ValueError as exc:
-        return jsonify({'error': {'code': 'invalid_channel_id', 'message': str(exc)}}), 400
+        return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
+    except MileageNotFoundError:
+        return jsonify({'error': {'code': 'mileage_not_found', 'message': 'Mileage event was not found.'}}), 404
+    except (MileageValidationError, MileageConflictError) as exc:
+        return jsonify({'error': {'code': 'invalid_mileage_action', 'message': str(exc)}}), 409
+
+    return jsonify({'data': user, 'meta': {'event': event}})
 
 
-@admin_bot_blueprint.post('/api/onboarding/users/<user_id>/reset')
-def reset_onboarding_user_api(user_id: str):
-    scope_error = require_operator_scope('ops.write')
+@admin_bot_blueprint.post('/mileage/events/<event_id>/reverse')
+def reverse_mileage_event_page_action(event_id: str):
+    if not _operator_can('mileage.write'):
+        return _page_mileage_scope_error()
+    try:
+        user, _event = _reverse_mileage_event(
+            event_id,
+            _parse_required_text(request.form.get('reason'), 'reason'),
+        )
+    except ConfigError:
+        return _page_mileage_config_error()
+    except MileageNotFoundError:
+        return _page_mileage_not_found_error()
+    except (MileageValidationError, MileageConflictError):
+        return _page_mileage_action_error()
+
+    return _mileage_page_redirect(str(cast(dict[str, object], user['total'])['discord_user_id']), saved='mileage-reversed')
+
+
+@admin_bot_blueprint.post('/api/queues')
+def create_queue_api():
+    scope_error = require_operator_scope('queue.write')
     if scope_error is not None:
         return scope_error
 
     payload = _request_data()
-    guild_id = _parse_required_int(payload.get('guild_id'), 'guild_id')
-    reason = str(payload.get('reason') or '').strip()
+    try:
+        queue = _create_queue(
+            _parse_required_text(payload.get('queue_id'), 'queue_id'),
+            _parse_required_int(payload.get('guild_id'), 'guild_id'),
+            _parse_required_text(payload.get('label'), 'label'),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue})
+
+
+@admin_bot_blueprint.post('/queues')
+def create_queue_page_action():
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error()
 
     try:
-        settings = _load_bot_runtime_settings()
-        onboarding_repo = _build_onboarding_repository_from_settings(settings)
-        queue_service = _build_queue_service_from_settings(settings)
-        mileage_service = _build_mileage_service_from_settings(settings)
-        onboarding_service = OnboardingService(onboarding_repo)
-
-        moderation_service = ModerationService(
-            queue_service=queue_service,
-            mileage_service=mileage_service,
-            onboarding_service=onboarding_service,
-            onboarding_repository=onboarding_repo
+        queue = _create_queue(
+            _parse_required_text(request.form.get('queue_id'), 'queue_id'),
+            _parse_required_int(request.form.get('guild_id'), 'guild_id'),
+            _parse_required_text(request.form.get('label'), 'label'),
         )
+    except ConfigError:
+        return _page_queue_config_error()
 
-        moderation_service.reset_user_onboarding(
-            guild_id=guild_id,
-            discord_user_id=user_id,
-            actor_user_id=str(session.get(
-                BOT_OPS_SESSION_KEY, '')).strip() or None,
-            reason=reason
-        )
-        return jsonify({'data': {'status': 'reset'}})
-    except ConfigError as exc:
-        return jsonify({'error': {'code': 'invalid_bot_config', 'message': str(exc)}}), 409
+    return _queue_page_redirect(str(cast(dict[str, object], queue['summary'])['queue_id']), saved='queue-created')
 
 
-@admin_bot_blueprint.get('/api/moderation/diagnostics')
-def moderation_diagnostics_api():
-    scope_error = require_operator_scope('ops.read')
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/advance')
+def advance_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
     if scope_error is not None:
         return scope_error
 
+    try:
+        queue, event = _advance_queue(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except (QueuePausedError, QueueConflictError) as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/advance')
+def advance_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _advance_queue(queue_id)
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except (QueuePausedError, QueueConflictError):
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-advanced')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/entries/<entry_id>/remove')
+def remove_queue_entry_api(queue_id: str, entry_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        queue, event = _remove_queue_entry(
+            queue_id, entry_id, str(payload.get('reason') or '').strip())
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueEntryNotFoundError:
+        return jsonify({'error': {'code': 'queue_entry_not_found', 'message': 'Queue entry was not found.'}}), 404
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/entries/<entry_id>/remove')
+def remove_queue_entry_page_action(queue_id: str, entry_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _remove_queue_entry(queue_id, entry_id, str(
+            request.form.get('reason') or '').strip())
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueEntryNotFoundError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='entry-removed')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/entries/<entry_id>/move')
+def move_queue_entry_api(queue_id: str, entry_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = _request_data()
+    try:
+        queue, event = _move_queue_entry(
+            queue_id,
+            entry_id,
+            _parse_required_int(payload.get(
+                'target_position'), 'target_position'),
+            str(payload.get('reason') or '').strip(),
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueEntryNotFoundError:
+        return jsonify({'error': {'code': 'queue_entry_not_found', 'message': 'Queue entry was not found.'}}), 404
+    except QueueValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_action', 'message': str(exc)}}), 400
+    except QueuePausedError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/entries/<entry_id>/move')
+def move_queue_entry_page_action(queue_id: str, entry_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _move_queue_entry(
+            queue_id,
+            entry_id,
+            _parse_required_int(request.form.get(
+                'target_position'), 'target_position'),
+            str(request.form.get('reason') or '').strip(),
+        )
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except (QueueEntryNotFoundError, QueueValidationError, QueuePausedError):
+        return _page_queue_action_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    return _queue_page_redirect(queue_id, saved='entry-moved')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/pause')
+def pause_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    payload = _request_data()
+    try:
+        queue, event = _pause_queue(queue_id, str(
+            payload.get('reason') or '').strip())
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueConflictError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/pause')
+def pause_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _pause_queue(queue_id, str(request.form.get('reason') or '').strip())
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueConflictError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-paused')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/resume')
+def resume_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    try:
+        queue, event = _resume_queue(queue_id)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueConflictError as exc:
+        return jsonify({'error': {'code': 'queue_conflict', 'message': str(exc)}}), 409
+
+    return jsonify({'data': queue, 'meta': {'event': event}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/resume')
+def resume_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _resume_queue(queue_id)
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueConflictError:
+        return _page_queue_action_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-resumed')
+
+
+@admin_bot_blueprint.post('/api/queues/<path:queue_id>/clear')
+def clear_queue_api(queue_id: str):
+    scope_error = require_operator_scope('queue.write')
+    if scope_error is not None:
+        return scope_error
+    payload = _request_data()
+    dry_run = bool(payload.get('dry_run', False))
+    try:
+        queue, event = _clear_queue(
+            queue_id,
+            str(payload.get('reason') or '').strip(),
+            str(payload.get('confirm') or '').strip(),
+            dry_run=dry_run,
+        )
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
+    except QueueNotFoundError:
+        return jsonify({'error': {'code': 'queue_not_found', 'message': 'Queue was not found.'}}), 404
+    except QueueValidationError as exc:
+        return jsonify({'error': {'code': 'invalid_queue_action', 'message': str(exc)}}), 400
+
+    return jsonify({'data': queue, 'meta': {'event': event, 'dry_run': dry_run}})
+
+
+@admin_bot_blueprint.post('/queues/<path:queue_id>/clear')
+def clear_queue_page_action(queue_id: str):
+    if not _operator_can('queue.write'):
+        return _page_queue_scope_error(queue_id)
+    try:
+        _clear_queue(
+            queue_id,
+            str(request.form.get('reason') or '').strip(),
+            str(request.form.get('confirm') or '').strip(),
+        )
+    except ConfigError:
+        return _page_queue_config_error(queue_id)
+    except QueueNotFoundError:
+        return _page_queue_not_found_error()
+    except QueueValidationError:
+        return _page_queue_confirmation_error(queue_id)
+    return _queue_page_redirect(queue_id, saved='queue-cleared')
+
+
+@admin_bot_blueprint.get('/api/syndication/sources')
+def syndication_sources_api():
+    snapshot = build_syndication_snapshot()
+    return jsonify({'data': snapshot['sources'], 'meta': {'status': snapshot['status']}})
+
+
+@admin_bot_blueprint.get('/api/syndication/channels')
+def syndication_channels_api():
+    snapshot = build_syndication_snapshot()
+    return jsonify({'data': snapshot['channel_bindings'], 'meta': {'status': snapshot['status']}})
+
+
+@admin_bot_blueprint.post('/api/syndication/sources/<source_key>/retry')
+def retry_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state, meta = _run_manual_syndication_retry(source_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+    except Exception as exc:
+        return jsonify({'error': {'code': 'syndication_retry_failed', 'message': str(exc)}}), 500
+
+    return jsonify({'data': source_state, 'meta': meta})
+
+
+@admin_bot_blueprint.post('/syndication/sources/<source_key>/retry')
+def retry_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_syndication_scope_error()
+
+    try:
+        _run_manual_syndication_retry(source_key)
+    except ConfigError:
+        return _page_syndication_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+    except Exception:
+        return redirect(url_for('admin_bot.syndication_page', error='retry-failed'))
+
+    return redirect(url_for('admin_bot.syndication_page', saved='retry'))
+
+
+@admin_bot_blueprint.post('/api/syndication/sources/<source_key>/checkpoint/reset')
+def reset_syndication_checkpoint_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _reset_syndication_checkpoint(source_key)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/syndication/sources/<source_key>/checkpoint/reset')
+def reset_syndication_checkpoint_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_syndication_scope_error()
+
+    try:
+        _reset_syndication_checkpoint(source_key)
+    except ConfigError:
+        return _page_syndication_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.syndication_page', saved='checkpoint-reset'))
+
+
+@admin_bot_blueprint.post('/api/config/sources/<source_key>/enable')
+def enable_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _set_syndication_source_enabled(source_key, True)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/config/sources/<source_key>/enable')
+def enable_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _set_syndication_source_enabled(source_key, True)
+    except ConfigError:
+        return _page_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.config_page', saved='source-enabled'))
+
+
+@admin_bot_blueprint.post('/api/config/sources/<source_key>/disable')
+def disable_syndication_source_api(source_key: str):
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        source_state = _set_syndication_source_enabled(source_key, False)
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except KeyError:
+        return jsonify({'error': {'code': 'syndication_source_not_found', 'message': 'Configured syndication source was not found.'}}), 404
+
+    return jsonify({'data': source_state})
+
+
+@admin_bot_blueprint.post('/config/sources/<source_key>/disable')
+def disable_syndication_source_page_action(source_key: str):
+    if not _operator_can('syndication.write'):
+        return _page_config_scope_error()
+
+    try:
+        _set_syndication_source_enabled(source_key, False)
+    except ConfigError:
+        return _page_config_error()
+    except KeyError:
+        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+
+    return redirect(url_for('admin_bot.config_page', saved='source-disabled'))
+
+
+@admin_bot_blueprint.post('/api/commands/poll-all')
+def poll_all_sources_api():
+    scope_error = require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    try:
+        result = _run_manual_syndication_poll_all()
+    except ConfigError as exc:
+        return jsonify({'error': {'code': 'invalid_syndication_config', 'message': str(exc)}}), 409
+    except Exception as exc:
+        return jsonify({'error': {'code': 'command_failed', 'message': str(exc)}}), 500
+
+    return jsonify({'data': result})
+
+
+@admin_bot_blueprint.post('/commands/poll-all')
+def poll_all_sources_page_action():
+    if not _operator_can('syndication.write'):
+        return _page_commands_scope_error()
+
+    try:
+        _run_manual_syndication_poll_all()
+    except ConfigError:
+        return _page_commands_error()
+    except Exception:
+        return redirect(url_for('admin_bot.commands_page', error='command-failed'))
+
+    return redirect(url_for('admin_bot.commands_page', saved='poll-all'))
+
+
+@admin_bot_blueprint.post('/api/operators/<user_id>/disable')
+def disable_operator_api(user_id: str):
+    operator_record = _update_operator_active(user_id, False)
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return jsonify({'data': operator_record})
+
+
+@admin_bot_blueprint.post('/operators/<user_id>/disable')
+def disable_operator_page_action(user_id: str):
+    operator_record = _update_operator_active(user_id, False)
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return redirect(url_for('admin_bot.operators_page', saved='1'))
+
+
+@admin_bot_blueprint.post('/api/operators/<user_id>/enable')
+def enable_operator_api(user_id: str):
+    operator_record = _update_operator_active(user_id, True)
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return jsonify({'data': operator_record})
+
+
+@admin_bot_blueprint.post('/api/operators/<user_id>/scopes')
+def update_operator_scopes_api(user_id: str):
+    raw_scopes = request.get_json(silent=True, cache=False)
+    if isinstance(raw_scopes, dict):
+        raw_scopes = raw_scopes.get('scopes')
+    else:
+        raw_scopes = request.form.get('scopes', '')
+
+    operator_record = _update_operator_scopes(user_id, raw_scopes)
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return jsonify({'data': operator_record})
+
+
+@admin_bot_blueprint.post('/operators/<user_id>/enable')
+def enable_operator_page_action(user_id: str):
+    operator_record = _update_operator_active(user_id, True)
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return redirect(url_for('admin_bot.operators_page', saved='1'))
+
+
+@admin_bot_blueprint.post('/operators/<user_id>/scopes')
+def update_operator_scopes_page_action(user_id: str):
+    operator_record = _update_operator_scopes(
+        user_id, request.form.get('scopes', ''))
+    if not isinstance(operator_record, dict):
+        return operator_record
+    return redirect(url_for('admin_bot.operators_page', saved='1'))
+
+
+# ---------------------------------------------------------------------------
+# Onboarding
+# ---------------------------------------------------------------------------
+
+def _build_onboarding_service() -> 'OnboardingService | None':
+    if not BOT_MODULE_AVAILABLE or build_postgres_onboarding_repository is None or OnboardingService is None:
+        return None
+    try:
+        settings = _load_bot_runtime_settings()
+        if not settings.database_url:
+            return None
+        return OnboardingService(
+            onboarding_repository=build_postgres_onboarding_repository(
+                settings.database_url)
+        )
+    except Exception:
+        return None
+
+
+@admin_bot_blueprint.get('/onboarding/events')
+def list_onboarding_events_api():
+    if not _operator_can('onboarding.read'):
+        return _operator_scope_denied_response('onboarding.read')
+    settings = _load_bot_runtime_settings()
+    guild_id = request.args.get('guild_id', type=int) or settings.guild_id
+    if not guild_id:
+        return jsonify({'error': 'guild_id is required'}), 400
+    limit = min(request.args.get('limit', 50, type=int), 200)
+    onboarding_service = _build_onboarding_service()
+    if onboarding_service is None:
+        return jsonify({'data': [], 'meta': {'guild_id': guild_id, 'backend': 'unavailable'}}), 200
+    events = onboarding_service.list_recent_events(guild_id, limit=limit)
     return jsonify({
-        'data': {
-            'status': 'ok',
-            'checks': [
-                {'name': 'database', 'status': 'pass' if current_app.config.get(
-                    'DATABASE_URL') else 'fail'},
-                {'name': 'bot_token', 'status': 'pass' if current_app.config.get(
-                    'OMO_DISCORD_TOKEN') or current_app.config.get('DISCORD_TOKEN') else 'fail'},
-            ]
-        }
+        'data': [
+            {
+                'event_id': e.event_id,
+                'guild_id': e.guild_id,
+                'discord_user_id': e.discord_user_id,
+                'display_name': e.display_name,
+                'event_type': e.event_type,
+                'role_id': e.role_id,
+                'role_binding_key': e.role_binding_key,
+                'actor_user_id': e.actor_user_id,
+                'metadata': e.metadata,
+                'created_at': e.created_at.isoformat() if e.created_at else None,
+            }
+            for e in events
+        ],
+        'meta': {'guild_id': guild_id, 'count': len(events)},
     })
 
 
-@admin_bot_blueprint.post('/onboarding/users/<user_id>/complete')
-def complete_onboarding_page_action(user_id: str):
-    if not _operator_can('ops.write'):
-        return redirect(url_for('admin_bot.onboarding_page', error='scope-denied'))
+@admin_bot_blueprint.post('/onboarding/replay')
+def replay_onboarding_api():
+    if not _operator_can('onboarding.write'):
+        return _operator_scope_denied_response('onboarding.write')
+    body = request.get_json(silent=True) or {}
+    guild_id = body.get('guild_id')
+    discord_user_id = body.get('discord_user_id')
+    display_name = body.get('display_name', '')
+    actor_user_id = str(session.get(BOT_OPS_SESSION_KEY, '')).strip() or None
+    if not guild_id or not discord_user_id:
+        return jsonify({'error': 'guild_id and discord_user_id are required'}), 400
+    onboarding_service = _build_onboarding_service()
+    if onboarding_service is None:
+        return jsonify({'error': 'Onboarding service unavailable — database not configured'}), 503
+    events, was_skipped = onboarding_service.replay_member_onboarding(
+        guild_id=int(guild_id),
+        discord_user_id=str(discord_user_id),
+        display_name=str(display_name),
+        actor_user_id=str(actor_user_id or ''),
+    )
+    audit_service = _build_bot_audit_service()
+    if audit_service:
+        try:
+            audit_service.record(
+                action_key='onboarding.replay',
+                target_type='member',
+                target_key=str(discord_user_id),
+                before_state=None,
+                after_state={'replayed_events': len(
+                    events), 'skipped': was_skipped},
+            )
+        except Exception:
+            pass
+    return jsonify({
+        'data': {
+            'skipped': was_skipped,
+            'replayed_events': len(events),
+            'events': [
+                {
+                    'event_id': e.event_id,
+                    'event_type': e.event_type,
+                    'role_id': e.role_id,
+                    'role_binding_key': e.role_binding_key,
+                }
+                for e in events
+            ],
+        },
+        'meta': {'guild_id': guild_id, 'discord_user_id': discord_user_id},
+    })
 
+
+@admin_bot_blueprint.post('/onboarding/reset')
+def reset_onboarding_api():
+    if not _operator_can('onboarding.write'):
+        return _operator_scope_denied_response('onboarding.write')
+    body = request.get_json(silent=True) or {}
+    guild_id = body.get('guild_id')
+    discord_user_id = body.get('discord_user_id')
+    display_name = body.get('display_name', '')
+    dry_run = bool(body.get('dry_run', False))
+    confirm = str(body.get('confirm') or '').strip().lower()
+    actor_user_id = str(session.get(BOT_OPS_SESSION_KEY, '')).strip() or None
+    if not guild_id or not discord_user_id:
+        return jsonify({'error': 'guild_id and discord_user_id are required'}), 400
+    if not actor_user_id:
+        return jsonify({'error': 'operator session is required for onboarding reset'}), 401
+    if not dry_run and confirm != 'reset':
+        return jsonify({'error': 'Onboarding reset requires confirm=reset.'}), 400
+    onboarding_service = _build_onboarding_service()
+    if onboarding_service is None:
+        return jsonify({'error': 'Onboarding service unavailable — database not configured'}), 503
+    events, deleted_count = onboarding_service.reset_member_onboarding(
+        guild_id=int(guild_id),
+        discord_user_id=str(discord_user_id),
+        display_name=str(display_name),
+        actor_user_id=actor_user_id,
+        dry_run=dry_run,
+    )
+    if not dry_run:
+        audit_service = _build_bot_audit_service()
+        if audit_service:
+            try:
+                audit_service.record(
+                    action_key='onboarding.reset',
+                    target_type='member',
+                    target_key=str(discord_user_id),
+                    before_state={'deleted_events': deleted_count},
+                    after_state={'replayed_events': len(events)},
+                )
+            except Exception:
+                pass
+    return jsonify({
+        'data': {
+            'deleted_events': deleted_count,
+            'replayed_events': len(events),
+            'dry_run': dry_run,
+            'events': [
+                {
+                    'event_id': e.event_id,
+                    'event_type': e.event_type,
+                    'role_id': e.role_id,
+                    'role_binding_key': e.role_binding_key,
+                }
+                for e in events
+            ],
+        },
+        'meta': {'guild_id': guild_id, 'discord_user_id': discord_user_id},
+    })
+
+
+@admin_bot_blueprint.post('/onboarding/role-cleanup')
+def request_onboarding_role_cleanup_api():
+    if not _operator_can('onboarding.write'):
+        return _operator_scope_denied_response('onboarding.write')
+    body = request.get_json(silent=True) or {}
+    guild_id = body.get('guild_id')
+    discord_user_id = body.get('discord_user_id')
+    display_name = str(body.get('display_name') or '').strip()
+    actor_user_id = str(session.get(BOT_OPS_SESSION_KEY, '')).strip() or None
+    if not guild_id or not discord_user_id:
+        return jsonify({'error': 'guild_id and discord_user_id are required'}), 400
+    if not actor_user_id:
+        return jsonify({'error': 'operator session is required'}), 401
+    onboarding_service = _build_onboarding_service()
+    if onboarding_service is None:
+        return jsonify({'error': 'Onboarding service unavailable — database not configured'}), 503
+    event = onboarding_service.request_role_cleanup(
+        guild_id=int(guild_id),
+        discord_user_id=str(discord_user_id),
+        display_name=display_name or str(discord_user_id),
+        actor_user_id=actor_user_id,
+    )
+    _record_bot_audit_event(
+        action_key='onboarding.role_cleanup_requested',
+        target_type='member',
+        target_key=str(discord_user_id),
+        before_state={},
+        after_state={'event_id': event.event_id},
+    )
+    return jsonify({
+        'data': {
+            'event_id': event.event_id,
+            'event_type': event.event_type,
+            'discord_user_id': event.discord_user_id,
+            'guild_id': event.guild_id,
+        },
+    })
+
+
+@admin_bot_blueprint.get('/api/diagnostics')
+def diagnostics_api():
+    if not _operator_can('queue.read', 'onboarding.read', 'mileage.read'):
+        return _operator_scope_denied_response('queue.read')
+    result: dict[str, object] = {}
     try:
         settings = _load_bot_runtime_settings()
-        guild_id = settings.guild_id
-        if guild_id is None:
-            return redirect(url_for('admin_bot.onboarding_page', error='guild-not-configured'))
-
-        onboarding_repo = _build_onboarding_repository_from_settings(settings)
-        service = OnboardingService(onboarding_repo)
-        service.complete_onboarding(guild_id=guild_id, discord_user_id=user_id)
-
-        return redirect(url_for('admin_bot.onboarding_page', saved='user-completed'))
-    except (ConfigError, OnboardingError):
-        return redirect(url_for('admin_bot.onboarding_page', error='action-failed'))
-
-
-@admin_bot_blueprint.get('/moderation')
-def moderation_page():
-    if not _operator_can('ops.read'):
-        return redirect(url_for('admin_bot.overview', error='scope-denied'))
-
-    diagnostics = {
-        'checks': [
-            {'name': 'database', 'status': 'pass' if current_app.config.get(
-                'DATABASE_URL') else 'fail'},
-            {'name': 'bot_token', 'status': 'pass' if current_app.config.get(
-                'OMO_DISCORD_TOKEN') or current_app.config.get('DISCORD_TOKEN') else 'fail'},
-        ]
-    }
-    return render_template('admin/bot/moderation.html', diagnostics=diagnostics)
-
-
-@admin_bot_blueprint.post('/moderation/onboarding/reset')
-def reset_onboarding_page_action():
-    if not _operator_can('ops.write'):
-        return redirect(url_for('admin_bot.moderation_page', error='scope-denied'))
-
-    user_id = str(request.form.get('discord_user_id') or '').strip()
-    reason = str(request.form.get('reason') or '').strip()
-
-    if not user_id:
-        return redirect(url_for('admin_bot.moderation_page', error='user-id-required'))
-
-    try:
-        settings = _load_bot_runtime_settings()
-        guild_id = settings.guild_id
-        if guild_id is None:
-            return redirect(url_for('admin_bot.moderation_page', error='guild-not-configured'))
-
-        onboarding_repo = _build_onboarding_repository_from_settings(settings)
         queue_service = _build_queue_service_from_settings(settings)
+        queues = queue_service.list_queues()
+        result['queues'] = {
+            'total': len(queues),
+            'paused': sum(1 for q in queues if q.is_paused),
+            'total_waiting': sum(q.waiting_count for q in queues),
+            'total_active': sum(1 for q in queues if q.active_entry_id is not None),
+        }
+    except Exception:
+        result['queues'] = {'status': 'unavailable'}
+    try:
+        onboarding_service = _build_onboarding_service()
+        settings = _load_bot_runtime_settings()
+        guild_id = settings.guild_id if settings else None
+        if onboarding_service and guild_id:
+            pending_cleanups = onboarding_service.list_pending_role_cleanups(
+                guild_id)
+            result['onboarding'] = {
+                'pending_role_cleanups': len(pending_cleanups),
+            }
+        else:
+            result['onboarding'] = {'status': 'unavailable'}
+    except Exception:
+        result['onboarding'] = {'status': 'unavailable'}
+    try:
+        settings = _load_bot_runtime_settings()
+        guild_id = _mileage_active_guild_id(settings)
         mileage_service = _build_mileage_service_from_settings(settings)
-        onboarding_service = OnboardingService(onboarding_repo)
-
-        moderation_service = ModerationService(
-            queue_service=queue_service,
-            mileage_service=mileage_service,
-            onboarding_service=onboarding_service,
-            onboarding_repository=onboarding_repo
-        )
-
-        moderation_service.reset_user_onboarding(
-            guild_id=guild_id,
-            discord_user_id=user_id,
-            actor_user_id=str(session.get(
-                BOT_OPS_SESSION_KEY, '')).strip() or None,
-            reason=reason
-        )
-        return redirect(url_for('admin_bot.moderation_page', saved='onboarding-reset'))
-    except ConfigError:
-        return redirect(url_for('admin_bot.moderation_page', error='action-failed'))
-
-
-def _build_onboarding_repository_from_settings(settings: BotRuntimeSettings) -> OnboardingRepository:
-    if not settings.database_url:
-        return InMemoryOnboardingRepository()
-    return build_postgres_onboarding_repository(settings.database_url)
+        tier_stats = mileage_service.list_tier_stats(guild_id)
+        total_users = sum(ts.user_count for ts in tier_stats)
+        result['mileage'] = {
+            'total_users': total_users,
+            'tier_count': len(tier_stats),
+        }
+    except Exception:
+        result['mileage'] = {'status': 'unavailable'}
+    return jsonify({'data': result})

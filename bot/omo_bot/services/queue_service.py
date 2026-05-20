@@ -299,10 +299,26 @@ class QueueService:
         queue_id: str,
         actor_user_id: str | None = None,
         reason: str = '',
+        dry_run: bool = False,
     ) -> tuple[QueueSnapshot, QueueEvent]:
         snapshot = self.get_queue(queue_id)
         removed_entries = [self._entry_payload(
             entry) for entry in snapshot.entries]
+        if dry_run:
+            preview_event = QueueEvent(
+                event_id='dry-run',
+                queue_id=queue_id,
+                event_type='queue_cleared',
+                actor_user_id=actor_user_id,
+                entry_id=None,
+                payload={
+                    'removed_entries': removed_entries,
+                    'reason': reason.strip(),
+                    'dry_run': True,
+                },
+                created_at=datetime.now(tz=timezone.utc),
+            )
+            return replace(snapshot, last_event=preview_event), preview_event
         saved_snapshot = self._save_snapshot(snapshot.summary, ())
         event = self._append_event(
             queue_id=queue_id,

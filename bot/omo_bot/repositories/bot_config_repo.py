@@ -15,8 +15,6 @@ class BotManagedRuntimeConfig:
     channel_map: dict[str, int]
     role_map: dict[str, int]
     managed_by_repository: bool
-    onboarding_welcome_copy: str = ""
-    onboarding_starter_channels: tuple[int, ...] = ()
 
 
 class InMemoryBotConfigRepository:
@@ -26,14 +24,10 @@ class InMemoryBotConfigRepository:
         guild_id: int | None = None,
         channel_map: dict[str, int] | None = None,
         role_map: dict[str, int] | None = None,
-        onboarding_welcome_copy: str = "",
-        onboarding_starter_channels: tuple[int, ...] = (),
     ) -> None:
         self._guild_id = guild_id
         self._channel_map = dict(channel_map or {})
         self._role_map = dict(role_map or {})
-        self._onboarding_welcome_copy = onboarding_welcome_copy
-        self._onboarding_starter_channels = onboarding_starter_channels
 
     def load_runtime_config(
         self,
@@ -47,8 +41,6 @@ class InMemoryBotConfigRepository:
             channel_map=dict(self._channel_map or default_channel_map),
             role_map=dict(self._role_map or default_role_map),
             managed_by_repository=True,
-            onboarding_welcome_copy=self._onboarding_welcome_copy,
-            onboarding_starter_channels=self._onboarding_starter_channels,
         )
 
     def get_active_guild_id(self) -> int | None:
@@ -126,112 +118,6 @@ class InMemoryBotConfigRepository:
         del self._role_map[binding_key]
         return True
 
-    def get_onboarding_config(self, guild_id: int) -> dict[str, object]:
-        connection = self._connection_factory()
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        try:
-            if not self._tables_exist(cursor):
-                return {}
-            cursor.execute(
-                """
-                SELECT guild_id, onboarding_welcome_copy AS welcome_copy, onboarding_starter_channels AS starter_channels
-                FROM bot_guild_config
-                WHERE guild_id = %s
-                """,
-                (guild_id,),
-            )
-            row = cursor.fetchone()
-            if not row:
-                return {}
-            return {
-                "guild_id": int(row["guild_id"]),
-                "welcome_copy": str(row["welcome_copy"] or ""),
-                "starter_channels": [int(cid) for cid in (row["starter_channels"] or [])],
-            }
-        finally:
-            cursor.close()
-            connection.close()
-
-    def upsert_onboarding_config(
-        self,
-        *,
-        guild_id: int,
-        welcome_copy: str,
-        starter_channels: tuple[int, ...],
-    ) -> dict[str, object]:
-        connection = self._connection_factory()
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        try:
-            if not self._tables_exist(cursor):
-                raise RuntimeError(
-                    "Bot configuration tables are not available")
-            self._ensure_guild_row(cursor, guild_id)
-            cursor.execute(
-                """
-                UPDATE bot_guild_config
-                SET onboarding_welcome_copy = %s,
-                    onboarding_starter_channels = %s
-                WHERE guild_id = %s
-                RETURNING guild_id, onboarding_welcome_copy AS welcome_copy, onboarding_starter_channels AS starter_channels
-                """,
-                (welcome_copy, list(starter_channels), guild_id),
-            )
-            row = cursor.fetchone()
-            connection.commit()
-            if not row:
-                return {
-                    "guild_id": guild_id,
-                    "welcome_copy": welcome_copy,
-                    "starter_channels": list(starter_channels),
-                }
-            return {
-                "guild_id": int(row["guild_id"]),
-                "welcome_copy": str(row["welcome_copy"]),
-                "starter_channels": [int(cid) for cid in (row["starter_channels"] or [])],
-            }
-        except Exception:
-            connection.rollback()
-            raise
-        finally:
-            cursor.close()
-            connection.close()
-
-    def _tables_exist(self, cursor: Any | None = None) -> bool:
-        active_cursor = cursor
-        active_connection = None
-        if active_cursor is None:
-            active_connection = self._connection_factory()
-            active_cursor = active_connection.cursor(
-                cursor_factory=RealDictCursor)
-
-        try:
-            active_cursor.execute(
-                """
-                SELECT
-                    to_regclass('public.bot_guild_config') AS guild_table,
-                    to_regclass('public.bot_channel_binding') AS channel_table,
-                    to_regclass('public.bot_role_binding') AS role_table
-                """
-            )
-            row = active_cursor.fetchone()
-            return bool(row and row.get("guild_table") and row.get("channel_table") and row.get("role_table"))
-        finally:
-            if active_connection is not None:
-                active_cursor.close()
-                active_connection.close()
-
-    @staticmethod
-    def _ensure_guild_row(cursor: Any, guild_id: int) -> None:
-        cursor.execute(
-            """
-            INSERT INTO bot_guild_config (guild_id, is_active)
-            VALUES (%s, true)
-            ON CONFLICT (guild_id)
-            DO NOTHING
-            """,
-            (guild_id,),
-        )
-
 
 class PostgresBotConfigRepository:
     def __init__(self, connection_factory: Callable[[], Any]) -> None:
@@ -244,56 +130,29 @@ class PostgresBotConfigRepository:
         default_channel_map: dict[str, int],
         default_role_map: dict[str, int],
     ) -> BotManagedRuntimeConfig:
-        connection = self._connection_factory()
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        try:
-            if not self._tables_exist(cursor):
-                return BotManagedRuntimeConfig(
-                    guild_id=default_guild_id,
-                    channel_map=dict(default_channel_map),
-                    role_map=dict(default_role_map),
-                    managed_by_repository=False,
-                )
-            cursor.execute(
-                """
-                SELECT guild_id, onboarding_welcome_copy, onboarding_starter_channels
-                FROM bot_guild_config
-                WHERE is_active = true
-                ORDER BY updated_at DESC, guild_id ASC
-                LIMIT 1
-                """
-            )
-            row = cursor.fetchone()
-            if not row:
-                return BotManagedRuntimeConfig(
-                    guild_id=default_guild_id,
-                    channel_map=dict(default_channel_map),
-                    role_map=dict(default_role_map),
-                    managed_by_repository=True,
-                )
-
-            guild_id = int(row["guild_id"])
+        guild_id = self.get_active_guild_id()
+        if guild_id is None:
             return BotManagedRuntimeConfig(
-                guild_id=guild_id,
-                channel_map={
-                    str(binding["binding_key"]): int(binding["channel_id"])
-                    for binding in self.list_channel_bindings(guild_id)
-                }
-                or dict(default_channel_map),
-                role_map={
-                    str(binding["binding_key"]): int(binding["role_id"])
-                    for binding in self.list_role_bindings(guild_id)
-                }
-                or dict(default_role_map),
-                managed_by_repository=True,
-                onboarding_welcome_copy=str(
-                    row["onboarding_welcome_copy"] or ""),
-                onboarding_starter_channels=tuple(int(cid) for cid in (
-                    row["onboarding_starter_channels"] or [])),
+                guild_id=default_guild_id,
+                channel_map=dict(default_channel_map),
+                role_map=dict(default_role_map),
+                managed_by_repository=self._tables_exist(),
             )
-        finally:
-            cursor.close()
-            connection.close()
+
+        return BotManagedRuntimeConfig(
+            guild_id=guild_id,
+            channel_map={
+                str(binding["binding_key"]): int(binding["channel_id"])
+                for binding in self.list_channel_bindings(guild_id)
+            }
+            or dict(default_channel_map),
+            role_map={
+                str(binding["binding_key"]): int(binding["role_id"])
+                for binding in self.list_role_bindings(guild_id)
+            }
+            or dict(default_role_map),
+            managed_by_repository=True,
+        )
 
     def get_active_guild_id(self) -> int | None:
         connection = self._connection_factory()
@@ -491,74 +350,19 @@ class PostgresBotConfigRepository:
             connection.close()
 
     def delete_role_binding(self, *, guild_id: int, binding_key: str) -> bool:
-        if self._guild_id != guild_id or binding_key not in self._role_map:
-            return False
-        del self._role_map[binding_key]
-        return True
-
-    def get_onboarding_config(self, guild_id: int) -> dict[str, object]:
-        connection = self._connection_factory()
-        cursor = connection.cursor(cursor_factory=RealDictCursor)
-        try:
-            if not self._tables_exist(cursor):
-                return {}
-            cursor.execute(
-                """
-                SELECT guild_id, onboarding_welcome_copy AS welcome_copy, onboarding_starter_channels AS starter_channels
-                FROM bot_guild_config
-                WHERE guild_id = %s
-                """,
-                (guild_id,),
-            )
-            row = cursor.fetchone()
-            if not row:
-                return {}
-            return {
-                "guild_id": int(row["guild_id"]),
-                "welcome_copy": str(row["welcome_copy"] or ""),
-                "starter_channels": [int(cid) for cid in (row["starter_channels"] or [])],
-            }
-        finally:
-            cursor.close()
-            connection.close()
-
-    def upsert_onboarding_config(
-        self,
-        *,
-        guild_id: int,
-        welcome_copy: str,
-        starter_channels: tuple[int, ...],
-    ) -> dict[str, object]:
         connection = self._connection_factory()
         cursor = connection.cursor(cursor_factory=RealDictCursor)
         try:
             if not self._tables_exist(cursor):
                 raise RuntimeError(
                     "Bot configuration tables are not available")
-            self._ensure_guild_row(cursor, guild_id)
             cursor.execute(
-                """
-                UPDATE bot_guild_config
-                SET onboarding_welcome_copy = %s,
-                    onboarding_starter_channels = %s
-                WHERE guild_id = %s
-                RETURNING guild_id, onboarding_welcome_copy AS welcome_copy, onboarding_starter_channels AS starter_channels
-                """,
-                (welcome_copy, list(starter_channels), guild_id),
+                "DELETE FROM bot_role_binding WHERE guild_id = %s AND binding_key = %s",
+                (guild_id, binding_key),
             )
-            row = cursor.fetchone()
+            deleted = cursor.rowcount > 0
             connection.commit()
-            if not row:
-                return {
-                    "guild_id": guild_id,
-                    "welcome_copy": welcome_copy,
-                    "starter_channels": list(starter_channels),
-                }
-            return {
-                "guild_id": int(row["guild_id"]),
-                "welcome_copy": str(row["welcome_copy"]),
-                "starter_channels": [int(cid) for cid in (row["starter_channels"] or [])],
-            }
+            return deleted
         except Exception:
             connection.rollback()
             raise

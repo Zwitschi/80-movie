@@ -91,9 +91,45 @@ def handle_queue_clear(
     queue_id: str,
     actor_user_id: str | None = None,
     reason: str = '',
+    dry_run: bool = False,
 ) -> tuple[QueueSnapshot, QueueEvent]:
     return service.clear_queue(
         queue_id=_required_text(queue_id, 'queue_id'),
+        actor_user_id=actor_user_id,
+        reason=reason,
+        dry_run=dry_run,
+    )
+
+
+def handle_queue_remove_entry(
+    service: QueueService,
+    *,
+    queue_id: str,
+    entry_id: str,
+    actor_user_id: str | None = None,
+    reason: str = '',
+) -> tuple[QueueSnapshot, QueueEvent]:
+    return service.remove_entry(
+        queue_id=_required_text(queue_id, 'queue_id'),
+        entry_id=_required_text(entry_id, 'entry_id'),
+        actor_user_id=actor_user_id,
+        reason=reason,
+    )
+
+
+def handle_queue_move_entry(
+    service: QueueService,
+    *,
+    queue_id: str,
+    entry_id: str,
+    target_position: int,
+    actor_user_id: str | None = None,
+    reason: str = '',
+) -> tuple[QueueSnapshot, QueueEvent]:
+    return service.move_entry(
+        queue_id=_required_text(queue_id, 'queue_id'),
+        entry_id=_required_text(entry_id, 'entry_id'),
+        target_position=target_position,
         actor_user_id=actor_user_id,
         reason=reason,
     )
