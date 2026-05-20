@@ -70,7 +70,11 @@ This service owns both editorial CMS routes under `/admin` and bot/operator rout
 - [ ] Confirm `DATABASE_URL` points to `192.168.88.35`
 - [ ] Generate `ADMIN_PASSWORD_HASH` for control room only: `python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))"`
 - [ ] Set `ADMIN_USERNAME` and `ADMIN_PASSWORD_HASH` on control room only, not website
-- [ ] Configure Discord OAuth app with correct redirect URIs
+- [ ] Configure Discord OAuth app in the Discord Developer Portal for control room operator login:
+  - OAuth2 redirect URI: `https://admin.openmicodyssey.com/oauth/discord/callback`
+  - Environment variables on control room: `OMO_DISCORD_CLIENT_ID`, `OMO_DISCORD_CLIENT_SECRET`, `OMO_DISCORD_REDIRECT_URI`
+  - Requested scope: `identify`
+  - Verify login with one allowed Discord user from `OMO_BOT_OPS_ALLOWED_USER_IDS`
 - [ ] Verify all 3 domains respond correctly after deploy
 - [ ] Verify website does not expose `/admin` or `/admin/bot`; use `admin.openmicodyssey.com` for all editorial and operator workflows
 - [ ] Verify bot worker connects to Discord and starts polling
@@ -82,3 +86,4 @@ See `deploy/` directory for per-service Coolify configuration files:
 - `deploy/website-coolify.md`
 - `deploy/control-room-coolify.md`
 - `deploy/bot-api-coolify.md`
+- `deploy/bot-worker-coolify.md`
