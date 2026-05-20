@@ -93,6 +93,8 @@ class BotConfig:
     syndication_poll_seconds: int
     role_map: dict[str, int] = field(default_factory=dict)
     log_level: str = "INFO"
+    onboarding_welcome_copy: str = ""
+    onboarding_starter_channels: tuple[int, ...] = ()
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "BotConfig":
@@ -111,6 +113,8 @@ class BotConfig:
             syndication_poll_seconds=settings.syndication_poll_seconds,
             role_map=settings.role_map,
             log_level=settings.log_level,
+            onboarding_welcome_copy=settings.onboarding_welcome_copy,
+            onboarding_starter_channels=settings.onboarding_starter_channels,
         )
 
 
@@ -126,6 +130,8 @@ class BotRuntimeSettings:
     syndication_poll_seconds: int
     role_map: dict[str, int] = field(default_factory=dict)
     log_level: str = "INFO"
+    onboarding_welcome_copy: str = ""
+    onboarding_starter_channels: tuple[int, ...] = ()
 
 
 def read_runtime_settings(
@@ -161,6 +167,14 @@ def read_runtime_settings(
             "OMO_SYNDICATION_POLL_SECONDS must be greater than zero")
 
     log_level = source_env.get("OMO_LOG_LEVEL", "INFO").upper()
+    onboarding_welcome_copy = source_env.get("OMO_ONBOARDING_WELCOME_COPY", "")
+    onboarding_starter_channels_raw = source_env.get(
+        "OMO_ONBOARDING_STARTER_CHANNELS", "")
+    onboarding_starter_channels = tuple(
+        int(cid.strip())
+        for cid in onboarding_starter_channels_raw.split(",")
+        if cid.strip() and cid.strip().isdigit()
+    )
 
     return BotRuntimeSettings(
         discord_token=discord_token,
@@ -171,4 +185,6 @@ def read_runtime_settings(
         syndication_poll_seconds=syndication_poll_seconds,
         role_map={},
         log_level=log_level,
+        onboarding_welcome_copy=onboarding_welcome_copy,
+        onboarding_starter_channels=onboarding_starter_channels,
     )

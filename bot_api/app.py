@@ -45,6 +45,10 @@ def create_app() -> Flask:
             "syndication_sources": app.config.get('SYNDICATION_SOURCES', []),
             "syndication_poll_seconds": app.config.get('SYNDICATION_POLL_SECONDS', 300),
             "log_level": app.config.get('LOG_LEVEL', 'INFO'),
+            "onboarding": {
+                "welcome_copy": app.config.get('OMO_ONBOARDING_WELCOME_COPY', ''),
+                "starter_channels": app.config.get('OMO_ONBOARDING_STARTER_CHANNELS', []),
+            }
         })
 
     return app

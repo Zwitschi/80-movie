@@ -1,0 +1,106 @@
+{% extends "admin/bot/_bot_base.html" %} {% block title %}Onboarding | Bot | {{
+super() }}{% endblock %} {% block bot_content %}
+<div class="admin-header">
+  <div class="header-main">
+    <h1>Member <strong>Onboarding</strong></h1>
+    <p class="text-muted">Manage guild welcome experience and user progress.</p>
+  </div>
+</div>
+
+<div class="admin-grid">
+  <div class="card">
+    <div class="card-header">
+      <h2>Onboarding Configuration</h2>
+    </div>
+    <div class="card-body">
+      <form
+        action="{{ url_for('admin_bot.upsert_onboarding_config_page_action') }}"
+        method="POST"
+      >
+        <input type="hidden" name="guild_id" value="{{ config.guild_id }}" />
+
+        <div class="form-group">
+          <label for="welcome_copy">Welcome Message</label>
+          <textarea
+            id="welcome_copy"
+            name="welcome_copy"
+            class="form-control"
+            rows="5"
+            placeholder="Welcome to the server!"
+          >
+{{ config.welcome_copy }}</textarea
+          >
+          <p class="form-help">Text sent to new members when they join.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="starter_channels">Starter Channel IDs</label>
+          <input
+            type="text"
+            id="starter_channels"
+            name="starter_channels"
+            class="form-control"
+            value="{{ config.starter_channels | join(', ') }}"
+            placeholder="123456789, 987654321"
+          />
+          <p class="form-help">
+            Comma-separated Discord channel IDs shown to new members.
+          </p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            Save Configuration
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Pending Onboarding</h2>
+    </div>
+    <div class="card-body">
+      {% if pending_users %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Status</th>
+              <th>Joined At</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in pending_users %}
+            <tr>
+              <td><code>{{ user.discord_user_id }}</code></td>
+              <td>
+                <span class="badge badge-warning">{{ user.status }}</span>
+              </td>
+              <td>{{ user.joined_at }}</td>
+              <td>
+                <form
+                  action="{{ url_for('admin_bot.complete_onboarding_page_action', user_id=user.discord_user_id) }}"
+                  method="POST"
+                  style="display: inline"
+                >
+                  <button type="submit" class="btn btn-sm btn-success">
+                    Complete
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted">No users currently in pending onboarding.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

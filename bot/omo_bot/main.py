@@ -22,6 +22,9 @@ from .repositories import (
     BotAuditLogRepository,
     InMemoryBotAuditLogRepository,
     build_postgres_bot_audit_log_repository,
+    InMemoryOnboardingRepository,
+    OnboardingRepository,
+    build_postgres_onboarding_repository,
 )
 from .runtime.client import BotRuntime
 from .runtime.shutdown import shutdown_runtime
@@ -33,6 +36,7 @@ from .services import (
     QueueService,
     MileageService,
     BotAuditService,
+    OnboardingService,
 )
 
 
@@ -76,6 +80,13 @@ def build_audit_repository(config: BotConfig) -> BotAuditLogRepository:
         return build_postgres_bot_audit_log_repository(config.database_url)
 
     return InMemoryBotAuditLogRepository()
+
+
+def build_onboarding_repository(config: BotConfig) -> OnboardingRepository:
+    if config.database_url:
+        return build_postgres_onboarding_repository(config.database_url)
+
+    return InMemoryOnboardingRepository()
 
 
 def build_syndication_adapters(config: BotConfig) -> dict[str, SyndicationAdapter]:
@@ -126,6 +137,8 @@ def build_effective_bot_config(config: BotConfig) -> BotConfig:
         syndication_poll_seconds=config.syndication_poll_seconds,
         role_map=managed_config.role_map,
         log_level=config.log_level,
+        onboarding_welcome_copy=managed_config.onboarding_welcome_copy or config.onboarding_welcome_copy,
+        onboarding_starter_channels=managed_config.onboarding_starter_channels or config.onboarding_starter_channels,
     )
 
 
@@ -153,6 +166,10 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
     audit_repository = build_audit_repository(effective_config)
     audit_service = BotAuditService(repository=audit_repository)
 
+    onboarding_repository = build_onboarding_repository(effective_config)
+    onboarding_service = OnboardingService(
+        repository=onboarding_repository, logger=logger)
+
     return BotRuntime(
         config=effective_config,
         logger=logger,
@@ -166,6 +183,8 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
         mileage_service=mileage_service,
         audit_repository=audit_repository,
         audit_service=audit_service,
+        onboarding_repository=onboarding_repository,
+        onboarding_service=onboarding_service,
     )
 
 

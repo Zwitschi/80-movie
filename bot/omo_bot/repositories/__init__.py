@@ -35,6 +35,12 @@ from .syndication_repo import (
     SyndicationSourceRepository,
     build_postgres_syndication_repository,
 )
+from .onboarding_repo import (
+    InMemoryOnboardingRepository,
+    OnboardingRepository,
+    PostgresOnboardingRepository,
+    build_postgres_onboarding_repository,
+)
 
 __all__ = [
     "BotAuditLogEntry",
@@ -48,6 +54,10 @@ __all__ = [
     "InMemoryQueueRepository",
     "InMemoryWebsiteContentRepository",
     "MileageRepository",
+    "OnboardingRepository",
+    "InMemoryOnboardingRepository",
+    "PostgresOnboardingRepository",
+    "build_postgres_onboarding_repository",
     "PostgresBotConfigRepository",
     "PostgresMileageRepository",
     "PostgresQueueRepository",

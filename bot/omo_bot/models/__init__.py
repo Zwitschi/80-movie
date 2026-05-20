@@ -4,6 +4,7 @@ from .mileage import MileageEvent, MileageTier, MileageTierStat, MileageTotal, M
 from .queue import QueueEntry, QueueEvent, QueueSnapshot, QueueSummary
 from .syndication_feed import SyndicationFetchResult, SyndicationItem
 from .syndication import SyndicationSourceState
+from .onboarding import OnboardingStatus, OnboardingUserState
 from .website_content import CampaignLink, ProductionMetadata, ScreeningEvent, ScreeningOffer
 
 __all__ = [
@@ -13,6 +14,8 @@ __all__ = [
     "MileageTierStat",
     "MileageTotal",
     "MileageUserDetail",
+    "OnboardingStatus",
+    "OnboardingUserState",
     "ProductionMetadata",
     "QueueEntry",
     "QueueEvent",

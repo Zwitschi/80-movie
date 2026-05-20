@@ -9,8 +9,8 @@ from datetime import datetime, timezone
 
 from ..jobs import SyndicationPollingJob
 from ..config import BotConfig
-from ..repositories import SyndicationSourceRepository, QueueRepository, MileageRepository, BotAuditLogRepository
-from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService
+from ..repositories import SyndicationSourceRepository, QueueRepository, MileageRepository, BotAuditLogRepository, OnboardingRepository
+from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService, OnboardingService
 
 
 @dataclass
@@ -29,6 +29,8 @@ class BotRuntime:
     mileage_service: MileageService
     audit_repository: BotAuditLogRepository
     audit_service: BotAuditService
+    onboarding_repository: OnboardingRepository
+    onboarding_service: OnboardingService
     state: str = field(default="created", init=False)
     last_started_at: datetime | None = field(default=None, init=False)
     last_poll_started_at: datetime | None = field(default=None, init=False)
@@ -83,6 +85,7 @@ class BotRuntime:
             "queue_repository_backend": self.queue_repository.__class__.__name__,
             "mileage_repository_backend": self.mileage_repository.__class__.__name__,
             "audit_repository_backend": self.audit_repository.__class__.__name__,
+            "onboarding_repository_backend": self.onboarding_repository.__class__.__name__,
             "database_configured": bool(self.config.database_url),
             "last_started_at": self.last_started_at.isoformat() if self.last_started_at else None,
             "polling_task_state": self.polling_task_state,
