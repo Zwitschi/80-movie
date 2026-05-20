@@ -5,6 +5,7 @@ import os
 from secrets import token_urlsafe
 from datetime import datetime, timedelta, timezone
 from typing import Any, cast
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -104,6 +105,11 @@ BOT_OPS_NEXT_URL_KEY = 'bot_ops_next_url'
 DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize'
 DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token'
 DISCORD_ME_URL = 'https://discord.com/api/users/@me'
+DISCORD_HTTP_USER_AGENT = (
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/136.0.0.0 Safari/537.36'
+)
 
 
 class OperatorAuthError(RuntimeError):
@@ -288,6 +294,24 @@ def _discord_avatar_url(discord_user: dict[str, object]) -> str | None:
     return f'https://cdn.discordapp.com/avatars/{user_id}/{avatar_hash}.png'
 
 
+def _decode_http_error(exc: HTTPError) -> str:
+    try:
+        body = exc.read().decode('utf-8', errors='replace').strip()
+    except Exception:
+        body = ''
+    return body
+
+
+def _discord_request_headers(*, access_token: str | None = None) -> dict[str, str]:
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': DISCORD_HTTP_USER_AGENT,
+    }
+    if access_token:
+        headers['Authorization'] = f'Bearer {access_token}'
+    return headers
+
+
 def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
     oauth = _oauth_config()
     if not all(oauth.values()):
@@ -306,13 +330,27 @@ def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
         DISCORD_TOKEN_URL,
         data=token_body,
         headers={
-            'Accept': 'application/json',
+            **_discord_request_headers(),
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         method='POST',
     )
-    with urlopen(token_request, timeout=10) as response:
-        token_payload = json.loads(response.read().decode('utf-8'))
+    try:
+        with urlopen(token_request, timeout=10) as response:
+            token_payload = json.loads(response.read().decode('utf-8'))
+    except HTTPError as exc:
+        detail = _decode_http_error(exc)
+        if detail:
+            raise OperatorAuthError(
+                f'Discord OAuth token exchange failed with HTTP {exc.code}: {detail}'
+            ) from exc
+        raise OperatorAuthError(
+            f'Discord OAuth token exchange failed with HTTP {exc.code}.'
+        ) from exc
+    except URLError as exc:
+        raise OperatorAuthError(
+            'Discord OAuth token exchange failed because Discord could not be reached.'
+        ) from exc
 
     access_token = str(token_payload.get('access_token', '')).strip()
     if not access_token:
@@ -321,14 +359,25 @@ def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
 
     identity_request = Request(
         DISCORD_ME_URL,
-        headers={
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {access_token}',
-        },
+        headers=_discord_request_headers(access_token=access_token),
         method='GET',
     )
-    with urlopen(identity_request, timeout=10) as response:
-        identity_payload = json.loads(response.read().decode('utf-8'))
+    try:
+        with urlopen(identity_request, timeout=10) as response:
+            identity_payload = json.loads(response.read().decode('utf-8'))
+    except HTTPError as exc:
+        detail = _decode_http_error(exc)
+        if detail:
+            raise OperatorAuthError(
+                f'Discord OAuth identity lookup failed with HTTP {exc.code}: {detail}'
+            ) from exc
+        raise OperatorAuthError(
+            f'Discord OAuth identity lookup failed with HTTP {exc.code}.'
+        ) from exc
+    except URLError as exc:
+        raise OperatorAuthError(
+            'Discord OAuth identity lookup failed because Discord could not be reached.'
+        ) from exc
 
     user_id = str(identity_payload.get('id', '')).strip()
     if not user_id:

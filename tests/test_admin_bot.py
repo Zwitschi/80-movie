@@ -7,7 +7,9 @@ import control_room.bot_operator_service as bot_operator_service
 import control_room.bot_operator_repo as bot_operator_repo
 import control_room.admin_bot as admin_bot
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from typing import cast
+from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlparse
 
 from control_room.app import create_app
@@ -229,6 +231,41 @@ def test_discord_oauth_callback_alias_is_reachable(monkeypatch):
 
     assert response.status_code == 302
     assert response.headers['Location'].endswith('/admin/bot/health')
+
+
+def test_exchange_code_for_discord_identity_surfaces_http_error_as_operator_auth_error(monkeypatch):
+    app = create_app()
+    app.config.update(
+        TESTING=True,
+        BOT_OPS_DISCORD_CLIENT_ID='client-id',
+        BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://admin.openmicodyssey.com/oauth/discord/callback',
+    )
+    requests: list[object] = []
+
+    def fake_urlopen(request, timeout=10):
+        requests.append(request)
+        raise HTTPError(
+            request.full_url,
+            403,
+            'Forbidden',
+            hdrs=None,
+            fp=BytesIO(b'{"error":"access_denied"}'),
+        )
+
+    monkeypatch.setattr(admin_bot, 'urlopen', fake_urlopen)
+
+    with app.app_context():
+        try:
+            admin_bot.exchange_code_for_discord_identity('test-code')
+            assert False, 'expected OperatorAuthError'
+        except admin_bot.OperatorAuthError as exc:
+            message = str(exc)
+
+    assert 'HTTP 403' in message
+    assert 'access_denied' in message
+    assert requests
+    assert requests[0].headers['User-agent'] == admin_bot.DISCORD_HTTP_USER_AGENT
 
 
 def test_admin_bot_oauth_callback_sets_operator_session_for_allowed_user(monkeypatch):
