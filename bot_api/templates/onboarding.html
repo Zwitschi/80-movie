@@ -1,0 +1,28 @@
+{% extends '_bot_base.html' %} {% block admin_title %}Onboarding{%
+endblock %} {% block bot_content %}
+<section>
+  <h2>Onboarding</h2>
+  <p>
+    Member-join events, role-assignment history, and replay tooling for missed
+    or failed onboarding flows.
+  </p>
+  {% if error == 'operator-scope-required' %}
+  <p>Onboarding write scope is required for replay actions.</p>
+  {% endif %}
+  <p>
+    Use the API endpoints to list recent onboarding events or trigger a replay
+    for a specific member:
+  </p>
+  <ul>
+    <li>
+      <code>GET /onboarding/events?guild_id=&lt;id&gt;</code> — list
+      recent events
+    </li>
+    <li>
+      <code>POST /onboarding/replay</code> — replay onboarding for a
+      member (body: <code>{"guild_id": …, "discord_user_id": …}</code>)
+    </li>
+  </ul>
+</section>
+{% endblock %}
+

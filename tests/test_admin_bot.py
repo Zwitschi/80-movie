@@ -3,16 +3,16 @@ from bot.omo_bot.models import SyndicationSourceState
 from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryBotConfigRepository, InMemoryMileageRepository, InMemoryQueueRepository, InMemorySyndicationSourceRepository
 from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem
 from bot.omo_bot.config import BotRuntimeSettings
-import control_room.bot_operator_service as bot_operator_service
-import control_room.bot_operator_repo as bot_operator_repo
-import control_room.admin_bot as admin_bot
+import bot_api.bot_operator_service as bot_operator_service
+import bot_api.bot_operator_repo as bot_operator_repo
+import bot_api.admin_bot as admin_bot
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from typing import cast
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlparse
 
-from control_room.app import create_app
+from bot_api.app import create_app
 
 
 class _FailingAuditRepository:
@@ -1830,5 +1830,6 @@ def test_admin_bot_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
     payload = response.get_json()
     assert payload['error']['code'] == 'invalid_operator_scopes'
     assert called['value'] is False
+
 
 

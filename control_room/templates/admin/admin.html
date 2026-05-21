@@ -63,15 +63,18 @@ endblock %} {% block admin_content %}
     <p>Individual reviews and aggregate rating fields.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('bot.overview') }}" class="admin-card">
+  <a
+    href="{{ current_app.config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="admin-card"
+  >
     <h2>Discord Bot</h2>
     <p>
-      Open the control-room landing page for bot health, syndication
-      configuration, and future operational workflows.
+      Open the bot API control room for health, syndication configuration,
+      queues, mileage, and operator management.
     </p>
-    <span class="card-link">Open control room &rarr;</span>
+    <span class="card-link">Open bot API &rarr;</span>
   </a>
 </div>
 {% endblock %}
-
-

@@ -4,6 +4,7 @@ Standalone Flask app exposing health, config, and syndication endpoints
 for the bot worker runtime.
 """
 
+from pathlib import Path
 from flask import Flask, jsonify
 
 from shared.config import load_dotenv_files, get_bot_api_config_values
@@ -12,10 +13,12 @@ from shared.db import init_app as init_db_app
 
 def create_app() -> Flask:
     """Create and configure the bot API Flask application."""
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=str(Path(__file__).parent / "templates"),
+    )
 
     # Load env files
-    from pathlib import Path
     repo_root = Path(__file__).resolve().parents[1]
     load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
 
@@ -24,6 +27,16 @@ def create_app() -> Flask:
 
     # Initialize DB
     init_db_app(app)
+
+    # Register bot blueprint
+    from .admin_bot import admin_bot_blueprint, oauth_callback
+    app.register_blueprint(admin_bot_blueprint)
+    app.add_url_rule(
+        '/oauth/discord/callback',
+        endpoint='discord_oauth_callback',
+        view_func=oauth_callback,
+        methods=['GET'],
+    )
 
     # Register health endpoint
     @app.route('/health')

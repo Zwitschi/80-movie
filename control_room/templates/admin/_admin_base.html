@@ -127,8 +127,9 @@
             <li><span class="nav-section-label">System</span></li>
             <li>
               <a
-                href="{{ url_for('bot.overview') }}"
-                class="{{ 'active' if request.endpoint and request.endpoint.startswith('bot.') else '' }}"
+                href="{{ current_app.config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
+                target="_blank"
+                rel="noopener noreferrer"
                 >Discord Bot</a
               >
             </li>

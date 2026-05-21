@@ -1,0 +1,61 @@
+{% extends '_bot_base.html' %} {% block admin_title %}Bot Health{%
+endblock %} {% block bot_content %}
+<section>
+  <h2>Health Summary</h2>
+  <ul>
+    <li><strong>Overall status:</strong> {{ health.status }}</li>
+    <li><strong>Generated at:</strong> {{ health.generated_at }}</li>
+    <li>
+      <strong>Operator session:</strong> {{ 'present' if
+      health.session.authenticated else 'not present' }}
+    </li>
+  </ul>
+</section>
+
+<section>
+  <h2>Services</h2>
+  <ul>
+    {% for name, component in health.components.items() %}
+    <li>
+      <strong>{{ name.replace('_', ' ')|title }}</strong>: {{ component.status
+      }}
+      <code>{{ component }}</code>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2>Syndication Status</h2>
+  <ul>
+    <li><strong>Snapshot status:</strong> {{ syndication.status }}</li>
+    <li>
+      <strong>Configured sources:</strong> {{ syndication.summary.source_count
+      }}
+    </li>
+    <li>
+      <strong>Due sources:</strong> {{ syndication.summary.due_source_count }}
+    </li>
+    <li>
+      <strong>Attention sources:</strong> {{
+      syndication.summary.attention_source_count }}
+    </li>
+  </ul>
+  <p>
+    <a href="{{ url_for('bot.syndication_page') }}"
+      >Open syndication controls</a
+    >
+  </p>
+</section>
+
+<section>
+  <h2>API Links</h2>
+  <ul>
+    <li><a href="{{ health.links.health }}">Health JSON</a></li>
+    <li><a href="{{ health.links.services }}">Services JSON</a></li>
+    <li><a href="{{ health.links.jobs }}">Jobs JSON</a></li>
+  </ul>
+</section>
+{% endblock %}
+
+

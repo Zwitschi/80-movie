@@ -54,16 +54,6 @@ def create_app() -> Flask:
     from .content import content_blueprint
     app.register_blueprint(content_blueprint)
 
-    # Register bot management blueprint
-    from .admin_bot import admin_bot_blueprint, oauth_callback
-    app.register_blueprint(admin_bot_blueprint)
-    app.add_url_rule(
-        '/oauth/discord/callback',
-        endpoint='discord_oauth_callback',
-        view_func=oauth_callback,
-        methods=['GET'],
-    )
-
     # Seed default admin user if table exists and empty
     with app.app_context():
         try:

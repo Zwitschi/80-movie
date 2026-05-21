@@ -1,0 +1,69 @@
+{% extends '_bot_base.html' %} {% block admin_title %}Bot Commands{%
+endblock %} {% block bot_content %}
+<section>
+  <h2>Command Actions</h2>
+  <p>
+    Trigger operator commands on demand against current configured bot runtime.
+  </p>
+  {% if save_success == 'poll-all' %}
+  <p>Poll-all command completed.</p>
+  {% endif %} {% if error == 'operator-scope-required' %}
+  <p>Syndication write scope is required for manual poll commands.</p>
+  {% elif error == 'invalid-syndication-config' %}
+  <p>
+    Manual commands require valid runtime settings and a database-backed
+    repository.
+  </p>
+  {% elif error == 'command-failed' %}
+  <p>Command failed. Check source status and runtime logs.</p>
+  {% endif %}
+  <ul>
+    <li><strong>Status:</strong> {{ commands_snapshot.status }}</li>
+    <li><strong>Generated at:</strong> {{ commands_snapshot.generated_at }}</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Available Commands</h2>
+  <ul>
+    {% for command in commands_snapshot.available_commands %}
+    <li>
+      <strong>{{ command.label }}</strong>
+      <br />Required scope: {{ command.required_scope }} <br />Supported: {{
+      'yes' if command.supported else 'no' }} {% if command.supported and
+      commands_snapshot.permissions.operator_can_write %}
+      <form method="post" action="{{ command.page_url }}">
+        <button type="submit">Run command</button>
+      </form>
+      {% elif not command.supported %}
+      <p>Command requires repository-backed runtime configuration.</p>
+      {% else %}
+      <p>Command requires `syndication.write`.</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2>Configured Sources</h2>
+  <ul>
+    {% for source in commands_snapshot.sources %}
+    <li>
+      <strong>{{ source.source_key }}</strong>
+      <br />Enabled: {{ 'yes' if source.enabled else 'no' }} <br />Status: {{
+      source.status }} <br />Checkpoint: {{ source.checkpoint or 'none' }}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <h2>API Links</h2>
+  <ul>
+    <li><a href="{{ url_for('bot.commands_api') }}">Commands JSON</a></li>
+  </ul>
+</section>
+{% endblock %}
+
+
