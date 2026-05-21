@@ -49,12 +49,12 @@ class TestServiceSeparation:
         response = client.get('/admin/')
         assert response.status_code == 404
 
-        response = client.get('/admin/login')
+        response = client.get('/login')
         assert response.status_code == 404
 
     def test_control_room_has_admin_routes(self, control_room_client):
         """Test that control room serves admin routes."""
-        response = control_room_client.get('/admin/login')
+        response = control_room_client.get('/login')
         assert response.status_code == 200
         assert b'Login' in response.data
 
@@ -69,7 +69,7 @@ class TestServiceSeparation:
     def test_control_room_no_public_frontend_routes(self, control_room_client):
         """Test that control room does not serve public frontend routes."""
         response = control_room_client.get('/')
-        assert response.status_code == 404
+        assert response.status_code == 200
 
         response = control_room_client.get('/film')
         assert response.status_code == 404
@@ -353,9 +353,9 @@ class TestAdminFlows:
 
     @staticmethod
     def _login(client, next_path: str | None = None):
-        login_path = '/admin/login'
+        login_path = '/login'
         if next_path:
-            login_path = f'/admin/login?next={next_path}'
+            login_path = f'/login?next={next_path}'
         return client.post(
             login_path,
             data={'username': 'editor', 'password': 'secret-pass'},
@@ -366,17 +366,17 @@ class TestAdminFlows:
         app = self._admin_app()
         client = app.test_client()
 
-        response = client.get('/admin/film')
+        response = client.get('/content/film')
 
         assert response.status_code == 302
-        assert '/admin/login?next=' in response.headers['Location']
+        assert '/login?next=' in response.headers['Location']
 
     def test_admin_login_rejects_invalid_credentials(self):
         app = self._admin_app()
         client = app.test_client()
 
         response = client.post(
-            '/admin/login',
+            '/login',
             data={'username': 'editor', 'password': 'wrong-pass'},
         )
 
@@ -387,10 +387,10 @@ class TestAdminFlows:
         app = self._admin_app()
         client = app.test_client()
 
-        response = self._login(client, '/admin/film')
+        response = self._login(client, '/content/film')
 
         assert response.status_code == 302
-        assert response.headers['Location'].endswith('/admin/film')
+        assert response.headers['Location'].endswith('/content/film')
 
     def test_admin_dashboard_links_to_bot_control_room(self):
         app = self._admin_app()
@@ -399,11 +399,11 @@ class TestAdminFlows:
         login_response = self._login(client)
         assert login_response.status_code == 302
 
-        response = client.get('/admin/')
+        response = client.get('/')
 
         assert response.status_code == 200
         assert b'Discord Bot' in response.data
-        assert b'/admin/bot' in response.data
+        assert b'/bot' in response.data
 
     def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
         app = self._admin_app()
@@ -448,7 +448,7 @@ class TestAdminFlows:
         assert login_response.status_code == 302
 
         response = client.post(
-            '/admin/film',
+            '/content/film',
             data={
                 'title': 'Open Mic Odyssey: The Movie',
                 'tagline': 'Three best friends embark on an outrageous journey.',
@@ -466,7 +466,7 @@ class TestAdminFlows:
         )
 
         assert response.status_code == 302
-        assert response.headers['Location'].endswith('/admin/film?saved=1')
+        assert response.headers['Location'].endswith('/content/film?saved=1')
         assert len(fake_writer.calls) == 1
 
         logical_file, payload = fake_writer.calls[0]

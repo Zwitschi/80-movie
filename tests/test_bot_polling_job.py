@@ -189,3 +189,4 @@ def test_discord_delivery_sink_posts_items_to_configured_channel(monkeypatch):
     assert payload["allowed_mentions"] == {"parse": []}
     assert "Fresh clip" in payload["content"]
     assert "https://www.youtube.com/watch?v=video-200" in payload["content"]
+

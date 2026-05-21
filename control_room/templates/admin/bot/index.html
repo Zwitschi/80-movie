@@ -31,7 +31,7 @@ endblock %} {% block bot_content %}
     {% endfor %}
   </ul>
   <p>
-    <a href="{{ url_for('admin_bot.health_page') }}"
+    <a href="{{ url_for('bot.health_page') }}"
       >Open detailed health view</a
     >
   </p>
@@ -40,17 +40,18 @@ endblock %} {% block bot_content %}
 <section>
   <h2>Control Room Sections</h2>
   <ul>
-    <li><a href="{{ url_for('admin_bot.overview') }}">Overview</a></li>
-    <li><a href="{{ url_for('admin_bot.health_page') }}">Health</a></li>
-    <li><a href="{{ url_for('admin_bot.config_page') }}">Bot Config</a></li>
-    <li><a href="{{ url_for('admin_bot.commands_page') }}">Command Actions</a></li>
+    <li><a href="{{ url_for('bot.overview') }}">Overview</a></li>
+    <li><a href="{{ url_for('bot.health_page') }}">Health</a></li>
+    <li><a href="{{ url_for('bot.config_page') }}">Bot Config</a></li>
+    <li><a href="{{ url_for('bot.commands_page') }}">Command Actions</a></li>
     <li>
-      <a href="{{ url_for('admin_bot.syndication_page') }}"
+      <a href="{{ url_for('bot.syndication_page') }}"
         >Syndication Configuration</a
       >
     </li>
-    <li><a href="{{ url_for('admin_bot.operators_page') }}">Operators</a></li>
+    <li><a href="{{ url_for('bot.operators_page') }}">Operators</a></li>
   </ul>
   <p>Config, command, retry, and audit actions now share one control-room home.</p>
 </section>
 {% endblock %}
+

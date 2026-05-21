@@ -4,7 +4,7 @@
 <p>
   Manage gallery entries stored in
   <code>website/data/gallery.json</code>. &mdash;
-  <a href="{{ url_for('admin.edit_media_assets') }}"
+  <a href="{{ url_for('content.edit_media_assets') }}"
     >Edit Media Assets &amp; Trailer</a
   >
 </p>
@@ -26,13 +26,13 @@
     {% for cat in categories %}
     <li>
       <span>{{ cat }}</span>
-      <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+      <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
         <input type="hidden" name="action" value="rename_category" />
         <input type="hidden" name="old_category_name" value="{{ cat }}" />
         <input type="text" name="new_category_name" placeholder="New name" size="20" />
         <button type="submit" class="btn btn-secondary btn-sm">Rename</button>
       </form>
-      <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+      <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
         <input type="hidden" name="action" value="remove_category" />
         <input type="hidden" name="category_name" value="{{ cat }}" />
         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -44,7 +44,7 @@
   <p>No categories defined.</p>
   {% endif %}
 
-  <form method="post" action="{{ url_for('admin.manage_media') }}" class="stack-sm">
+  <form method="post" action="{{ url_for('content.manage_media') }}" class="stack-sm">
     <input type="hidden" name="action" value="add_category" />
     <label>
       Add Category
@@ -76,7 +76,7 @@
           <p><strong>Image URL:</strong> {{ item.get('image_url', '') }}</p>
 
           <!-- Inline Edit Form -->
-          <form method="post" action="{{ url_for('admin.manage_media') }}" class="inline-edit stack-sm">
+          <form method="post" action="{{ url_for('content.manage_media') }}" class="inline-edit stack-sm">
             <input type="hidden" name="action" value="update" />
             <input type="hidden" name="index" value="{{ loop.index0 }}" />
 
@@ -93,7 +93,7 @@
             <button type="submit" class="btn btn-secondary btn-sm">Update</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.manage_media') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove" />
             <input type="hidden" name="index" value="{{ loop.index0 }}" />
             <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -113,7 +113,7 @@
   <h2>Add Gallery Item</h2>
   <form
     method="post"
-    action="{{ url_for('admin.manage_media') }}"
+    action="{{ url_for('content.manage_media') }}"
     class="stack-md"
   >
     <input type="hidden" name="action" value="add" />
@@ -195,3 +195,4 @@
 </script>
 
 {% endblock %}
+

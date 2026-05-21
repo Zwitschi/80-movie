@@ -25,7 +25,7 @@ def test_admin_bot_overview_renders_in_testing_mode():
     app.config['TESTING'] = True
     client = app.test_client()
 
-    response = client.get('/admin/bot')
+    response = client.get('/bot')
 
     assert response.status_code == 200
     assert b'Bot Overview' in response.data
@@ -37,14 +37,14 @@ def test_admin_bot_health_api_returns_snapshot_in_testing_mode():
     app.config['TESTING'] = True
     client = app.test_client()
 
-    response = client.get('/admin/bot/api/health')
+    response = client.get('/bot/api/health')
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload['data']['status'] in {'ok', 'degraded'}
     assert 'components' in payload['data']
     assert 'database' in payload['data']['components']
-    assert payload['data']['links']['health'].endswith('/admin/bot/api/health')
+    assert payload['data']['links']['health'].endswith('/bot/api/health')
 
 
 def test_admin_bot_health_page_renders_syndication_summary(monkeypatch):
@@ -81,7 +81,7 @@ def test_admin_bot_health_page_renders_syndication_summary(monkeypatch):
         lambda database_url: repository,
     )
 
-    response = client.get('/admin/bot/health')
+    response = client.get('/bot/health')
 
     assert response.status_code == 200
     assert b'Syndication Status' in response.data
@@ -93,7 +93,7 @@ def test_admin_bot_services_api_returns_component_details():
     app.config['TESTING'] = True
     client = app.test_client()
 
-    response = client.get('/admin/bot/api/health/services')
+    response = client.get('/bot/api/health/services')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -105,17 +105,17 @@ def test_admin_bot_page_redirects_without_operator_session_when_not_testing():
     app = create_app()
     client = app.test_client()
 
-    response = client.get('/admin/bot')
+    response = client.get('/bot')
 
     assert response.status_code == 302
-    assert '/admin/bot/login' in response.headers['Location']
+    assert '/bot/login' in response.headers['Location']
 
 
 def test_admin_bot_api_requires_operator_session_when_not_testing():
     app = create_app()
     client = app.test_client()
 
-    response = client.get('/admin/bot/api/health')
+    response = client.get('/bot/api/health')
 
     assert response.status_code == 401
     payload = response.get_json()
@@ -132,7 +132,7 @@ def test_admin_bot_oauth_start_redirects_and_sets_state():
     )
     client = app.test_client()
 
-    response = client.get('/admin/bot/oauth/start?next=/admin/bot/health')
+    response = client.get('/bot/oauth/start?next=/bot/health')
 
     assert response.status_code == 302
     location = response.headers['Location']
@@ -146,7 +146,7 @@ def test_admin_bot_oauth_start_redirects_and_sets_state():
 
     with client.session_transaction() as flask_session:
         assert flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY]
-        assert flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] == '/admin/bot/health'
+        assert flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] == '/bot/health'
 
 
 def test_admin_bot_oauth_start_uses_env_driven_config(monkeypatch):
@@ -161,7 +161,7 @@ def test_admin_bot_oauth_start_uses_env_driven_config(monkeypatch):
     app.config['TESTING'] = True
     client = app.test_client()
 
-    response = client.get('/admin/bot/oauth/start?next=/admin/bot/health')
+    response = client.get('/bot/oauth/start?next=/bot/health')
 
     assert response.status_code == 302
     location = response.headers['Location']
@@ -186,7 +186,7 @@ def test_admin_bot_oauth_callback_rejects_state_mismatch():
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
 
     response = client.get(
-        '/admin/bot/oauth/callback?state=wrong-state&code=test-code')
+        '/bot/oauth/callback?state=wrong-state&code=test-code')
 
     assert response.status_code == 400
     assert b'OAuth state did not match' in response.data
@@ -224,13 +224,13 @@ def test_discord_oauth_callback_alias_is_reachable(monkeypatch):
 
     with client.session_transaction() as flask_session:
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
-        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/admin/bot/health'
+        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/bot/health'
 
     response = client.get(
         '/oauth/discord/callback?state=expected-state&code=test-code')
 
     assert response.status_code == 302
-    assert response.headers['Location'].endswith('/admin/bot/health')
+    assert response.headers['Location'].endswith('/bot/health')
 
 
 def test_exchange_code_for_discord_identity_surfaces_http_error_as_operator_auth_error(monkeypatch):
@@ -300,13 +300,13 @@ def test_admin_bot_oauth_callback_sets_operator_session_for_allowed_user(monkeyp
 
     with client.session_transaction() as flask_session:
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
-        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/admin/bot/health'
+        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/bot/health'
 
     response = client.get(
-        '/admin/bot/oauth/callback?state=expected-state&code=test-code')
+        '/bot/oauth/callback?state=expected-state&code=test-code')
 
     assert response.status_code == 302
-    assert response.headers['Location'].endswith('/admin/bot/health')
+    assert response.headers['Location'].endswith('/bot/health')
     with client.session_transaction() as flask_session:
         assert flask_session[admin_bot.BOT_OPS_SESSION_KEY] == '123456'
         assert flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] == [
@@ -342,7 +342,7 @@ def test_admin_bot_oauth_callback_rejects_disallowed_operator(monkeypatch):
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
 
     response = client.get(
-        '/admin/bot/oauth/callback?state=expected-state&code=test-code')
+        '/bot/oauth/callback?state=expected-state&code=test-code')
 
     assert response.status_code == 403
     assert b'not on the control-room allowlist' in response.data
@@ -383,13 +383,13 @@ def test_admin_bot_oauth_callback_accepts_db_backed_operator_record(monkeypatch)
 
     with client.session_transaction() as flask_session:
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
-        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/admin/bot/health'
+        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/bot/health'
 
     response = client.get(
-        '/admin/bot/oauth/callback?state=expected-state&code=test-code')
+        '/bot/oauth/callback?state=expected-state&code=test-code')
 
     assert response.status_code == 302
-    assert response.headers['Location'].endswith('/admin/bot/health')
+    assert response.headers['Location'].endswith('/bot/health')
     with client.session_transaction() as flask_session:
         assert flask_session[admin_bot.BOT_OPS_SESSION_KEY] == 'db-user'
         assert flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] == [
@@ -433,10 +433,10 @@ def test_admin_bot_oauth_callback_persists_operator_profile_metadata(monkeypatch
 
     with client.session_transaction() as flask_session:
         flask_session[admin_bot.BOT_OPS_OAUTH_STATE_KEY] = 'expected-state'
-        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/admin/bot/health'
+        flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] = '/bot/health'
 
     response = client.get(
-        '/admin/bot/oauth/callback?state=expected-state&code=test-code')
+        '/bot/oauth/callback?state=expected-state&code=test-code')
 
     assert response.status_code == 302
     operator_identity = cast(dict[str, object], persisted['operator_identity'])
@@ -463,10 +463,10 @@ def test_admin_bot_logout_clears_only_operator_session_keys():
             timezone.utc).isoformat()
         flask_session['editorial_marker'] = 'keep-me'
 
-    response = client.post('/admin/bot/logout')
+    response = client.post('/bot/logout')
 
     assert response.status_code == 302
-    assert response.headers['Location'].endswith('/admin/bot/login')
+    assert response.headers['Location'].endswith('/bot/login')
     with client.session_transaction() as flask_session:
         assert admin_bot.BOT_OPS_SESSION_KEY not in flask_session
         assert admin_bot.BOT_OPS_SESSION_ID_KEY not in flask_session
@@ -483,7 +483,7 @@ def test_admin_bot_page_redirects_when_operator_session_is_idle_timed_out():
         flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
         flask_session[admin_bot.BOT_OPS_LAST_SEEN_AT_KEY] = stale
 
-    response = client.get('/admin/bot')
+    response = client.get('/bot')
 
     assert response.status_code == 302
     assert 'error=session-expired' in response.headers['Location']
@@ -501,7 +501,7 @@ def test_admin_bot_api_returns_session_expired_for_idle_timeout():
         flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
         flask_session[admin_bot.BOT_OPS_LAST_SEEN_AT_KEY] = stale
 
-    response = client.get('/admin/bot/api/health')
+    response = client.get('/bot/api/health')
 
     assert response.status_code == 401
     payload = response.get_json()
@@ -518,7 +518,7 @@ def test_admin_bot_authenticated_request_refreshes_last_seen():
         flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
         flask_session[admin_bot.BOT_OPS_LAST_SEEN_AT_KEY] = older
 
-    response = client.get('/admin/bot/health')
+    response = client.get('/bot/health')
 
     assert response.status_code == 200
     with client.session_transaction() as flask_session:
@@ -547,7 +547,7 @@ def test_admin_bot_operators_page_renders_list(monkeypatch):
         ],
     )
 
-    response = client.get('/admin/bot/operators')
+    response = client.get('/bot/operators')
 
     assert response.status_code == 200
     assert b'Bot Operators' in response.data
@@ -576,7 +576,7 @@ def test_admin_bot_operators_api_returns_records(monkeypatch):
         ],
     )
 
-    response = client.get('/admin/bot/api/operators')
+    response = client.get('/bot/api/operators')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -616,7 +616,7 @@ def test_admin_bot_queues_page_renders_queue_summary(monkeypatch):
         lambda database_url: queue_repository,
     )
 
-    response = client.get('/admin/bot/queues')
+    response = client.get('/bot/queues')
 
     assert response.status_code == 200
     assert b'Bot Queues' in response.data
@@ -675,7 +675,7 @@ def test_admin_bot_advance_queue_api_updates_snapshot_and_emits_audit_entry(monk
         lambda database_url: audit_repository,
     )
 
-    response = client.post('/admin/bot/api/queues/guild-1:open-mic/advance')
+    response = client.post('/bot/api/queues/guild-1:open-mic/advance')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -721,7 +721,7 @@ def test_admin_bot_mileage_page_renders_user_summary_and_tiers(monkeypatch):
         lambda database_url: mileage_repository,
     )
 
-    response = client.get('/admin/bot/mileage')
+    response = client.get('/bot/mileage')
 
     assert response.status_code == 200
     assert b'Mileage / XP' in response.data
@@ -769,7 +769,7 @@ def test_admin_bot_adjust_mileage_user_api_updates_total_and_emits_audit_entry(m
     )
 
     response = client.post(
-        '/admin/bot/api/mileage/users/u1/adjust',
+        '/bot/api/mileage/users/u1/adjust',
         json={
             'display_name': 'Alpha',
             'delta': 12,
@@ -833,7 +833,7 @@ def test_admin_bot_reverse_mileage_event_api_appends_reversal_and_audit(monkeypa
     )
 
     response = client.post(
-        f'/admin/bot/api/mileage/events/{original_event.event_id}/reverse',
+        f'/bot/api/mileage/events/{original_event.event_id}/reverse',
         json={'reason': 'Duplicate credit'},
     )
 
@@ -877,7 +877,7 @@ def test_admin_bot_syndication_page_renders_configured_sources(monkeypatch):
         lambda database_url: repository,
     )
 
-    response = client.get('/admin/bot/syndication')
+    response = client.get('/bot/syndication')
 
     assert response.status_code == 200
     assert b'Configured Sources' in response.data
@@ -919,7 +919,7 @@ def test_admin_bot_syndication_page_renders_retry_controls_for_writer(monkeypatc
         ),
     )
 
-    response = client.get('/admin/bot/syndication')
+    response = client.get('/bot/syndication')
 
     assert response.status_code == 200
     assert b'Retry poll' in response.data
@@ -958,7 +958,7 @@ def test_admin_bot_syndication_sources_api_returns_snapshot(monkeypatch):
         lambda database_url: repository,
     )
 
-    response = client.get('/admin/bot/api/syndication/sources')
+    response = client.get('/bot/api/syndication/sources')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -986,7 +986,7 @@ def test_admin_bot_syndication_channels_api_returns_bindings(monkeypatch):
         ),
     )
 
-    response = client.get('/admin/bot/api/syndication/channels')
+    response = client.get('/bot/api/syndication/channels')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1033,7 +1033,7 @@ def test_admin_bot_config_page_renders_sources_and_channel_bindings(monkeypatch)
         ),
     )
 
-    response = client.get('/admin/bot/config')
+    response = client.get('/bot/config')
 
     assert response.status_code == 200
     assert b'Runtime Configuration' in response.data
@@ -1077,7 +1077,7 @@ def test_admin_bot_config_api_returns_repository_managed_bindings(monkeypatch):
         ),
     )
 
-    response = client.get('/admin/bot/api/config')
+    response = client.get('/bot/api/config')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1124,7 +1124,7 @@ def test_admin_bot_upsert_channel_binding_api_updates_repository(monkeypatch):
     )
 
     response = client.post(
-        '/admin/bot/api/config/channels',
+        '/bot/api/config/channels',
         json={'binding_key': 'announcements', 'channel_id': 200},
     )
 
@@ -1178,7 +1178,7 @@ def test_admin_bot_upsert_channel_binding_api_succeeds_when_audit_is_degraded(mo
     )
 
     response = client.post(
-        '/admin/bot/api/config/channels',
+        '/bot/api/config/channels',
         json={'binding_key': 'announcements', 'channel_id': 200},
     )
 
@@ -1222,7 +1222,7 @@ def test_admin_bot_disable_syndication_source_api_updates_enabled_state(monkeypa
         lambda database_url: repository,
     )
 
-    response = client.post('/admin/bot/api/config/sources/youtube/disable')
+    response = client.post('/bot/api/config/sources/youtube/disable')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1269,7 +1269,7 @@ def test_admin_bot_disable_syndication_source_api_emits_audit_entry(monkeypatch)
         lambda database_url: audit_repository,
     )
 
-    response = client.post('/admin/bot/api/config/sources/youtube/disable')
+    response = client.post('/bot/api/config/sources/youtube/disable')
 
     assert response.status_code == 200
     assert len(audit_repository.entries) == 1
@@ -1333,7 +1333,7 @@ def test_admin_bot_disable_syndication_source_api_succeeds_when_audit_is_degrade
         lambda database_url: _FailingAuditRepository(),
     )
 
-    response = client.post('/admin/bot/api/config/sources/youtube/disable')
+    response = client.post('/bot/api/config/sources/youtube/disable')
 
     assert response.status_code == 200
     assert response.headers[admin_bot.BOT_AUDIT_STATUS_HEADER] == 'degraded'
@@ -1373,7 +1373,7 @@ def test_admin_bot_commands_page_renders_poll_all_command(monkeypatch):
         ),
     )
 
-    response = client.get('/admin/bot/commands')
+    response = client.get('/bot/commands')
 
     assert response.status_code == 200
     assert b'Command Actions' in response.data
@@ -1389,7 +1389,7 @@ def test_admin_bot_poll_all_sources_api_rejects_missing_scope():
         flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
         flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = ['ops.read']
 
-    response = client.post('/admin/bot/api/commands/poll-all')
+    response = client.post('/bot/api/commands/poll-all')
 
     assert response.status_code == 403
     payload = response.get_json()
@@ -1447,7 +1447,7 @@ def test_admin_bot_poll_all_sources_api_returns_summary(monkeypatch):
         },
     )
 
-    response = client.post('/admin/bot/api/commands/poll-all')
+    response = client.post('/bot/api/commands/poll-all')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1475,7 +1475,7 @@ def test_admin_bot_retry_syndication_api_rejects_missing_scope(monkeypatch):
         flask_session[admin_bot.BOT_OPS_SESSION_KEY] = '123456'
         flask_session[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = ['ops.read']
 
-    response = client.post('/admin/bot/api/syndication/sources/youtube/retry')
+    response = client.post('/bot/api/syndication/sources/youtube/retry')
 
     assert response.status_code == 403
     payload = response.get_json()
@@ -1533,7 +1533,7 @@ def test_admin_bot_retry_syndication_api_updates_source_state(monkeypatch):
         },
     )
 
-    response = client.post('/admin/bot/api/syndication/sources/youtube/retry')
+    response = client.post('/bot/api/syndication/sources/youtube/retry')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1575,7 +1575,7 @@ def test_admin_bot_reset_syndication_checkpoint_api_clears_checkpoint(monkeypatc
     )
 
     response = client.post(
-        '/admin/bot/api/syndication/sources/youtube/checkpoint/reset')
+        '/bot/api/syndication/sources/youtube/checkpoint/reset')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1605,7 +1605,7 @@ def test_admin_bot_disable_operator_api_disables_record(monkeypatch):
         },
     )
 
-    response = client.post('/admin/bot/api/operators/123456/disable')
+    response = client.post('/bot/api/operators/123456/disable')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1656,7 +1656,7 @@ def test_admin_bot_disable_operator_api_emits_audit_entry(monkeypatch):
         lambda database_url: audit_repository,
     )
 
-    response = client.post('/admin/bot/api/operators/123456/disable')
+    response = client.post('/bot/api/operators/123456/disable')
 
     assert response.status_code == 200
     assert len(audit_repository.entries) == 1
@@ -1697,7 +1697,7 @@ def test_admin_bot_disable_operator_api_succeeds_when_audit_is_degraded(monkeypa
         lambda database_url: _FailingAuditRepository(),
     )
 
-    response = client.post('/admin/bot/api/operators/123456/disable')
+    response = client.post('/bot/api/operators/123456/disable')
 
     assert response.status_code == 200
     assert response.headers[admin_bot.BOT_AUDIT_STATUS_HEADER] == 'degraded'
@@ -1726,7 +1726,7 @@ def test_admin_bot_disable_operator_api_rejects_missing_scope(monkeypatch):
         fake_set_bot_operator_active,
     )
 
-    response = client.post('/admin/bot/api/operators/123456/disable')
+    response = client.post('/bot/api/operators/123456/disable')
 
     assert response.status_code == 403
     payload = response.get_json()
@@ -1758,7 +1758,7 @@ def test_admin_bot_enable_operator_api_enables_record(monkeypatch):
         },
     )
 
-    response = client.post('/admin/bot/api/operators/123456/enable')
+    response = client.post('/bot/api/operators/123456/enable')
 
     assert response.status_code == 200
     payload = response.get_json()
@@ -1791,7 +1791,7 @@ def test_admin_bot_update_operator_scopes_api_updates_scopes(monkeypatch):
     )
 
     response = client.post(
-        '/admin/bot/api/operators/123456/scopes',
+        '/bot/api/operators/123456/scopes',
         json={'scopes': ['ops.read', 'queue.write']},
     )
 
@@ -1822,7 +1822,7 @@ def test_admin_bot_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
     )
 
     response = client.post(
-        '/admin/bot/api/operators/123456/scopes',
+        '/bot/api/operators/123456/scopes',
         json={'scopes': []},
     )
 
@@ -1830,3 +1830,5 @@ def test_admin_bot_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
     payload = response.get_json()
     assert payload['error']['code'] == 'invalid_operator_scopes'
     assert called['value'] is False
+
+

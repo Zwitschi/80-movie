@@ -25,7 +25,7 @@
         <td>{{ review.review_rating }}</td>
         <td>{{ review.date_published }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+          <form method="post" action="{{ url_for('content.edit_reviews') }}">
             <input type="hidden" name="action" value="remove_review" />
             <input
               type="hidden"
@@ -44,7 +44,7 @@
   {% endif %}
 
   <h3>Add Review</h3>
-  <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+  <form method="post" action="{{ url_for('content.edit_reviews') }}">
     <input type="hidden" name="action" value="add_review" />
 
     <label for="review_author_name"
@@ -98,7 +98,7 @@
 {# ── Aggregate rating ───────────────────────────────────────── #}
 <section>
   <h2>Aggregate Rating</h2>
-  <form method="post" action="{{ url_for('admin.edit_reviews') }}">
+  <form method="post" action="{{ url_for('content.edit_reviews') }}">
     <input type="hidden" name="action" value="save_aggregate" />
 
     <label for="agg_rating_value">Rating value</label>
@@ -156,3 +156,4 @@
   </form>
 </section>
 {% endblock %}
+

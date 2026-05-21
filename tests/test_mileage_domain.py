@@ -176,3 +176,4 @@ def test_mileage_command_handlers_drive_adjust_and_reverse():
     )
     assert reversal.reversed_event_id == event.event_id
     assert detail.total.total_points == 0
+

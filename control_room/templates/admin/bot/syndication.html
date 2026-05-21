@@ -132,15 +132,15 @@ Syndication{% endblock %} {% block bot_content %}
   <h2>API Links</h2>
   <ul>
     <li>
-      <a href="{{ url_for('admin_bot.syndication_api') }}">Syndication JSON</a>
+      <a href="{{ url_for('bot.syndication_api') }}">Syndication JSON</a>
     </li>
     <li>
-      <a href="{{ url_for('admin_bot.syndication_sources_api') }}"
+      <a href="{{ url_for('bot.syndication_sources_api') }}"
         >Sources JSON</a
       >
     </li>
     <li>
-      <a href="{{ url_for('admin_bot.syndication_channels_api') }}"
+      <a href="{{ url_for('bot.syndication_channels_api') }}"
         >Channel Bindings JSON</a
       >
     </li>
@@ -151,3 +151,4 @@ Syndication{% endblock %} {% block bot_content %}
   </ul>
 </section>
 {% endblock %}
+

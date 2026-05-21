@@ -491,3 +491,4 @@ def test_postgres_syndication_source_repository_returns_none_when_tables_missing
     loaded_state = repository.get_by_source_key("youtube")
 
     assert loaded_state is None
+

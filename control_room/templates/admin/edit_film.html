@@ -31,7 +31,7 @@ Details{% endblock %} {% block admin_content %}
   </ul>
 </section>
 
-<form method="post" class="stack-md" action="{{ url_for('admin.edit_film') }}">
+<form method="post" class="stack-md" action="{{ url_for('content.edit_film') }}">
   <label>
     Title
     <input
@@ -126,3 +126,4 @@ Details{% endblock %} {% block admin_content %}
 </form>
 
 {% endblock %}
+

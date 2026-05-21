@@ -25,7 +25,7 @@ endblock %} {% block bot_content %}
 
 <section>
   <h2>Filters</h2>
-  <form method="get" action="{{ url_for('admin_bot.mileage_page') }}">
+  <form method="get" action="{{ url_for('bot.mileage_page') }}">
     <label for="mileage-search">Search</label>
     <input
       id="mileage-search"
@@ -83,3 +83,4 @@ endblock %} {% block bot_content %}
   {% endif %}
 </section>
 {% endblock %}
+

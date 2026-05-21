@@ -19,8 +19,8 @@
 SITE_URL=https://www.openmicodyssey.com
 DATABASE_URL=postgresql://user:pass@192.168.88.35:5432/omo
 SECRET_KEY=<generate-with-python-c-import-secrets-print-secrets.token-hex-32>
-ADMIN_PASSWORD_HASH=<generate-with-python-c-from-werkzeug-security-import-generate-password-hash-print-generate-password-hash-your-password>
-ADMIN_USERNAME=admin
 CURRENT_YEAR=2026
 MAPBOX_ACCESS_TOKEN=<optional>
 ```
+
+> `ADMIN_USERNAME` and `ADMIN_PASSWORD_HASH` are control room variables — do not set them on the website service.

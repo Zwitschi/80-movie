@@ -113,3 +113,4 @@ def test_build_content_store_website_content_repository_reads_live_content():
     assert metadata.title
     assert isinstance(screenings, tuple)
     assert isinstance(campaigns, tuple)
+

@@ -13,7 +13,7 @@
         {# ── General media fields ───────────────────────────────────── #}
         <section>
           <h2>General</h2>
-          <form method="post" action="{{ url_for('admin.edit_media_assets') }}">
+          <form method="post" action="{{ url_for('content.edit_media_assets') }}">
             <input type="hidden" name="action" value="save_media" />
 
             <label for="poster_image">Poster image URL</label>
@@ -60,7 +60,7 @@
             </p>
           {% endif %}
 
-          <form method="post" action="{{ url_for('admin.edit_media_assets') }}">
+          <form method="post" action="{{ url_for('content.edit_media_assets') }}">
             <input type="hidden" name="action" value="save_trailer" />
 
             <label for="trailer_name">Name</label>
@@ -106,3 +106,4 @@
           </form>
         </section>
 {% endblock %}
+

@@ -74,7 +74,7 @@ def _handle_film_request_post(request):
     payload['movie'] = update
     try:
         writer.write('movies.json', payload)
-        return redirect(url_for('admin.edit_film', saved='1'))
+        return redirect(url_for('content.edit_film', saved='1'))
     except ContentWriteError as e:
         return render_template(
             'admin/edit_film.html',
@@ -120,7 +120,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 success, save_error = save_json(
                     'gallery.json', gallery_payload)
                 if success:
-                    return redirect(url_for('admin.manage_media', saved='1'))
+                    return redirect(url_for('content.manage_media', saved='1'))
                 else:
                     return render_template(
                         'admin/manage_media.html',
@@ -130,7 +130,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                         form_data=_gallery_form_fields(),
                         **_ctx(),
                     )
-        return redirect(url_for('admin.manage_media'))
+        return redirect(url_for('content.manage_media'))
 
     if action == 'remove_category':
         category_name = request.form.get('category_name', '').strip()
@@ -147,7 +147,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
             gallery_payload['gallery'] = gallery_items
             success, save_error = save_json('gallery.json', gallery_payload)
             if success:
-                return redirect(url_for('admin.manage_media', saved='1'))
+                return redirect(url_for('content.manage_media', saved='1'))
             else:
                 return render_template(
                     'admin/manage_media.html',
@@ -157,7 +157,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     form_data=_gallery_form_fields(),
                     **_ctx(),
                 )
-        return redirect(url_for('admin.manage_media'))
+        return redirect(url_for('content.manage_media'))
 
     if action == 'rename_category':
         old_name = request.form.get('old_category_name', '').strip()
@@ -175,7 +175,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
             gallery_payload['gallery'] = gallery_items
             success, save_error = save_json('gallery.json', gallery_payload)
             if success:
-                return redirect(url_for('admin.manage_media', saved='1'))
+                return redirect(url_for('content.manage_media', saved='1'))
             else:
                 return render_template(
                     'admin/manage_media.html',
@@ -185,7 +185,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     form_data=_gallery_form_fields(),
                     **_ctx(),
                 )
-        return redirect(url_for('admin.manage_media'))
+        return redirect(url_for('content.manage_media'))
 
     # --- Item reorder ---
     if action == 'reorder':
@@ -199,10 +199,10 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     success, save_error = save_json(
                         'gallery.json', gallery_payload)
                     if success:
-                        return redirect(url_for('admin.manage_media', saved='1'))
+                        return redirect(url_for('content.manage_media', saved='1'))
             except (ValueError, IndexError):
                 pass
-        return redirect(url_for('admin.manage_media'))
+        return redirect(url_for('content.manage_media'))
 
     # --- Item update ---
     if action == 'update':
@@ -223,7 +223,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 success, save_error = save_json(
                     'gallery.json', gallery_payload)
                 if success:
-                    return redirect(url_for('admin.manage_media', saved='1'))
+                    return redirect(url_for('content.manage_media', saved='1'))
                 else:
                     return render_template(
                         'admin/manage_media.html',
@@ -235,7 +235,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     )
         except ValueError:
             pass
-        return redirect(url_for('admin.manage_media'))
+        return redirect(url_for('content.manage_media'))
 
     # --- Add/Remove (existing) ---
     candidate = None
@@ -265,7 +265,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
 
     success, save_error = save_json('gallery.json', gallery_payload)
     if success:
-        return redirect(url_for('admin.manage_media', saved='1'))
+        return redirect(url_for('content.manage_media', saved='1'))
     else:
         return render_template(
             'admin/manage_media.html',
@@ -351,7 +351,7 @@ def _handle_content_post(request, content_payload, pages_payload, page_context, 
             **page_context,
         )
 
-    return redirect(url_for('admin.edit_content', saved='1'))
+    return redirect(url_for('content.edit_content', saved='1'))
 
 
 def _handle_content_request(request):
@@ -418,7 +418,7 @@ def _handle_events_request(request):
             events_payload['events'] = events
             success, err = save_json('events.json', events_payload)
             if success:
-                return redirect(url_for('admin.edit_events', saved='1'))
+                return redirect(url_for('content.edit_events', saved='1'))
             save_error = err
 
         elif action == 'remove_offer':
@@ -427,7 +427,7 @@ def _handle_events_request(request):
             offers_payload['offers'] = offers
             success, err = save_json('offers.json', offers_payload)
             if success:
-                return redirect(url_for('admin.edit_events', saved='1'))
+                return redirect(url_for('content.edit_events', saved='1'))
             save_error = err
 
         elif action == 'add_event':
@@ -439,7 +439,7 @@ def _handle_events_request(request):
                 events_payload['events'] = events
                 success, err = save_json('events.json', events_payload)
                 if success:
-                    return redirect(url_for('admin.edit_events', saved='1'))
+                    return redirect(url_for('content.edit_events', saved='1'))
                 save_error = err
 
         elif action == 'add_offer':
@@ -451,7 +451,7 @@ def _handle_events_request(request):
                 offers_payload['offers'] = offers
                 success, err = save_json('offers.json', offers_payload)
                 if success:
-                    return redirect(url_for('admin.edit_events', saved='1'))
+                    return redirect(url_for('content.edit_events', saved='1'))
                 save_error = err
 
         if save_error is None:
@@ -502,7 +502,7 @@ def _handle_faq_request(request):
             faq_payload['faq'] = updated
             success, save_error = save_json('faq.json', faq_payload)
             if success:
-                return redirect(url_for('admin.edit_faq', saved='1'))
+                return redirect(url_for('content.edit_faq', saved='1'))
 
     save_success = (save_error is None and request.method == 'POST') or (
         request.args.get('saved') == '1')
@@ -547,7 +547,7 @@ def _handle_people_request(request):
                 people_payload['people'] = people
                 success, save_error = save_json('people.json', people_payload)
                 if success:
-                    return redirect(url_for('admin.edit_people', saved='1'))
+                    return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'remove_person':
             key = request.form.get('person_key', '').strip()
@@ -557,7 +557,7 @@ def _handle_people_request(request):
                 people_payload['people'] = people
                 success, save_error = save_json('people.json', people_payload)
                 if success:
-                    return redirect(url_for('admin.edit_people', saved='1'))
+                    return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'add_contributor':
             section = request.form.get(
@@ -577,7 +577,7 @@ def _handle_people_request(request):
                     success, save_error = save_json(
                         'people.json', people_payload)
                     if success:
-                        return redirect(url_for('admin.edit_people', saved='1'))
+                        return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'remove_contributor':
             section = request.form.get(
@@ -589,7 +589,7 @@ def _handle_people_request(request):
             people_payload['contributors'] = contributors
             success, save_error = save_json('people.json', people_payload)
             if success:
-                return redirect(url_for('admin.edit_people', saved='1'))
+                return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'add_credit':
             entry, err = _credit_from_form(request.form, prefix='credit_')
@@ -601,7 +601,7 @@ def _handle_people_request(request):
                 people_payload['credits_people'] = credits_people
                 success, save_error = save_json('people.json', people_payload)
                 if success:
-                    return redirect(url_for('admin.edit_people', saved='1'))
+                    return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'remove_credit':
             credits_people = process_list_action(
@@ -609,7 +609,7 @@ def _handle_people_request(request):
             people_payload['credits_people'] = credits_people
             success, save_error = save_json('people.json', people_payload)
             if success:
-                return redirect(url_for('admin.edit_people', saved='1'))
+                return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'add_org':
             entry, err = _org_from_form(request.form, prefix='org_')
@@ -622,7 +622,7 @@ def _handle_people_request(request):
                 success, save_error = save_json(
                     'organizations.json', orgs_payload)
                 if success:
-                    return redirect(url_for('admin.edit_people', saved='1'))
+                    return redirect(url_for('content.edit_people', saved='1'))
 
         elif action == 'remove_org':
             key = request.form.get('org_key', '').strip()
@@ -633,7 +633,7 @@ def _handle_people_request(request):
                 success, save_error = save_json(
                     'organizations.json', orgs_payload)
                 if success:
-                    return redirect(url_for('admin.edit_people', saved='1'))
+                    return redirect(url_for('content.edit_people', saved='1'))
 
     save_success = (save_error is None and request.method ==
                     'POST') or (request.args.get('saved') == '1')
@@ -745,7 +745,7 @@ def _handle_connect_social_request(request):
                 social_payload['social'] = list(social) + [entry]
                 try:
                     writer.write('social.json', social_payload)
-                    return redirect(url_for('admin.edit_connect_social', saved='1'))
+                    return redirect(url_for('content.edit_connect_social', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
 
@@ -757,7 +757,7 @@ def _handle_connect_social_request(request):
                     updated.pop(idx)
                     social_payload['social'] = updated
                     writer.write('social.json', social_payload)
-                    return redirect(url_for('admin.edit_connect_social', saved='1'))
+                    return redirect(url_for('content.edit_connect_social', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -773,7 +773,7 @@ def _handle_connect_social_request(request):
                         updated[idx] = entry
                         social_payload['social'] = updated
                         writer.write('social.json', social_payload)
-                        return redirect(url_for('admin.edit_connect_social', saved='1'))
+                        return redirect(url_for('content.edit_connect_social', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -787,7 +787,7 @@ def _handle_connect_social_request(request):
                 )
                 social_payload['social'] = updated
                 writer.write('social.json', social_payload)
-                return redirect(url_for('admin.edit_connect_social', saved='1'))
+                return redirect(url_for('content.edit_connect_social', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -835,7 +835,7 @@ def _handle_connect_supporters_request(request):
                 connect_payload['connect'] = connect
                 try:
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                    return redirect(url_for('content.edit_connect_supporters', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
 
@@ -848,7 +848,7 @@ def _handle_connect_supporters_request(request):
                     connect.setdefault('links', {})['campaigns'] = updated
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                    return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -865,7 +865,7 @@ def _handle_connect_supporters_request(request):
                         connect.setdefault('links', {})['campaigns'] = updated
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
-                        return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                        return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -880,7 +880,7 @@ def _handle_connect_supporters_request(request):
                 connect.setdefault('links', {})['campaigns'] = updated
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
-                return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -894,7 +894,7 @@ def _handle_connect_supporters_request(request):
                 connect_payload['connect'] = connect
                 try:
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                    return redirect(url_for('content.edit_connect_supporters', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
 
@@ -907,7 +907,7 @@ def _handle_connect_supporters_request(request):
                     connect.setdefault('links', {})['channels'] = updated
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                    return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -924,7 +924,7 @@ def _handle_connect_supporters_request(request):
                         connect.setdefault('links', {})['channels'] = updated
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
-                        return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                        return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -939,7 +939,7 @@ def _handle_connect_supporters_request(request):
                 connect.setdefault('links', {})['channels'] = updated
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
-                return redirect(url_for('admin.edit_connect_supporters', saved='1'))
+                return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -995,7 +995,7 @@ def _handle_connect_patreon_request(request):
             connect_payload['connect'] = connect
             try:
                 writer.write('connect.json', connect_payload)
-                return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -1009,7 +1009,7 @@ def _handle_connect_patreon_request(request):
                 connect_payload['connect'] = connect
                 try:
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                    return redirect(url_for('content.edit_connect_patreon', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
 
@@ -1023,7 +1023,7 @@ def _handle_connect_patreon_request(request):
                     connect['page'] = page
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                    return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -1042,7 +1042,7 @@ def _handle_connect_patreon_request(request):
                         connect['page'] = page
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
-                        return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                        return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -1058,7 +1058,7 @@ def _handle_connect_patreon_request(request):
                 connect['page'] = page
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
-                return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -1072,7 +1072,7 @@ def _handle_connect_patreon_request(request):
                 connect_payload['connect'] = connect
                 try:
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                    return redirect(url_for('content.edit_connect_patreon', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
 
@@ -1086,7 +1086,7 @@ def _handle_connect_patreon_request(request):
                     connect['page'] = page
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
-                    return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                    return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -1104,7 +1104,7 @@ def _handle_connect_patreon_request(request):
                         connect['page'] = page
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
-                        return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                        return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
@@ -1120,7 +1120,7 @@ def _handle_connect_patreon_request(request):
                 connect['page'] = page
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
-                return redirect(url_for('admin.edit_connect_patreon', saved='1'))
+                return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -1130,7 +1130,7 @@ def _handle_connect_patreon_request(request):
 
 
 def _handle_connect_request(request):
-    return redirect(url_for('admin.edit_connect_social'))
+    return redirect(url_for('content.edit_connect_social'))
 
 
 def _handle_media_assets_request(request):
@@ -1176,7 +1176,7 @@ def _handle_media_assets_request(request):
             assets_payload['media'] = media
             try:
                 writer.write('media_assets.json', assets_payload)
-                return redirect(url_for('admin.edit_media_assets', saved='1'))
+                return redirect(url_for('content.edit_media_assets', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -1203,7 +1203,7 @@ def _handle_media_assets_request(request):
             assets_payload['media'] = media
             try:
                 writer.write('media_assets.json', assets_payload)
-                return redirect(url_for('admin.edit_media_assets', saved='1'))
+                return redirect(url_for('content.edit_media_assets', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
 
@@ -1242,7 +1242,7 @@ def _handle_reviews_request(request):
                 reviews_payload['reviews'] = reviews
                 success, err = save_json('reviews.json', reviews_payload)
                 if success:
-                    return redirect(url_for('admin.edit_reviews', saved='1'))
+                    return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err
 
         elif action == 'remove_review':
@@ -1251,7 +1251,7 @@ def _handle_reviews_request(request):
             reviews_payload['reviews'] = reviews
             success, err = save_json('reviews.json', reviews_payload)
             if success:
-                return redirect(url_for('admin.edit_reviews', saved='1'))
+                return redirect(url_for('content.edit_reviews', saved='1'))
             save_error = err
 
         elif action == 'save_aggregate':
@@ -1282,7 +1282,7 @@ def _handle_reviews_request(request):
                 reviews_payload['aggregate_rating'] = candidate
                 success, err = save_json('reviews.json', reviews_payload)
                 if success:
-                    return redirect(url_for('admin.edit_reviews', saved='1'))
+                    return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err
 
     save_success = (save_error is None and request.method == 'POST') or (
@@ -1295,3 +1295,4 @@ def _handle_reviews_request(request):
         aggregate=aggregate,
         **_ctx(),
     )
+

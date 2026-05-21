@@ -7,14 +7,14 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
 
 <p>
   Manage supporter page copy, benefits, and tiers. Switch to
-  <a href="{{ url_for('admin.edit_connect_social') }}">Social Links</a>
+  <a href="{{ url_for('content.edit_connect_social') }}">Social Links</a>
   or
-  <a href="{{ url_for('admin.edit_connect_supporters') }}">Supporter Links</a>.
+  <a href="{{ url_for('content.edit_connect_supporters') }}">Supporter Links</a>.
 </p>
 
 <section>
   <h2>Page Copy</h2>
-  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+  <form method="post" action="{{ url_for('content.edit_connect_patreon') }}">
     <input type="hidden" name="action" value="save_page" />
     <label for="page_title">Title</label>
     <input
@@ -78,7 +78,7 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
       {% for item in benefits %}
       <tr>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}">
             <input type="hidden" name="action" value="update_benefit" />
             <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
             <input type="text" name="benefit_title" value="{{ item.title }}" required />
@@ -90,19 +90,19 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
             <button type="submit">Save</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_up_benefit" />
             <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_down_benefit" />
             <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove_benefit" />
             <input type="hidden" name="benefit_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -117,7 +117,7 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
   {% endif %}
 
   <h3>Add Benefit</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+  <form method="post" action="{{ url_for('content.edit_connect_patreon') }}">
     <input type="hidden" name="action" value="add_benefit" />
     <label for="benefit_title">Title <span aria-hidden="true">*</span></label>
     <input id="benefit_title" name="benefit_title" type="text" required />
@@ -147,7 +147,7 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
       {% for item in tiers %}
       <tr>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}">
             <input type="hidden" name="action" value="update_tier" />
             <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
             <input type="text" name="tier_name" value="{{ item.name }}" required />
@@ -162,19 +162,19 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
             <button type="submit">Save</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_up_tier" />
             <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_down_tier" />
             <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_patreon') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove_tier" />
             <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -189,7 +189,7 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
   {% endif %}
 
   <h3>Add Tier</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect_patreon') }}">
+  <form method="post" action="{{ url_for('content.edit_connect_patreon') }}">
     <input type="hidden" name="action" value="add_tier" />
     <label for="tier_name">Name <span aria-hidden="true">*</span></label>
     <input id="tier_name" name="tier_name" type="text" required />
@@ -206,3 +206,4 @@ Tiers{% endblock %} {% block admin_content %} {% if save_success %}
   </form>
 </section>
 {% endblock %}
+

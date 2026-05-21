@@ -32,21 +32,21 @@ endblock %} {% block bot_content %}
         {% if operator.is_active %}
         <form
           method="post"
-          action="{{ url_for('admin_bot.disable_operator_page_action', user_id=operator.discord_user_id) }}"
+          action="{{ url_for('bot.disable_operator_page_action', user_id=operator.discord_user_id) }}"
         >
           <button type="submit">Disable</button>
         </form>
         {% else %}
         <form
           method="post"
-          action="{{ url_for('admin_bot.enable_operator_page_action', user_id=operator.discord_user_id) }}"
+          action="{{ url_for('bot.enable_operator_page_action', user_id=operator.discord_user_id) }}"
         >
           <button type="submit">Enable</button>
         </form>
         {% endif %}
         <form
           method="post"
-          action="{{ url_for('admin_bot.update_operator_scopes_page_action', user_id=operator.discord_user_id) }}"
+          action="{{ url_for('bot.update_operator_scopes_page_action', user_id=operator.discord_user_id) }}"
         >
           <label>
             Scopes
@@ -67,3 +67,4 @@ endblock %} {% block bot_content %}
   {% endif %}
 </section>
 {% endblock %}
+

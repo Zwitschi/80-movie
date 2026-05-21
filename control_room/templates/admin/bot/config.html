@@ -125,7 +125,7 @@ endblock %} {% block bot_content %}
   {% endif %} {% if config_snapshot.permissions.can_manage_channel_bindings %}
   <form
     method="post"
-    action="{{ url_for('admin_bot.upsert_channel_binding_page_action') }}"
+    action="{{ url_for('bot.upsert_channel_binding_page_action') }}"
   >
     <label for="channel_binding_key">Binding key</label>
     <input id="channel_binding_key" name="binding_key" type="text" />
@@ -157,7 +157,7 @@ endblock %} {% block bot_content %}
   {% endif %} {% if config_snapshot.permissions.can_manage_role_bindings %}
   <form
     method="post"
-    action="{{ url_for('admin_bot.upsert_role_binding_page_action') }}"
+    action="{{ url_for('bot.upsert_role_binding_page_action') }}"
   >
     <label for="role_binding_key">Binding key</label>
     <input id="role_binding_key" name="binding_key" type="text" />
@@ -172,8 +172,9 @@ endblock %} {% block bot_content %}
   <h2>API Links</h2>
   <ul>
     <li>
-      <a href="{{ url_for('admin_bot.config_api') }}">Configuration JSON</a>
+      <a href="{{ url_for('bot.config_api') }}">Configuration JSON</a>
     </li>
   </ul>
 </section>
 {% endblock %}
+

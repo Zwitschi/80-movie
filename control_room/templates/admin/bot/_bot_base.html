@@ -8,26 +8,27 @@ admin_content %}
   </p>
   <nav aria-label="Bot control room sections">
     <ul>
-      <li><a href="{{ url_for('admin_bot.overview') }}">Overview</a></li>
-      <li><a href="{{ url_for('admin_bot.health_page') }}">Health</a></li>
-      <li><a href="{{ url_for('admin_bot.queues_page') }}">Queues</a></li>
-      <li><a href="{{ url_for('admin_bot.mileage_page') }}">Mileage</a></li>
-      <li><a href="{{ url_for('admin_bot.config_page') }}">Config</a></li>
-      <li><a href="{{ url_for('admin_bot.commands_page') }}">Commands</a></li>
+      <li><a href="{{ url_for('bot.overview') }}">Overview</a></li>
+      <li><a href="{{ url_for('bot.health_page') }}">Health</a></li>
+      <li><a href="{{ url_for('bot.queues_page') }}">Queues</a></li>
+      <li><a href="{{ url_for('bot.mileage_page') }}">Mileage</a></li>
+      <li><a href="{{ url_for('bot.config_page') }}">Config</a></li>
+      <li><a href="{{ url_for('bot.commands_page') }}">Commands</a></li>
       <li>
-        <a href="{{ url_for('admin_bot.syndication_page') }}">Syndication</a>
+        <a href="{{ url_for('bot.syndication_page') }}">Syndication</a>
       </li>
       <li>
-        <a href="{{ url_for('admin_bot.onboarding_page') }}">Onboarding</a>
+        <a href="{{ url_for('bot.onboarding_page') }}">Onboarding</a>
       </li>
       <li>
-        <a href="{{ url_for('admin_bot.moderation_page') }}">Moderation</a>
+        <a href="{{ url_for('bot.moderation_page') }}">Moderation</a>
       </li>
-      <li><a href="{{ url_for('admin_bot.operators_page') }}">Operators</a></li>
+      <li><a href="{{ url_for('bot.operators_page') }}">Operators</a></li>
     </ul>
   </nav>
-  <form method="post" action="{{ url_for('admin_bot.logout') }}">
+  <form method="post" action="{{ url_for('bot.logout') }}">
     <button type="submit">Sign out</button>
   </form>
 </section>
 {% block bot_content %}{% endblock %} {% endblock %}
+

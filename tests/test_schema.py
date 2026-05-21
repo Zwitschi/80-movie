@@ -184,3 +184,4 @@ class TestSchemaBuilder:
         """Test schema generation with minimal movie data."""
         # Skip this test for now as it requires too many fields
         pytest.skip("Minimal data test requires extensive setup")
+

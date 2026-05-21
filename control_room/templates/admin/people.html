@@ -30,7 +30,7 @@
           >
         </td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_people') }}">
+          <form method="post" action="{{ url_for('content.edit_people') }}">
             <input type="hidden" name="action" value="remove_person" />
             <input type="hidden" name="person_key" value="{{ key }}" />
             <button type="submit">Remove</button>
@@ -45,7 +45,7 @@
   {% endif %}
 
   <h3>Add Person</h3>
-  <form method="post" action="{{ url_for('admin.edit_people') }}">
+  <form method="post" action="{{ url_for('content.edit_people') }}">
     <input type="hidden" name="action" value="add_person" />
     <label for="person_name">Name <span aria-hidden="true">*</span></label>
     <input id="person_name" name="person_name" type="text" required />
@@ -98,7 +98,7 @@
           >
         </td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_people') }}">
+          <form method="post" action="{{ url_for('content.edit_people') }}">
             <input type="hidden" name="action" value="remove_contributor" />
             <input
               type="hidden"
@@ -122,7 +122,7 @@
   {% endif %} {% endfor %}
 
   <h3>Add Contributor</h3>
-  <form method="post" action="{{ url_for('admin.edit_people') }}">
+  <form method="post" action="{{ url_for('content.edit_people') }}">
     <input type="hidden" name="action" value="add_contributor" />
     <label for="contributor_section">Section</label>
     <select id="contributor_section" name="contributor_section">
@@ -176,7 +176,7 @@
           >
         </td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_people') }}">
+          <form method="post" action="{{ url_for('content.edit_people') }}">
             <input type="hidden" name="action" value="remove_credit" />
             <input
               type="hidden"
@@ -195,7 +195,7 @@
   {% endif %}
 
   <h3>Add Credit</h3>
-  <form method="post" action="{{ url_for('admin.edit_people') }}">
+  <form method="post" action="{{ url_for('content.edit_people') }}">
     <input type="hidden" name="action" value="add_credit" />
     <label for="credit_name">Name <span aria-hidden="true">*</span></label>
     <input id="credit_name" name="credit_name" type="text" required />
@@ -238,7 +238,7 @@
         </td>
         <td>{{ org.people | join(', ') }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_people') }}">
+          <form method="post" action="{{ url_for('content.edit_people') }}">
             <input type="hidden" name="action" value="remove_org" />
             <input type="hidden" name="org_key" value="{{ key }}" />
             <button type="submit">Remove</button>
@@ -253,7 +253,7 @@
   {% endif %}
 
   <h3>Add Organization</h3>
-  <form method="post" action="{{ url_for('admin.edit_people') }}">
+  <form method="post" action="{{ url_for('content.edit_people') }}">
     <input type="hidden" name="action" value="add_org" />
     <label for="org_name">Name <span aria-hidden="true">*</span></label>
     <input id="org_name" name="org_name" type="text" required />
@@ -267,3 +267,4 @@
   </form>
 </section>
 {% endblock %}
+

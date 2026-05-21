@@ -12,7 +12,7 @@ Login{% endblock %} {% block bot_content %}
   <p><strong>{{ error }}</strong></p>
   {% endif %} {% if oauth_ready %}
   <p>
-    <a href="{{ url_for('admin_bot.oauth_start', next=next_url) }}"
+    <a href="{{ url_for('bot.oauth_start', next=next_url) }}"
       >Continue with Discord</a
     >
   </p>
@@ -25,3 +25,4 @@ Login{% endblock %} {% block bot_content %}
   {% endif %}
 </section>
 {% endblock %}
+

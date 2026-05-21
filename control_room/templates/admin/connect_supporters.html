@@ -7,9 +7,9 @@ endblock %} {% block admin_content %} {% if save_success %}
 
 <p>
   Manage campaign and supporter links. Switch to
-  <a href="{{ url_for('admin.edit_connect_social') }}">Social Links</a>
+  <a href="{{ url_for('content.edit_connect_social') }}">Social Links</a>
   or
-  <a href="{{ url_for('admin.edit_connect_patreon') }}"
+  <a href="{{ url_for('content.edit_connect_patreon') }}"
     >Patreon Benefits &amp; Tiers</a
   >.
 </p>
@@ -31,7 +31,7 @@ endblock %} {% block admin_content %} {% if save_success %}
       {% for item in campaigns %}
       <tr>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}">
             <input type="hidden" name="action" value="update_campaign" />
             <input type="hidden" name="campaign_index" value="{{ loop.index0 }}" />
             <input type="text" name="campaign_label" value="{{ item.label }}" required />
@@ -49,19 +49,19 @@ endblock %} {% block admin_content %} {% if save_success %}
             <button type="submit">Save</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_up_campaign" />
             <input type="hidden" name="campaign_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_down_campaign" />
             <input type="hidden" name="campaign_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove_campaign" />
             <input type="hidden" name="campaign_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -76,7 +76,7 @@ endblock %} {% block admin_content %} {% if save_success %}
   {% endif %}
 
   <h3>Add Campaign Link</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}">
+  <form method="post" action="{{ url_for('content.edit_connect_supporters') }}">
     <input type="hidden" name="action" value="add_campaign" />
     <label for="campaign_label">Label <span aria-hidden="true">*</span></label>
     <input id="campaign_label" name="campaign_label" type="text" required />
@@ -116,7 +116,7 @@ endblock %} {% block admin_content %} {% if save_success %}
       {% for item in channels %}
       <tr>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}">
             <input type="hidden" name="action" value="update_supporter" />
             <input type="hidden" name="supporter_index" value="{{ loop.index0 }}" />
             <input type="text" name="supporter_label" value="{{ item.label }}" required />
@@ -134,19 +134,19 @@ endblock %} {% block admin_content %} {% if save_success %}
             <button type="submit">Save</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_up_supporter" />
             <input type="hidden" name="supporter_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.first %}disabled{% endif %}>Up</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="move_down_supporter" />
             <input type="hidden" name="supporter_index" value="{{ loop.index0 }}" />
             <button type="submit" {% if loop.last %}disabled{% endif %}>Down</button>
           </form>
 
-          <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}" style="display:inline;">
+          <form method="post" action="{{ url_for('content.edit_connect_supporters') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove_supporter" />
             <input type="hidden" name="supporter_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -161,7 +161,7 @@ endblock %} {% block admin_content %} {% if save_success %}
   {% endif %}
 
   <h3>Add Supporter Link</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect_supporters') }}">
+  <form method="post" action="{{ url_for('content.edit_connect_supporters') }}">
     <input type="hidden" name="action" value="add_supporter" />
     <label for="supporter_label">Label <span aria-hidden="true">*</span></label>
     <input id="supporter_label" name="supporter_label" type="text" required />
@@ -184,3 +184,4 @@ endblock %} {% block admin_content %} {% if save_success %}
   </form>
 </section>
 {% endblock %}
+

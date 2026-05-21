@@ -28,7 +28,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
         </td>
         <td>{{ item.description }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+          <form method="post" action="{{ url_for('content.edit_connect') }}">
             <input type="hidden" name="action" value="remove_social" />
             <input
               type="hidden"
@@ -47,7 +47,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   {% endif %}
 
   <h3>Add Social Link</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="add_social" />
     <label for="social_label">Label <span aria-hidden="true">*</span></label>
     <input id="social_label" name="social_label" type="text" required />
@@ -87,7 +87,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
           >
         </td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+          <form method="post" action="{{ url_for('content.edit_connect') }}">
             <input type="hidden" name="action" value="remove_campaign" />
             <input
               type="hidden"
@@ -106,7 +106,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   {% endif %}
 
   <h3>Add Campaign Link</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="add_campaign" />
     <label for="campaign_label">Label <span aria-hidden="true">*</span></label>
     <input id="campaign_label" name="campaign_label" type="text" required />
@@ -153,7 +153,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
           >
         </td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+          <form method="post" action="{{ url_for('content.edit_connect') }}">
             <input type="hidden" name="action" value="remove_supporter" />
             <input
               type="hidden"
@@ -172,7 +172,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   {% endif %}
 
   <h3>Add Supporter Link</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="add_supporter" />
     <label for="supporter_label">Label <span aria-hidden="true">*</span></label>
     <input id="supporter_label" name="supporter_label" type="text" required />
@@ -198,7 +198,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
 {# ── Page copy ──────────────────────────────────────────────── #}
 <section>
   <h2>Page Copy</h2>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="save_page" />
 
     <label for="page_title">Title</label>
@@ -273,7 +273,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
         <td>{{ item.title }}</td>
         <td>{{ item.description }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+          <form method="post" action="{{ url_for('content.edit_connect') }}">
             <input type="hidden" name="action" value="remove_benefit" />
             <input
               type="hidden"
@@ -292,7 +292,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   {% endif %}
 
   <h3>Add Benefit</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="add_benefit" />
     <label for="benefit_title">Title <span aria-hidden="true">*</span></label>
     <input id="benefit_title" name="benefit_title" type="text" required />
@@ -326,7 +326,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
         <td>{{ item.price }}</td>
         <td>{{ item.description }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_connect') }}">
+          <form method="post" action="{{ url_for('content.edit_connect') }}">
             <input type="hidden" name="action" value="remove_tier" />
             <input type="hidden" name="tier_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -341,7 +341,7 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   {% endif %}
 
   <h3>Add Tier</h3>
-  <form method="post" action="{{ url_for('admin.edit_connect') }}">
+  <form method="post" action="{{ url_for('content.edit_connect') }}">
     <input type="hidden" name="action" value="add_tier" />
     <label for="tier_name">Name <span aria-hidden="true">*</span></label>
     <input id="tier_name" name="tier_name" type="text" required />
@@ -358,3 +358,4 @@ Connect &amp; Support{% endblock %} {% block admin_content %} {% if save_success
   </form>
 </section>
 {% endblock %}
+

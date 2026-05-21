@@ -24,7 +24,7 @@ endblock %} {% block admin_content %} {% if save_success %}
         {% if not loop.first %}
         <form
           method="post"
-          action="{{ url_for('admin.edit_faq') }}"
+          action="{{ url_for('content.edit_faq') }}"
           class="admin-inline-form"
         >
           <input type="hidden" name="action" value="move_up" />
@@ -34,7 +34,7 @@ endblock %} {% block admin_content %} {% if save_success %}
         {% endif %} {% if not loop.last %}
         <form
           method="post"
-          action="{{ url_for('admin.edit_faq') }}"
+          action="{{ url_for('content.edit_faq') }}"
           class="admin-inline-form"
         >
           <input type="hidden" name="action" value="move_down" />
@@ -44,7 +44,7 @@ endblock %} {% block admin_content %} {% if save_success %}
         {% endif %}
       </td>
       <td>
-        <form method="post" action="{{ url_for('admin.edit_faq') }}">
+        <form method="post" action="{{ url_for('content.edit_faq') }}">
           <input type="hidden" name="action" value="remove" />
           <input type="hidden" name="index" value="{{ loop.index0 }}" />
           <button type="submit">Remove</button>
@@ -59,7 +59,7 @@ endblock %} {% block admin_content %} {% if save_success %}
 {% endif %}
 
 <h2>Add FAQ Entry</h2>
-<form method="post" action="{{ url_for('admin.edit_faq') }}">
+<form method="post" action="{{ url_for('content.edit_faq') }}">
   <input type="hidden" name="action" value="add" />
 
   <label for="question">Question <span aria-hidden="true">*</span></label>
@@ -71,3 +71,4 @@ endblock %} {% block admin_content %} {% if save_success %}
   <button type="submit">Add Entry</button>
 </form>
 {% endblock %}
+

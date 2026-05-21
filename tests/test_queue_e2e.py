@@ -79,21 +79,22 @@ def test_queue_lifecycle_via_api(client, monkeypatch):
 
     # 2. Pause Queue
     response = client.post(
-        '/admin/bot/api/queues/test-queue/pause', json={'reason': 'Taking a break'})
+        '/bot/api/queues/test-queue/pause', json={'reason': 'Taking a break'})
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['summary']['is_paused'] is True
     assert data['summary']['paused_reason'] == 'Taking a break'
 
     # 3. Resume Queue
-    response = client.post('/admin/bot/api/queues/test-queue/resume')
+    response = client.post('/bot/api/queues/test-queue/resume')
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['summary']['is_paused'] is False
 
     # 4. Clear Queue
     response = client.post(
-        '/admin/bot/api/queues/test-queue/clear', json={'confirm': 'clear'})
+        '/bot/api/queues/test-queue/clear', json={'confirm': 'clear'})
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['summary']['total_entries'] == 0
+

@@ -44,7 +44,7 @@ Copy{% endblock %} {% block admin_content %}
   <h2>Edit Required Pages</h2>
   <form
     method="post"
-    action="{{ url_for('admin.edit_content') }}"
+    action="{{ url_for('content.edit_content') }}"
     class="stack-md"
   >
     {% for key, page in form_pages.items() %}
@@ -94,3 +94,4 @@ Copy{% endblock %} {% block admin_content %}
 </section>
 
 {% endblock %}
+

@@ -27,7 +27,7 @@
         <td>{{ event.location.name if event.location else '' }}</td>
         <td>{{ event.event_status.replace('https://schema.org/', '') }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_events') }}">
+          <form method="post" action="{{ url_for('content.edit_events') }}">
             <input type="hidden" name="action" value="remove_event" />
             <input type="hidden" name="event_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -42,7 +42,7 @@
   {% endif %}
 
   <h3>Add Screening</h3>
-  <form method="post" action="{{ url_for('admin.edit_events') }}">
+  <form method="post" action="{{ url_for('content.edit_events') }}">
     <input type="hidden" name="action" value="add_event" />
 
     <label for="event_name">Name <span aria-hidden="true">*</span></label>
@@ -176,7 +176,7 @@
         <td>{{ offer.availability.replace('https://schema.org/', '') }}</td>
         <td>{{ offer.valid_from }}</td>
         <td>
-          <form method="post" action="{{ url_for('admin.edit_events') }}">
+          <form method="post" action="{{ url_for('content.edit_events') }}">
             <input type="hidden" name="action" value="remove_offer" />
             <input type="hidden" name="offer_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -191,7 +191,7 @@
   {% endif %}
 
   <h3>Add Offer</h3>
-  <form method="post" action="{{ url_for('admin.edit_events') }}">
+  <form method="post" action="{{ url_for('content.edit_events') }}">
     <input type="hidden" name="action" value="add_offer" />
 
     <label for="offer_name">Name <span aria-hidden="true">*</span></label>
@@ -250,3 +250,4 @@
   </form>
 </section>
 {% endblock %}
+

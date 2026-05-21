@@ -118,7 +118,7 @@ from .bot_utils import (
 )
 
 
-admin_bot_blueprint = Blueprint('admin_bot', __name__, url_prefix='/admin/bot')
+admin_bot_blueprint = Blueprint('bot', __name__, url_prefix='/bot')
 
 BOT_AUDIT_STATUS_HEADER = 'X-OMO-Bot-Audit-Status'
 _BOT_AUDIT_STATUS_ENV_KEY = 'omo.bot.audit_status'
@@ -229,9 +229,9 @@ def _oauth_ready() -> bool:
 
 
 def _sanitize_next_url(next_url: str | None) -> str:
-    if next_url and next_url.startswith('/admin/bot') and not next_url.startswith('//'):
+    if next_url and next_url.startswith('/bot') and not next_url.startswith('//'):
         return next_url
-    return url_for('admin_bot.overview')
+    return url_for('bot.overview')
 
 
 def _operator_session_keys() -> tuple[str, ...]:
@@ -408,9 +408,9 @@ def build_health_snapshot() -> dict[str, object]:
             ),
         },
         'links': {
-            'health': url_for('admin_bot.health_api'),
-            'services': url_for('admin_bot.health_services_api'),
-            'jobs': url_for('admin_bot.health_jobs_api'),
+            'health': url_for('bot.health_api'),
+            'services': url_for('bot.health_services_api'),
+            'jobs': url_for('bot.health_jobs_api'),
         },
         'session': {
             'authenticated': bool(session.get(BOT_OPS_SESSION_KEY)),
@@ -531,37 +531,37 @@ def _build_manual_syndication_polling_job(
 
 
 def _page_syndication_scope_error() -> Any:
-    return redirect(url_for('admin_bot.syndication_page', error='operator-scope-required'))
+    return redirect(url_for('bot.syndication_page', error='operator-scope-required'))
 
 
 def _page_syndication_config_error() -> Any:
-    return redirect(url_for('admin_bot.syndication_page', error='invalid-syndication-config'))
+    return redirect(url_for('bot.syndication_page', error='invalid-syndication-config'))
 
 
 def _page_config_scope_error() -> Any:
-    return redirect(url_for('admin_bot.config_page', error='operator-scope-required'))
+    return redirect(url_for('bot.config_page', error='operator-scope-required'))
 
 
 def _page_config_error() -> Any:
-    return redirect(url_for('admin_bot.config_page', error='invalid-syndication-config'))
+    return redirect(url_for('bot.config_page', error='invalid-syndication-config'))
 
 
 def _page_config_binding_error() -> Any:
-    return redirect(url_for('admin_bot.config_page', error='invalid-config-binding'))
+    return redirect(url_for('bot.config_page', error='invalid-config-binding'))
 
 
 def _page_commands_scope_error() -> Any:
-    return redirect(url_for('admin_bot.commands_page', error='operator-scope-required'))
+    return redirect(url_for('bot.commands_page', error='operator-scope-required'))
 
 
 def _page_commands_error() -> Any:
-    return redirect(url_for('admin_bot.commands_page', error='invalid-syndication-config'))
+    return redirect(url_for('bot.commands_page', error='invalid-syndication-config'))
 
 
 def _queue_page_redirect(queue_id: str | None = None, **params: str) -> Any:
     if queue_id:
-        return redirect(url_for('admin_bot.queue_detail_page', queue_id=queue_id, **params))
-    return redirect(url_for('admin_bot.queues_page', **params))
+        return redirect(url_for('bot.queue_detail_page', queue_id=queue_id, **params))
+    return redirect(url_for('bot.queues_page', **params))
 
 
 def _page_queue_scope_error(queue_id: str | None = None) -> Any:
@@ -586,8 +586,8 @@ def _page_queue_confirmation_error(queue_id: str | None = None) -> Any:
 
 def _mileage_page_redirect(user_id: str | None = None, **params: str) -> Any:
     if user_id:
-        return redirect(url_for('admin_bot.mileage_detail_page', user_id=user_id, **params))
-    return redirect(url_for('admin_bot.mileage_page', **params))
+        return redirect(url_for('bot.mileage_detail_page', user_id=user_id, **params))
+    return redirect(url_for('bot.mileage_page', **params))
 
 
 def _page_mileage_scope_error(user_id: str | None = None) -> Any:
@@ -630,13 +630,13 @@ def _serialize_syndication_state(
         'actions': {
             'can_write': can_write,
             'manual_actions_supported': manual_actions_supported,
-            'retry_api': url_for('admin_bot.retry_syndication_source_api', source_key=state.source_key),
+            'retry_api': url_for('bot.retry_syndication_source_api', source_key=state.source_key),
             'reset_checkpoint_api': url_for(
-                'admin_bot.reset_syndication_checkpoint_api', source_key=state.source_key
+                'bot.reset_syndication_checkpoint_api', source_key=state.source_key
             ),
-            'retry_page': url_for('admin_bot.retry_syndication_source_page_action', source_key=state.source_key),
+            'retry_page': url_for('bot.retry_syndication_source_page_action', source_key=state.source_key),
             'reset_checkpoint_page': url_for(
-                'admin_bot.reset_syndication_checkpoint_page_action', source_key=state.source_key
+                'bot.reset_syndication_checkpoint_page_action', source_key=state.source_key
             ),
         },
     }
@@ -747,10 +747,10 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
                     bot_runtime['manual_actions_supported']
                     and bot_runtime['operator_can_write']
                 ),
-                'enable_api': url_for('admin_bot.enable_syndication_source_api', source_key=source['source_key']),
-                'disable_api': url_for('admin_bot.disable_syndication_source_api', source_key=source['source_key']),
-                'enable_page': url_for('admin_bot.enable_syndication_source_page_action', source_key=source['source_key']),
-                'disable_page': url_for('admin_bot.disable_syndication_source_page_action', source_key=source['source_key']),
+                'enable_api': url_for('bot.enable_syndication_source_api', source_key=source['source_key']),
+                'disable_api': url_for('bot.disable_syndication_source_api', source_key=source['source_key']),
+                'enable_page': url_for('bot.enable_syndication_source_page_action', source_key=source['source_key']),
+                'disable_page': url_for('bot.disable_syndication_source_page_action', source_key=source['source_key']),
             }
             for source in cast(list[dict[str, object]], syndication['sources'])
         ],
@@ -760,8 +760,8 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
                 'channel_id': channel_id,
                 'managed_by': 'repository' if managed_by_repository else 'environment',
                 'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
-                'delete_api': url_for('admin_bot.delete_channel_binding_api', binding_key=binding_key),
-                'delete_page': url_for('admin_bot.delete_channel_binding_page_action', binding_key=binding_key),
+                'delete_api': url_for('bot.delete_channel_binding_api', binding_key=binding_key),
+                'delete_page': url_for('bot.delete_channel_binding_page_action', binding_key=binding_key),
             }
             for binding_key, channel_id in sorted(effective_settings.channel_map.items())
         ],
@@ -771,8 +771,8 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
                 'role_id': role_id,
                 'managed_by': 'repository' if managed_by_repository else 'runtime-default',
                 'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
-                'delete_api': url_for('admin_bot.delete_role_binding_api', binding_key=binding_key),
-                'delete_page': url_for('admin_bot.delete_role_binding_page_action', binding_key=binding_key),
+                'delete_api': url_for('bot.delete_role_binding_api', binding_key=binding_key),
+                'delete_page': url_for('bot.delete_role_binding_page_action', binding_key=binding_key),
             }
             for binding_key, role_id in sorted(effective_settings.role_map.items())
         ],
@@ -780,8 +780,8 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
             'guild_id': effective_settings.guild_id,
             'managed_by': 'repository' if managed_by_repository else 'environment',
             'editable': bool(managed_by_repository and _config_write_supported(effective_settings)),
-            'set_api': url_for('admin_bot.set_active_guild_api'),
-            'set_page': url_for('admin_bot.set_active_guild_page_action'),
+            'set_api': url_for('bot.set_active_guild_api'),
+            'set_page': url_for('bot.set_active_guild_page_action'),
         },
         'bot_runtime': bot_runtime,
         'permissions': {
@@ -810,8 +810,8 @@ def build_bot_commands_snapshot() -> dict[str, object]:
                 'label': 'Poll all sources now',
                 'required_scope': 'syndication.write',
                 'supported': bool(bot_runtime['manual_actions_supported']),
-                'api_url': url_for('admin_bot.poll_all_sources_api'),
-                'page_url': url_for('admin_bot.poll_all_sources_page_action'),
+                'api_url': url_for('bot.poll_all_sources_api'),
+                'page_url': url_for('bot.poll_all_sources_page_action'),
             },
         ],
         'sources': config_snapshot['sources'],
@@ -840,17 +840,17 @@ def _serialize_queue_summary(summary: QueueSummary, *, can_write: bool) -> dict[
         'waiting_count': summary.waiting_count,
         'total_entries': summary.total_entries,
         'updated_at': summary.updated_at.isoformat() if summary.updated_at else None,
-        'detail_api': url_for('admin_bot.queue_detail_api', queue_id=summary.queue_id),
-        'detail_page': url_for('admin_bot.queue_detail_page', queue_id=summary.queue_id),
-        'events_api': url_for('admin_bot.queue_events_api', queue_id=summary.queue_id),
-        'advance_api': url_for('admin_bot.advance_queue_api', queue_id=summary.queue_id),
-        'advance_page': url_for('admin_bot.advance_queue_page_action', queue_id=summary.queue_id),
-        'pause_api': url_for('admin_bot.pause_queue_api', queue_id=summary.queue_id),
-        'pause_page': url_for('admin_bot.pause_queue_page_action', queue_id=summary.queue_id),
-        'resume_api': url_for('admin_bot.resume_queue_api', queue_id=summary.queue_id),
-        'resume_page': url_for('admin_bot.resume_queue_page_action', queue_id=summary.queue_id),
-        'clear_api': url_for('admin_bot.clear_queue_api', queue_id=summary.queue_id),
-        'clear_page': url_for('admin_bot.clear_queue_page_action', queue_id=summary.queue_id),
+        'detail_api': url_for('bot.queue_detail_api', queue_id=summary.queue_id),
+        'detail_page': url_for('bot.queue_detail_page', queue_id=summary.queue_id),
+        'events_api': url_for('bot.queue_events_api', queue_id=summary.queue_id),
+        'advance_api': url_for('bot.advance_queue_api', queue_id=summary.queue_id),
+        'advance_page': url_for('bot.advance_queue_page_action', queue_id=summary.queue_id),
+        'pause_api': url_for('bot.pause_queue_api', queue_id=summary.queue_id),
+        'pause_page': url_for('bot.pause_queue_page_action', queue_id=summary.queue_id),
+        'resume_api': url_for('bot.resume_queue_api', queue_id=summary.queue_id),
+        'resume_page': url_for('bot.resume_queue_page_action', queue_id=summary.queue_id),
+        'clear_api': url_for('bot.clear_queue_api', queue_id=summary.queue_id),
+        'clear_page': url_for('bot.clear_queue_page_action', queue_id=summary.queue_id),
         'editable': can_write,
     }
 
@@ -866,10 +866,10 @@ def _serialize_queue_entry(entry: QueueEntry, *, can_write: bool) -> dict[str, o
         'note': entry.note,
         'joined_at': entry.joined_at.isoformat(),
         'started_at': entry.started_at.isoformat() if entry.started_at else None,
-        'remove_api': url_for('admin_bot.remove_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
-        'remove_page': url_for('admin_bot.remove_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
-        'move_api': url_for('admin_bot.move_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
-        'move_page': url_for('admin_bot.move_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'remove_api': url_for('bot.remove_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'remove_page': url_for('bot.remove_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'move_api': url_for('bot.move_queue_entry_api', queue_id=entry.queue_id, entry_id=entry.entry_id),
+        'move_page': url_for('bot.move_queue_entry_page_action', queue_id=entry.queue_id, entry_id=entry.entry_id),
         'editable': can_write,
     }
 
@@ -908,10 +908,10 @@ def _serialize_mileage_total(total: MileageTotal, *, can_write: bool) -> dict[st
         'last_event_id': total.last_event_id,
         'last_event_at': total.last_event_at.isoformat() if total.last_event_at else None,
         'updated_at': total.updated_at.isoformat() if total.updated_at else None,
-        'detail_api': url_for('admin_bot.mileage_user_detail_api', user_id=total.discord_user_id),
-        'detail_page': url_for('admin_bot.mileage_detail_page', user_id=total.discord_user_id),
-        'adjust_api': url_for('admin_bot.adjust_mileage_user_api', user_id=total.discord_user_id),
-        'adjust_page': url_for('admin_bot.adjust_mileage_user_page_action', user_id=total.discord_user_id),
+        'detail_api': url_for('bot.mileage_user_detail_api', user_id=total.discord_user_id),
+        'detail_page': url_for('bot.mileage_detail_page', user_id=total.discord_user_id),
+        'adjust_api': url_for('bot.adjust_mileage_user_api', user_id=total.discord_user_id),
+        'adjust_page': url_for('bot.adjust_mileage_user_page_action', user_id=total.discord_user_id),
         'editable': can_write,
     }
 
@@ -930,8 +930,8 @@ def _serialize_mileage_event(event: MileageEvent, *, can_write: bool) -> dict[st
         'reversed_event_id': event.reversed_event_id,
         'metadata': cast(dict[str, object], _serialize_audit_value(event.metadata)),
         'created_at': event.created_at.isoformat(),
-        'reverse_api': url_for('admin_bot.reverse_mileage_event_api', event_id=event.event_id),
-        'reverse_page': url_for('admin_bot.reverse_mileage_event_page_action', event_id=event.event_id),
+        'reverse_api': url_for('bot.reverse_mileage_event_api', event_id=event.event_id),
+        'reverse_page': url_for('bot.reverse_mileage_event_page_action', event_id=event.event_id),
         'reversible': bool(can_write and event.reversed_event_id is None and event.event_type != 'manual_reversal'),
     }
 
@@ -1109,8 +1109,8 @@ def build_queue_index_snapshot() -> dict[str, object]:
             'queues': [],
             'permissions': {'operator_can_write': can_write},
             'repository_error': str(exc),
-            'create_api': url_for('admin_bot.create_queue_api'),
-            'create_page': url_for('admin_bot.create_queue_page_action'),
+            'create_api': url_for('bot.create_queue_api'),
+            'create_page': url_for('bot.create_queue_page_action'),
         }
 
     if not settings.database_url:
@@ -1120,8 +1120,8 @@ def build_queue_index_snapshot() -> dict[str, object]:
             'queues': [],
             'permissions': {'operator_can_write': can_write},
             'repository_error': 'Queue operations require a configured database-backed repository.',
-            'create_api': url_for('admin_bot.create_queue_api'),
-            'create_page': url_for('admin_bot.create_queue_page_action'),
+            'create_api': url_for('bot.create_queue_api'),
+            'create_page': url_for('bot.create_queue_page_action'),
         }
 
     try:
@@ -1132,8 +1132,8 @@ def build_queue_index_snapshot() -> dict[str, object]:
             'queues': [_serialize_queue_summary(summary, can_write=can_write) for summary in summaries],
             'permissions': {'operator_can_write': can_write},
             'repository_error': None,
-            'create_api': url_for('admin_bot.create_queue_api'),
-            'create_page': url_for('admin_bot.create_queue_page_action'),
+            'create_api': url_for('bot.create_queue_api'),
+            'create_page': url_for('bot.create_queue_page_action'),
         }
     except Exception as exc:
         return {
@@ -1142,8 +1142,8 @@ def build_queue_index_snapshot() -> dict[str, object]:
             'queues': [],
             'permissions': {'operator_can_write': can_write},
             'repository_error': str(exc),
-            'create_api': url_for('admin_bot.create_queue_api'),
-            'create_page': url_for('admin_bot.create_queue_page_action'),
+            'create_api': url_for('bot.create_queue_api'),
+            'create_page': url_for('bot.create_queue_page_action'),
         }
 
 
@@ -1593,7 +1593,7 @@ def _run_manual_syndication_poll_all() -> dict[str, object]:
 
 
 def _login_redirect_response(expired: bool = False):
-    if request.path.startswith('/admin/bot/api/'):
+    if request.path.startswith('/bot/api/'):
         return jsonify({
             'error': {
                 'code': 'operator_session_expired' if expired else 'operator_auth_required',
@@ -1607,7 +1607,7 @@ def _login_redirect_response(expired: bool = False):
 
     return redirect(
         url_for(
-            'admin_bot.login',
+            'bot.login',
             next=request.url,
             error='session-expired' if expired else None,
         )
@@ -1615,7 +1615,7 @@ def _login_redirect_response(expired: bool = False):
 
 
 def _operator_scope_denied_response(*required_scopes: str):
-    if request.path.startswith('/admin/bot/api/'):
+    if request.path.startswith('/bot/api/'):
         return jsonify({
             'error': {
                 'code': 'operator_scope_required',
@@ -1643,7 +1643,7 @@ def require_operator_scope(*required_scopes: str):
 
 
 def _operator_not_found_response():
-    if request.path.startswith('/admin/bot/api/'):
+    if request.path.startswith('/bot/api/'):
         return jsonify({
             'error': {
                 'code': 'operator_not_found',
@@ -1651,11 +1651,11 @@ def _operator_not_found_response():
             }
         }), 404
 
-    return redirect(url_for('admin_bot.operators_page', error='operator-not-found'))
+    return redirect(url_for('bot.operators_page', error='operator-not-found'))
 
 
 def _invalid_operator_scopes_response():
-    if request.path.startswith('/admin/bot/api/'):
+    if request.path.startswith('/bot/api/'):
         return jsonify({
             'error': {
                 'code': 'invalid_operator_scopes',
@@ -1663,7 +1663,7 @@ def _invalid_operator_scopes_response():
             }
         }), 400
 
-    return redirect(url_for('admin_bot.operators_page', error='invalid-operator-scopes'))
+    return redirect(url_for('bot.operators_page', error='invalid-operator-scopes'))
 
 
 def _update_operator_active(user_id: str, is_active: bool):
@@ -1718,9 +1718,9 @@ def require_operator_session():
         return None
 
     allowed_endpoints = {
-        'admin_bot.login',
-        'admin_bot.oauth_start',
-        'admin_bot.oauth_callback',
+        'bot.login',
+        'bot.oauth_start',
+        'bot.oauth_callback',
     }
     if request.endpoint in allowed_endpoints:
         return None
@@ -1840,7 +1840,7 @@ def oauth_callback():
 @admin_bot_blueprint.post('/logout')
 def logout():
     clear_operator_session()
-    return redirect(url_for('admin_bot.login'))
+    return redirect(url_for('bot.login'))
 
 
 @admin_bot_blueprint.get('')
@@ -2028,7 +2028,7 @@ def set_active_guild_page_action():
     except ConfigError:
         return _page_config_binding_error()
 
-    return redirect(url_for('admin_bot.config_page', saved='guild-updated'))
+    return redirect(url_for('bot.config_page', saved='guild-updated'))
 
 
 @admin_bot_blueprint.post('/api/config/channels')
@@ -2062,7 +2062,7 @@ def upsert_channel_binding_page_action():
     except ConfigError:
         return _page_config_binding_error()
 
-    return redirect(url_for('admin_bot.config_page', saved='channel-binding-saved'))
+    return redirect(url_for('bot.config_page', saved='channel-binding-saved'))
 
 
 @admin_bot_blueprint.post('/api/config/channels/<binding_key>/delete')
@@ -2091,7 +2091,7 @@ def delete_channel_binding_page_action(binding_key: str):
     except (ConfigError, KeyError):
         return _page_config_binding_error()
 
-    return redirect(url_for('admin_bot.config_page', saved='channel-binding-deleted'))
+    return redirect(url_for('bot.config_page', saved='channel-binding-deleted'))
 
 
 @admin_bot_blueprint.post('/api/config/roles')
@@ -2125,7 +2125,7 @@ def upsert_role_binding_page_action():
     except ConfigError:
         return _page_config_binding_error()
 
-    return redirect(url_for('admin_bot.config_page', saved='role-binding-saved'))
+    return redirect(url_for('bot.config_page', saved='role-binding-saved'))
 
 
 @admin_bot_blueprint.post('/api/config/roles/<binding_key>/delete')
@@ -2154,7 +2154,7 @@ def delete_role_binding_page_action(binding_key: str):
     except (ConfigError, KeyError):
         return _page_config_binding_error()
 
-    return redirect(url_for('admin_bot.config_page', saved='role-binding-deleted'))
+    return redirect(url_for('bot.config_page', saved='role-binding-deleted'))
 
 
 @admin_bot_blueprint.get('/api/commands')
@@ -2625,11 +2625,11 @@ def retry_syndication_source_page_action(source_key: str):
     except ConfigError:
         return _page_syndication_config_error()
     except KeyError:
-        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+        return redirect(url_for('bot.syndication_page', error='source-not-found'))
     except Exception:
-        return redirect(url_for('admin_bot.syndication_page', error='retry-failed'))
+        return redirect(url_for('bot.syndication_page', error='retry-failed'))
 
-    return redirect(url_for('admin_bot.syndication_page', saved='retry'))
+    return redirect(url_for('bot.syndication_page', saved='retry'))
 
 
 @admin_bot_blueprint.post('/api/syndication/sources/<source_key>/checkpoint/reset')
@@ -2658,9 +2658,9 @@ def reset_syndication_checkpoint_page_action(source_key: str):
     except ConfigError:
         return _page_syndication_config_error()
     except KeyError:
-        return redirect(url_for('admin_bot.syndication_page', error='source-not-found'))
+        return redirect(url_for('bot.syndication_page', error='source-not-found'))
 
-    return redirect(url_for('admin_bot.syndication_page', saved='checkpoint-reset'))
+    return redirect(url_for('bot.syndication_page', saved='checkpoint-reset'))
 
 
 @admin_bot_blueprint.post('/api/config/sources/<source_key>/enable')
@@ -2689,9 +2689,9 @@ def enable_syndication_source_page_action(source_key: str):
     except ConfigError:
         return _page_config_error()
     except KeyError:
-        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+        return redirect(url_for('bot.config_page', error='source-not-found'))
 
-    return redirect(url_for('admin_bot.config_page', saved='source-enabled'))
+    return redirect(url_for('bot.config_page', saved='source-enabled'))
 
 
 @admin_bot_blueprint.post('/api/config/sources/<source_key>/disable')
@@ -2720,9 +2720,9 @@ def disable_syndication_source_page_action(source_key: str):
     except ConfigError:
         return _page_config_error()
     except KeyError:
-        return redirect(url_for('admin_bot.config_page', error='source-not-found'))
+        return redirect(url_for('bot.config_page', error='source-not-found'))
 
-    return redirect(url_for('admin_bot.config_page', saved='source-disabled'))
+    return redirect(url_for('bot.config_page', saved='source-disabled'))
 
 
 @admin_bot_blueprint.post('/api/commands/poll-all')
@@ -2751,9 +2751,9 @@ def poll_all_sources_page_action():
     except ConfigError:
         return _page_commands_error()
     except Exception:
-        return redirect(url_for('admin_bot.commands_page', error='command-failed'))
+        return redirect(url_for('bot.commands_page', error='command-failed'))
 
-    return redirect(url_for('admin_bot.commands_page', saved='poll-all'))
+    return redirect(url_for('bot.commands_page', saved='poll-all'))
 
 
 @admin_bot_blueprint.post('/api/operators/<user_id>/disable')
@@ -2769,7 +2769,7 @@ def disable_operator_page_action(user_id: str):
     operator_record = _update_operator_active(user_id, False)
     if not isinstance(operator_record, dict):
         return operator_record
-    return redirect(url_for('admin_bot.operators_page', saved='1'))
+    return redirect(url_for('bot.operators_page', saved='1'))
 
 
 @admin_bot_blueprint.post('/api/operators/<user_id>/enable')
@@ -2799,7 +2799,7 @@ def enable_operator_page_action(user_id: str):
     operator_record = _update_operator_active(user_id, True)
     if not isinstance(operator_record, dict):
         return operator_record
-    return redirect(url_for('admin_bot.operators_page', saved='1'))
+    return redirect(url_for('bot.operators_page', saved='1'))
 
 
 @admin_bot_blueprint.post('/operators/<user_id>/scopes')
@@ -2808,7 +2808,7 @@ def update_operator_scopes_page_action(user_id: str):
         user_id, request.form.get('scopes', ''))
     if not isinstance(operator_record, dict):
         return operator_record
-    return redirect(url_for('admin_bot.operators_page', saved='1'))
+    return redirect(url_for('bot.operators_page', saved='1'))
 
 
 # ---------------------------------------------------------------------------

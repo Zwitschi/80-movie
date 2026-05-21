@@ -46,11 +46,15 @@ def create_app() -> Flask:
         from .auth import AdminUser
         return AdminUser(user_id)
 
-    # Register admin CMS blueprint
+    # Register auth + dashboard blueprint
     from .admin import admin_blueprint
     app.register_blueprint(admin_blueprint)
 
-    # Register bot operator blueprint
+    # Register content management blueprint
+    from .content import content_blueprint
+    app.register_blueprint(content_blueprint)
+
+    # Register bot management blueprint
     from .admin_bot import admin_bot_blueprint, oauth_callback
     app.register_blueprint(admin_bot_blueprint)
     app.add_url_rule(
@@ -59,6 +63,18 @@ def create_app() -> Flask:
         view_func=oauth_callback,
         methods=['GET'],
     )
+
+    # Seed default admin user if table exists and empty
+    with app.app_context():
+        try:
+            from flask import current_app as _current_app
+            from .user_repo import seed_default_admin
+            admin_user = _current_app.config.get('ADMIN_USERNAME')
+            admin_pass = _current_app.config.get('ADMIN_PASSWORD')
+            if admin_user and admin_pass:
+                seed_default_admin(admin_user, admin_pass)
+        except Exception:
+            pass
 
     return app
 

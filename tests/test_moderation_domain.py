@@ -315,7 +315,7 @@ def test_reset_onboarding_api_calls_service(client, monkeypatch):
     _set_operator_session(client)
 
     response = client.post(
-        '/admin/bot/onboarding/reset',
+        '/bot/onboarding/reset',
         json={'guild_id': 100, 'discord_user_id': 'user-1',
               'display_name': 'Alice', 'confirm': 'reset'},
     )
@@ -333,14 +333,14 @@ def test_reset_onboarding_api_requires_guild_and_user(client, monkeypatch):
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
     _set_operator_session(client)
 
-    response = client.post('/admin/bot/onboarding/reset', json={})
+    response = client.post('/bot/onboarding/reset', json={})
     assert response.status_code == 400
 
 
 def test_reset_onboarding_api_requires_operator_scope(client):
     """No session → scope denied."""
     response = client.post(
-        '/admin/bot/onboarding/reset',
+        '/bot/onboarding/reset',
         json={'guild_id': 100, 'discord_user_id': 'user-1'},
     )
     assert response.status_code in (401, 403)
@@ -353,7 +353,7 @@ def test_reset_onboarding_api_requires_confirm(client, monkeypatch):
     _set_operator_session(client)
 
     response = client.post(
-        '/admin/bot/onboarding/reset',
+        '/bot/onboarding/reset',
         json={'guild_id': 100, 'discord_user_id': 'user-1'},
     )
     assert response.status_code == 400
@@ -433,7 +433,7 @@ def test_reset_onboarding_api_dry_run_does_not_require_confirm(client, monkeypat
     _set_operator_session(client)
 
     response = client.post(
-        '/admin/bot/onboarding/reset',
+        '/bot/onboarding/reset',
         json={'guild_id': 100, 'discord_user_id': 'user-1', 'dry_run': True},
     )
 
@@ -548,7 +548,7 @@ def test_role_cleanup_api_records_event(client, monkeypatch):
     _set_operator_session(client)
 
     response = client.post(
-        '/admin/bot/onboarding/role-cleanup',
+        '/bot/onboarding/role-cleanup',
         json={'guild_id': 100, 'discord_user_id': 'user-1',
               'display_name': 'Alice'},
     )
@@ -565,13 +565,13 @@ def test_role_cleanup_api_requires_guild_and_user(client, monkeypatch):
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
     _set_operator_session(client)
 
-    response = client.post('/admin/bot/onboarding/role-cleanup', json={})
+    response = client.post('/bot/onboarding/role-cleanup', json={})
     assert response.status_code == 400
 
 
 def test_role_cleanup_api_requires_operator_scope(client):
     response = client.post(
-        '/admin/bot/onboarding/role-cleanup',
+        '/bot/onboarding/role-cleanup',
         json={'guild_id': 100, 'discord_user_id': 'user-1'},
     )
     assert response.status_code in (401, 403)
@@ -633,7 +633,7 @@ def test_diagnostics_api_returns_domain_summary(client, monkeypatch):
         sess[admin_bot.BOT_OPS_LOGIN_AT_KEY] = '2026-05-20T10:00:00Z'
         sess[admin_bot.BOT_OPS_LAST_SEEN_AT_KEY] = '2026-05-20T10:00:00Z'
 
-    response = client.get('/admin/bot/api/diagnostics')
+    response = client.get('/bot/api/diagnostics')
 
     assert response.status_code == 200
     data = response.get_json()['data']
@@ -645,7 +645,7 @@ def test_diagnostics_api_returns_domain_summary(client, monkeypatch):
 
 
 def test_diagnostics_api_requires_scope(client):
-    response = client.get('/admin/bot/api/diagnostics')
+    response = client.get('/bot/api/diagnostics')
     assert response.status_code in (401, 403)
 
 
@@ -654,27 +654,27 @@ def test_diagnostics_api_requires_scope(client):
 # ---------------------------------------------------------------------------
 
 def test_queue_remove_entry_api_requires_queue_write(client):
-    response = client.post('/admin/bot/api/queues/q1/entries/e1/remove')
+    response = client.post('/bot/api/queues/q1/entries/e1/remove')
     assert response.status_code in (401, 403)
 
 
 def test_queue_move_entry_api_requires_queue_write(client):
-    response = client.post('/admin/bot/api/queues/q1/entries/e1/move')
+    response = client.post('/bot/api/queues/q1/entries/e1/move')
     assert response.status_code in (401, 403)
 
 
 def test_queue_clear_api_requires_queue_write(client):
-    response = client.post('/admin/bot/api/queues/q1/clear')
+    response = client.post('/bot/api/queues/q1/clear')
     assert response.status_code in (401, 403)
 
 
 def test_mileage_adjust_api_requires_mileage_write(client):
-    response = client.post('/admin/bot/api/mileage/users/user1/adjust')
+    response = client.post('/bot/api/mileage/users/user1/adjust')
     assert response.status_code in (401, 403)
 
 
 def test_mileage_reverse_api_requires_mileage_write(client):
-    response = client.post('/admin/bot/api/mileage/events/ev1/reverse')
+    response = client.post('/bot/api/mileage/events/ev1/reverse')
     assert response.status_code in (401, 403)
 
 
@@ -734,7 +734,7 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
                         lambda **kwargs: audit_calls.append(kwargs))
     _make_queue_api_session(client, admin_bot)
 
-    response = client.post('/admin/bot/api/queues/q1/clear',
+    response = client.post('/bot/api/queues/q1/clear',
                            json={'confirm': 'clear', 'reason': 'test'})
 
     assert response.status_code == 200
@@ -762,7 +762,7 @@ def test_queue_remove_entry_api_records_audit_event(client, monkeypatch):
     _make_queue_api_session(client, admin_bot)
 
     response = client.post(
-        f'/admin/bot/api/queues/q1/entries/{entry_id}/remove',
+        f'/bot/api/queues/q1/entries/{entry_id}/remove',
         json={'reason': 'audit test'},
     )
 
@@ -795,7 +795,7 @@ def test_queue_move_entry_api_records_audit_event(client, monkeypatch):
     _make_queue_api_session(client, admin_bot)
 
     response = client.post(
-        f'/admin/bot/api/queues/q1/entries/{entry_id}/move',
+        f'/bot/api/queues/q1/entries/{entry_id}/move',
         json={'target_position': 1, 'reason': 'priority'},
     )
 
@@ -829,7 +829,7 @@ def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
     _make_mileage_api_session(client, admin_bot)
 
     response = client.post(
-        '/admin/bot/api/mileage/users/user-1/adjust',
+        '/bot/api/mileage/users/user-1/adjust',
         json={'display_name': 'Alice', 'delta': 10, 'reason': 'attendance'},
     )
 
@@ -868,7 +868,7 @@ def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
     _make_mileage_api_session(client, admin_bot)
 
     response = client.post(
-        f'/admin/bot/api/mileage/events/{event_id}/reverse',
+        f'/bot/api/mileage/events/{event_id}/reverse',
         json={'reason': 'correcting error'},
     )
 
@@ -906,10 +906,11 @@ def test_onboarding_reset_api_records_audit_event(client, monkeypatch):
     _set_operator_session(client)
 
     response = client.post(
-        '/admin/bot/onboarding/reset',
+        '/bot/onboarding/reset',
         json={'guild_id': 100, 'discord_user_id': 'user-1', 'confirm': 'reset'},
     )
 
     assert response.status_code == 200
     assert any(r.get('action_key') ==
                'onboarding.reset' for r in audit_records)
+

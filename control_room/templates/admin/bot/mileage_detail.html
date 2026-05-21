@@ -31,7 +31,7 @@ endblock %} {% block bot_content %}
       mileage_detail_snapshot.user.total.last_event_at or 'never' }}
     </li>
   </ul>
-  <p><a href="{{ url_for('admin_bot.mileage_page') }}">Back to mileage</a></p>
+  <p><a href="{{ url_for('bot.mileage_page') }}">Back to mileage</a></p>
 </section>
 
 <section>
@@ -90,3 +90,4 @@ endblock %} {% block bot_content %}
   {% endif %}
 </section>
 {% endblock %}
+

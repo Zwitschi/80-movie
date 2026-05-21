@@ -3,17 +3,17 @@ endblock %} {% block admin_content %}
 <p>Welcome to the admin dashboard. Select a section to manage site content.</p>
 
 <div class="admin-card-grid">
-  <a href="{{ url_for('admin.edit_film') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_film') }}" class="admin-card">
     <h2>Film Details</h2>
     <p>Title, tagline, description, genre, runtime, release date and status.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.manage_media') }}" class="admin-card">
+  <a href="{{ url_for('content.manage_media') }}" class="admin-card">
     <h2>Media Gallery</h2>
     <p>Add and remove gallery images with captions and categories.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_media_assets') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_media_assets') }}" class="admin-card">
     <h2>Media Assets</h2>
     <p>
       Poster image, trailer embed URL, thumbnail, content rating, and publish
@@ -21,49 +21,49 @@ endblock %} {% block admin_content %}
     </p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_content') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_content') }}" class="admin-card">
     <h2>Metadata &amp; Copy</h2>
     <p>Per-page SEO title, description, keywords, and canonical path.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_connect_social') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_connect_social') }}" class="admin-card">
     <h2>Social Links</h2>
     <p>Manage global social channels like Instagram, TikTok, and YouTube.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_connect_supporters') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_connect_supporters') }}" class="admin-card">
     <h2>Supporter Links</h2>
     <p>
       Manage campaign and supporter destinations like Patreon or Kickstarter.
     </p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_connect_patreon') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_connect_patreon') }}" class="admin-card">
     <h2>Patreon Benefits &amp; Tiers</h2>
     <p>Manage supporter page copy, benefits, and membership tiers.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_events') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_events') }}" class="admin-card">
     <h2>Events &amp; Offers</h2>
     <p>Screening events with venue details, dates, and global ticket offers.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_faq') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_faq') }}" class="admin-card">
     <h2>FAQ</h2>
     <p>Add, remove, and reorder FAQ question &amp; answer pairs.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_people') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_people') }}" class="admin-card">
     <h2>People &amp; Orgs</h2>
     <p>People, contributors, credits, and linked organizations.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin.edit_reviews') }}" class="admin-card">
+  <a href="{{ url_for('content.edit_reviews') }}" class="admin-card">
     <h2>Reviews</h2>
     <p>Individual reviews and aggregate rating fields.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
-  <a href="{{ url_for('admin_bot.overview') }}" class="admin-card">
+  <a href="{{ url_for('bot.overview') }}" class="admin-card">
     <h2>Discord Bot</h2>
     <p>
       Open the control-room landing page for bot health, syndication
@@ -73,3 +73,5 @@ endblock %} {% block admin_content %}
   </a>
 </div>
 {% endblock %}
+
+

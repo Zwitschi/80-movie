@@ -58,7 +58,7 @@ def test_mileage_lifecycle_via_api(client, monkeypatch):
 
     # 1. Adjust Mileage
     response = client.post(
-        '/admin/bot/api/mileage/users/user1/adjust',
+        '/bot/api/mileage/users/user1/adjust',
         json={
             'display_name': 'User One',
             'delta': 50,
@@ -73,7 +73,7 @@ def test_mileage_lifecycle_via_api(client, monkeypatch):
     assert data['total']['display_name'] == 'User One'
 
     # 2. Check Event List
-    response = client.get('/admin/bot/api/mileage/users/user1')
+    response = client.get('/bot/api/mileage/users/user1')
     assert response.status_code == 200
     data = response.get_json()['data']
     assert len(data['events']) == 1
@@ -81,9 +81,10 @@ def test_mileage_lifecycle_via_api(client, monkeypatch):
 
     # 3. Reverse Event
     response = client.post(
-        f'/admin/bot/api/mileage/events/{event_id}/reverse',
+        f'/bot/api/mileage/events/{event_id}/reverse',
         json={'reason': 'Typo in adjustment'}
     )
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['total']['total_points'] == 0
+

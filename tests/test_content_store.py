@@ -56,3 +56,4 @@ def test_db_pool_is_app_scoped_and_releases_connections(monkeypatch):
 
     with app.app_context():
         assert db.get_db_pool() is fake_pool
+

@@ -231,7 +231,7 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
         sess[admin_bot.BOT_OPS_LAST_SEEN_AT_KEY] = '2026-05-20T10:00:00Z'
 
     # 1. List events — should be empty initially
-    resp = client.get('/admin/bot/onboarding/events?guild_id=111')
+    resp = client.get('/bot/onboarding/events?guild_id=111')
     assert resp.status_code == 200
     data = resp.get_json()
     assert data['data'] == []
@@ -241,7 +241,7 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     svc.handle_member_join(111, 'discord-user-42', 'Alice')
 
     # 3. List events — should now have join + role + welcome
-    resp = client.get('/admin/bot/onboarding/events?guild_id=111')
+    resp = client.get('/bot/onboarding/events?guild_id=111')
     assert resp.status_code == 200
     data = resp.get_json()
     assert data['meta']['count'] == 3
@@ -251,7 +251,7 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     assert 'welcome_sent' in event_types
 
     # 4. Replay for a different user who was never joined
-    resp = client.post('/admin/bot/onboarding/replay', json={
+    resp = client.post('/bot/onboarding/replay', json={
         'guild_id': 111,
         'discord_user_id': 'discord-user-99',
         'display_name': 'NewMember',
@@ -262,7 +262,7 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     assert result['data']['replayed_events'] > 0
 
     # 5. Replay again — should be skipped (already complete)
-    resp = client.post('/admin/bot/onboarding/replay', json={
+    resp = client.post('/bot/onboarding/replay', json={
         'guild_id': 111,
         'discord_user_id': 'discord-user-99',
         'display_name': 'NewMember',
@@ -271,3 +271,4 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     result = resp.get_json()
     assert result['data']['skipped'] is True
     assert result['data']['replayed_events'] == 0
+
