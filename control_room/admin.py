@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash
 from secrets import compare_digest
 
 from .auth import AdminUser
-from .admin_content import _ctx
+from .content_common import _ctx
 
 admin_blueprint = Blueprint(
     'admin', __name__, url_prefix='/', static_folder='static')

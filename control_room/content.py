@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 from flask_login import current_user
+from .content_common import _ctx
 
 from .admin_content import (
     _handle_film_request,
@@ -15,7 +16,6 @@ from .admin_content import (
     _handle_media_assets_request,
     _handle_reviews_request,
 )
-from .admin_content import _ctx
 
 content_blueprint = Blueprint(
     'content', __name__, url_prefix='/content', static_folder='static')
