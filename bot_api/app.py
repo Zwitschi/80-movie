@@ -29,8 +29,8 @@ def create_app() -> Flask:
     init_db_app(app)
 
     # Register bot blueprint
-    from .admin_bot import admin_bot_blueprint, oauth_callback
-    app.register_blueprint(admin_bot_blueprint)
+    from .admin_bot import bp, oauth_callback
+    app.register_blueprint(bp)
     app.add_url_rule(
         '/oauth/discord/callback',
         endpoint='discord_oauth_callback',

@@ -40,7 +40,7 @@ def test_bot_api_root_redirects_to_operator_dashboard():
     response = client.get('/')
 
     assert response.status_code == 302
-    assert response.headers['Location'].endswith('/bot/')
+    assert response.headers['Location'].endswith('/bot')
 
 
 def test_bot_api_health_api_returns_snapshot_in_testing_mode():
