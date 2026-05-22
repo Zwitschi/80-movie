@@ -135,4 +135,5 @@ def get_bot_api_config_values() -> dict:
         ),
         "BOT_OPS_ALLOWED_USER_IDS": get_env_tuple("OMO_BOT_OPS_ALLOWED_USER_IDS"),
         "BOT_OPS_DEFAULT_SCOPES": get_env_tuple("OMO_BOT_OPS_DEFAULT_SCOPES", ("ops.read",)),
+        "BOT_OPS_SESSION_IDLE_MINUTES": get_env_int("OMO_BOT_OPS_SESSION_IDLE_MINUTES", 60),
     }
