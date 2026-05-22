@@ -1,141 +1,79 @@
 from __future__ import annotations
-
-from datetime import datetime, timedelta, timezone
-from typing import Any, cast
-from urllib.parse import urlencode
-from urllib.request import urlopen
-
-from flask import Blueprint, current_app, has_app_context, has_request_context, jsonify, redirect, render_template, request, session, url_for
-
-# Bot imports are deferred so the website can start even when deployed
-# from the website/ subdirectory (where bot/ is not on the Python path).
-# When bot/ is available (repo-root deploy or PYTHONPATH includes root),
-# these imports resolve normally.
-try:
-    from bot.omo_bot.config import BotConfig
-    from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
-    from bot.omo_bot.jobs import SyndicationPollingJob
-    from bot.omo_bot.main import build_syndication_adapters
-    from bot.omo_bot.models import MileageEvent, MileageTierStat, MileageTotal, MileageUserDetail, OnboardingConfig, OnboardingEvent, OnboardingRoleBinding, QueueEntry, QueueEvent, QueueSnapshot, QueueSummary, SyndicationSourceState
-    from bot.omo_bot.repositories import (
-        build_postgres_bot_audit_log_repository,
-        build_postgres_bot_config_repository,
-        build_postgres_mileage_repository,
-        build_postgres_onboarding_repository,
-        build_postgres_queue_repository,
-        build_postgres_syndication_repository,
-    )
-    from bot.omo_bot.services import BotAuditService, NullSyndicationDeliverySink, SyndicationPlanningService
-    from bot.omo_bot.services.onboarding_service import OnboardingService
-    from bot.omo_bot.services.mileage_service import (
-        MileageConflictError,
-        MileageNotFoundError,
-        MileageService,
-        MileageValidationError,
-    )
-    from bot.omo_bot.services.queue_service import (
-        QueueConflictError,
-        QueueEntryNotFoundError,
-        QueueNotFoundError,
-        QueuePausedError,
-        QueueService,
-        QueueValidationError,
-    )
-    BOT_MODULE_AVAILABLE = True
-except ModuleNotFoundError:
-    BOT_MODULE_AVAILABLE = False
-    BotConfig = None  # type: ignore[misc,assignment]
-    BotRuntimeSettings = None  # type: ignore[misc,assignment]
-    ConfigError = RuntimeError  # type: ignore[misc,assignment]
-    SyndicationPollingJob = None  # type: ignore[misc,assignment]
-    build_syndication_adapters = None  # type: ignore[misc,assignment]
-    MileageEvent = None  # type: ignore[misc,assignment]
-    MileageTierStat = None  # type: ignore[misc,assignment]
-    MileageTotal = None  # type: ignore[misc,assignment]
-    MileageUserDetail = None  # type: ignore[misc,assignment]
-    OnboardingConfig = None  # type: ignore[misc,assignment]
-    OnboardingEvent = None  # type: ignore[misc,assignment]
-    OnboardingRoleBinding = None  # type: ignore[misc,assignment]
-    QueueEntry = None  # type: ignore[misc,assignment]
-    QueueEvent = None  # type: ignore[misc,assignment]
-    QueueSnapshot = None  # type: ignore[misc,assignment]
-    QueueSummary = None  # type: ignore[misc,assignment]
-    SyndicationSourceState = None  # type: ignore[misc,assignment]
-    # type: ignore[misc,assignment]
-    build_postgres_bot_audit_log_repository = None
-    # type: ignore[misc,assignment]
-    build_postgres_bot_config_repository = None
-    build_postgres_mileage_repository = None  # type: ignore[misc,assignment]
-    # type: ignore[misc,assignment]
-    build_postgres_onboarding_repository = None
-    build_postgres_queue_repository = None  # type: ignore[misc,assignment]
-    # type: ignore[misc,assignment]
-    build_postgres_syndication_repository = None
-    BotAuditService = None  # type: ignore[misc,assignment]
-    NullSyndicationDeliverySink = None  # type: ignore[misc,assignment]
-    SyndicationPlanningService = None  # type: ignore[misc,assignment]
-    OnboardingService = None  # type: ignore[misc,assignment]
-    MileageConflictError = RuntimeError  # type: ignore[misc,assignment]
-    MileageNotFoundError = RuntimeError  # type: ignore[misc,assignment]
-    MileageService = None  # type: ignore[misc,assignment]
-    MileageValidationError = RuntimeError  # type: ignore[misc,assignment]
-    QueueConflictError = RuntimeError  # type: ignore[misc,assignment]
-    QueueEntryNotFoundError = RuntimeError  # type: ignore[misc,assignment]
-    QueueNotFoundError = RuntimeError  # type: ignore[misc,assignment]
-    QueuePausedError = RuntimeError  # type: ignore[misc,assignment]
-    QueueService = None  # type: ignore[misc,assignment]
-    QueueValidationError = RuntimeError  # type: ignore[misc,assignment]
-
-    def read_runtime_settings(env=None):  # type: ignore[misc]
-        raise RuntimeError('Bot module not available on this deployment path.')
-
-from . import bot_operator_repo
-from . import bot_operator_service
-from .bot_utils import (
-    DISCORD_HTTP_USER_AGENT,
-    _bool_status,
-    _build_bot_config_from_runtime_settings,
-    _configured_syndication_source,
-    _decode_http_error,
-    _default_syndication_state,
-    _discord_avatar_url,
-    _discord_request_headers,
-    _health_components,
-    _manual_syndication_actions_supported,
-    _mileage_active_guild_id,
-    _operator_user_id,
-    _parse_session_timestamp,
-    _serialize_audit_state,
-    _serialize_audit_value,
-    _syndication_last_poll_result,
-    _syndication_source_status,
-    _syndication_summary,
-    _utcnow,
+from .auth_runtime import (
+    _record_bot_audit_event,
+    _apply_bot_audit_status,
 )
-from .health_routes import (
-    build_health_snapshot,
-    overview,
-    health_page,
-    health_api,
-    health_services_api,
-    health_jobs_api,
+from .queue_mileage_snapshot import (
+    _build_queue_service_from_settings,
+    _serialize_queue_event,
+    _serialize_queue_snapshot,
+    _serialize_mileage_event,
+    _serialize_mileage_user_detail,
+    _build_mileage_service_from_settings,
+    _mileage_user_before_state,
+    _queue_before_state,
 )
-from .auth_routes import (
-    require_operator_session,
-    login,
-    oauth_start,
-    oauth_callback,
-    logout,
+from .runtime_snapshot import (
+    _build_bot_config_repository_from_settings,
+    _effective_runtime_settings,
+    _build_syndication_repository_from_settings,
+    _build_manual_syndication_polling_job,
+    _serialize_syndication_state,
+    build_bot_configuration_snapshot,
 )
-from .operator_routes import (
-    operators_page,
-    operators_api,
-    disable_operator_api,
-    disable_operator_page_action,
-    enable_operator_api,
-    enable_operator_page_action,
-    update_operator_scopes_api,
-    update_operator_scopes_page_action,
+from .onboarding_routes import (
+    onboarding_page,
+    list_onboarding_events_api,
+    replay_onboarding_api,
+    reset_onboarding_api,
+    request_onboarding_role_cleanup_api,
+)
+from .diagnostics_routes import diagnostics_api
+from .command_routes import (
+    commands_page,
+    commands_api,
+    poll_all_sources_api,
+    poll_all_sources_page_action,
+)
+from .syndication_routes import (
+    syndication_page,
+    syndication_api,
+    syndication_sources_api,
+    syndication_channels_api,
+    retry_syndication_source_api,
+    retry_syndication_source_page_action,
+    reset_syndication_checkpoint_api,
+    reset_syndication_checkpoint_page_action,
+)
+from .config_routes import (
+    config_page,
+    config_api,
+    set_active_guild_api,
+    set_active_guild_page_action,
+    upsert_channel_binding_api,
+    upsert_channel_binding_page_action,
+    delete_channel_binding_api,
+    delete_channel_binding_page_action,
+    upsert_role_binding_api,
+    upsert_role_binding_page_action,
+    delete_role_binding_api,
+    delete_role_binding_page_action,
+    enable_syndication_source_api,
+    enable_syndication_source_page_action,
+    disable_syndication_source_api,
+    disable_syndication_source_page_action,
+)
+from .mileage_routes import (
+    mileage_page,
+    mileage_detail_page,
+    mileage_users_api,
+    mileage_user_detail_api,
+    mileage_user_events_api,
+    mileage_tiers_api,
+    adjust_mileage_user_api,
+    adjust_mileage_user_page_action,
+    reverse_mileage_event_api,
+    reverse_mileage_event_page_action,
 )
 from .queue_routes import (
     queues_page,
@@ -158,126 +96,58 @@ from .queue_routes import (
     clear_queue_api,
     clear_queue_page_action,
 )
-from .mileage_routes import (
-    mileage_page,
-    mileage_detail_page,
-    mileage_users_api,
-    mileage_user_detail_api,
-    mileage_user_events_api,
-    mileage_tiers_api,
-    adjust_mileage_user_api,
-    adjust_mileage_user_page_action,
-    reverse_mileage_event_api,
-    reverse_mileage_event_page_action,
+from .operator_routes import (
+    operators_page,
+    operators_api,
+    disable_operator_api,
+    disable_operator_page_action,
+    enable_operator_api,
+    enable_operator_page_action,
+    update_operator_scopes_api,
+    update_operator_scopes_page_action,
 )
-from .config_routes import (
-    config_page,
-    config_api,
-    set_active_guild_api,
-    set_active_guild_page_action,
-    upsert_channel_binding_api,
-    upsert_channel_binding_page_action,
-    delete_channel_binding_api,
-    delete_channel_binding_page_action,
-    upsert_role_binding_api,
-    upsert_role_binding_page_action,
-    delete_role_binding_api,
-    delete_role_binding_page_action,
-    enable_syndication_source_api,
-    enable_syndication_source_page_action,
-    disable_syndication_source_api,
-    disable_syndication_source_page_action,
+from .auth_routes import (
+    require_operator_session,
+    login,
+    oauth_start,
+    oauth_callback,
+    logout,
 )
-from .syndication_routes import (
-    syndication_page,
-    syndication_api,
-    syndication_sources_api,
-    syndication_channels_api,
-    retry_syndication_source_api,
-    retry_syndication_source_page_action,
-    reset_syndication_checkpoint_api,
-    reset_syndication_checkpoint_page_action,
+from .health_routes import (
+    overview,
+    health_page,
+    health_api,
+    health_services_api,
+    health_jobs_api,
 )
-from .command_routes import (
-    commands_page,
-    commands_api,
-    poll_all_sources_api,
-    poll_all_sources_page_action,
+from .bot_utils import (
+    _configured_syndication_source,
+    _default_syndication_state,
+    _manual_syndication_actions_supported,
+    _mileage_active_guild_id,
+    _parse_session_timestamp,
+    _utcnow,
 )
-from .diagnostics_routes import diagnostics_api
-from .onboarding_routes import (
-    onboarding_page,
-    list_onboarding_events_api,
-    replay_onboarding_api,
-    reset_onboarding_api,
-    request_onboarding_role_cleanup_api,
+from . import bot_operator_service
+
+from datetime import timedelta
+from typing import cast
+
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
+
+# Bot imports are deferred so the website can start even when deployed
+# from the website/ subdirectory (where bot/ is not on the Python path).
+# When bot/ is available (repo-root deploy or PYTHONPATH includes root),
+# these imports resolve normally.
+from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
+from bot.omo_bot.models import SyndicationSourceState
+from bot.omo_bot.services.mileage_service import (
+    MileageNotFoundError,
 )
-from .runtime_snapshot import (
-    _build_bot_config_repository_from_settings,
-    _effective_runtime_settings,
-    _config_write_supported,
-    _build_syndication_repository_from_settings,
-    _build_manual_syndication_polling_job,
-    _serialize_syndication_state,
-    build_syndication_snapshot,
-    build_bot_configuration_snapshot,
-    build_bot_commands_snapshot,
-    _run_manual_syndication_poll_all,
+from bot.omo_bot.services.queue_service import (
+    QueueValidationError,
 )
-from .queue_mileage_snapshot import (
-    _build_queue_service_from_settings,
-    _serialize_queue_summary,
-    _serialize_queue_entry,
-    _serialize_queue_event,
-    _serialize_queue_snapshot,
-    _serialize_mileage_total,
-    _serialize_mileage_event,
-    _serialize_mileage_tier_stat,
-    _serialize_mileage_user_detail,
-    _build_mileage_service_from_settings,
-    build_mileage_index_snapshot,
-    build_mileage_detail_snapshot,
-    _mileage_user_before_state,
-    build_queue_index_snapshot,
-    build_queue_detail_snapshot,
-    _queue_before_state,
-)
-from .auth_runtime import (
-    _audit_database_url,
-    _build_bot_audit_service,
-    _mark_bot_audit_degraded,
-    _record_bot_audit_event,
-    _apply_bot_audit_status,
-    _read_env,
-    _oauth_config,
-    _oauth_ready,
-    _sanitize_next_url,
-    exchange_code_for_discord_identity,
-)
-from .request_ui_helpers import (
-    _request_data,
-    _parse_binding_key,
-    _parse_required_text,
-    _parse_required_int,
-    _page_syndication_scope_error,
-    _page_syndication_config_error,
-    _page_config_scope_error,
-    _page_config_error,
-    _page_config_binding_error,
-    _page_commands_scope_error,
-    _page_commands_error,
-    _queue_page_redirect,
-    _page_queue_scope_error,
-    _page_queue_config_error,
-    _page_queue_action_error,
-    _page_queue_not_found_error,
-    _page_queue_confirmation_error,
-    _mileage_page_redirect,
-    _page_mileage_scope_error,
-    _page_mileage_config_error,
-    _page_mileage_action_error,
-    _page_mileage_not_found_error,
-)
+BOT_MODULE_AVAILABLE = True
 
 
 bp = Blueprint('bot', __name__, url_prefix='/bot')
@@ -996,22 +866,3 @@ def moderation_page():
         'moderation.html',
         error=request.args.get('error'),
     )
-
-
-# ---------------------------------------------------------------------------
-# Onboarding
-# ---------------------------------------------------------------------------
-
-def _build_onboarding_service() -> 'OnboardingService | None':
-    if not BOT_MODULE_AVAILABLE or build_postgres_onboarding_repository is None or OnboardingService is None:
-        return None
-    try:
-        settings = _load_bot_runtime_settings()
-        if not settings.database_url:
-            return None
-        return OnboardingService(
-            onboarding_repository=build_postgres_onboarding_repository(
-                settings.database_url)
-        )
-    except Exception:
-        return None
