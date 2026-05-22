@@ -439,6 +439,19 @@ class TestAdminFlows:
         assert b'Discord Bot' in response.data
         assert b'api.openmicodyssey.com' in response.data
 
+    def test_admin_media_page_renders(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        with client.session_transaction() as session:
+            session['_user_id'] = 'editor'
+            session['_fresh'] = True
+
+        response = client.get('/content/media')
+
+        assert response.status_code == 200
+        assert b'Manage Media Gallery' in response.data
+
     def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
         app = self._admin_app()
         client = app.test_client()

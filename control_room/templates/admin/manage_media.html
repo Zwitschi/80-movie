@@ -181,7 +181,7 @@
           // Submit reorder via hidden form
           const form = document.createElement('form');
           form.method = 'post';
-          form.action = '{{ url_for("admin.manage_media") }}';
+          form.action = '{{ url_for("content.manage_media") }}';
           form.innerHTML = `
             <input type="hidden" name="action" value="reorder" />
             <input type="hidden" name="order" value="${order.join(',')}" />

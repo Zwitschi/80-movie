@@ -13,7 +13,8 @@ admin_blueprint = Blueprint(
 def _matches_config_password(password: str) -> bool:
     valid_password = current_app.config.get('ADMIN_PASSWORD')
     if isinstance(valid_password, str) and valid_password:
-        return compare_digest(valid_password, password)
+        if compare_digest(valid_password, password):
+            return True
 
     valid_hash = current_app.config.get('ADMIN_PASSWORD_HASH')
     if not isinstance(valid_hash, str) or not valid_hash:
