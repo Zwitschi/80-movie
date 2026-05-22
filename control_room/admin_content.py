@@ -30,6 +30,7 @@ from shared.utils import (
     EVENT_ATTENDANCE_MODES,
     OFFER_AVAILABILITIES,
 )
+from .content_film import _handle_film_request, _handle_film_request_post
 
 
 def _ctx():
@@ -48,60 +49,6 @@ def _ctx():
         'release_status': movie.get('release_status', {}),
         'current_year': current_app.config.get('CURRENT_YEAR', ''),
     }
-
-
-def _handle_film_request_post(request):
-    writer = get_content_writer()
-    reader = get_content_reader()
-    payload = reader.read('movies.json')
-    movie = payload.get('movie', {})
-    update = dict(movie)
-    update['title'] = request.form.get('title', '').strip()
-    update['tagline'] = request.form.get('tagline', '').strip()
-    update['description'] = request.form.get('description', '').strip()
-    update['genre'] = request.form.get('genre', '').strip()
-    update['runtime'] = request.form.get('runtime', '').strip()
-    update['duration_iso'] = request.form.get('duration_iso', '').strip()
-    update['release_date'] = request.form.get('release_date', '').strip()
-
-    rs = _coerce_release_status(update)
-    rs['label'] = request.form.get('release_status_label', '').strip()
-    rs['headline'] = request.form.get('release_status_headline', '').strip()
-    rs['summary'] = request.form.get('release_status_summary', '').strip()
-    rs['detail'] = request.form.get('release_status_detail', '').strip()
-    update['release_status'] = rs
-
-    payload['movie'] = update
-    try:
-        writer.write('movies.json', payload)
-        return redirect(url_for('content.edit_film', saved='1'))
-    except ContentWriteError as e:
-        return render_template(
-            'admin/edit_film.html',
-            save_error=str(e),
-            form_data=_movie_form_fields(update),
-            raw_movie_data=update,
-            **_ctx(),
-        )
-
-
-def _handle_film_request(request):
-    save_error = None
-    movies_payload = load_json('movies.json')
-    movie_payload = movies_payload.get('movie', {})
-
-    if request.method == 'POST':
-        return _handle_film_request_post(request)
-
-    save_success = request.args.get('saved') == '1'
-    return render_template(
-        'admin/edit_film.html',
-        save_error=save_error,
-        save_success=save_success,
-        form_data=_movie_form_fields(movie_payload),
-        raw_movie_data=movie_payload,
-        **_ctx(),
-    )
 
 
 def _handle_media_request_post(request, gallery_payload, gallery_items):

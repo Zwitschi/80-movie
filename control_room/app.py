@@ -9,7 +9,6 @@ from shared.db import init_app as init_db_app
 from shared.config import load_dotenv_files, get_control_room_config_values
 from flask_login import LoginManager
 from flask import Flask
-from pathlib import Path
 
 
 def create_app() -> Flask:

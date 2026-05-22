@@ -1,6 +1,5 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
-from flask_login import current_user, login_user, logout_user
-from werkzeug.security import check_password_hash
+from flask_login import current_user
 
 from .admin_content import (
     _handle_film_request,
@@ -16,8 +15,6 @@ from .admin_content import (
     _handle_media_assets_request,
     _handle_reviews_request,
 )
-from .auth import AdminUser
-from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
 from .admin_content import _ctx
 
 content_blueprint = Blueprint(
