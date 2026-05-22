@@ -32,6 +32,17 @@ def test_bot_api_overview_renders_in_testing_mode():
     assert b'Component Snapshot' in response.data
 
 
+def test_bot_api_root_redirects_to_operator_dashboard():
+    app = create_app()
+    app.config['TESTING'] = True
+    client = app.test_client()
+
+    response = client.get('/')
+
+    assert response.status_code == 302
+    assert response.headers['Location'].endswith('/bot/')
+
+
 def test_bot_api_health_api_returns_snapshot_in_testing_mode():
     app = create_app()
     app.config['TESTING'] = True

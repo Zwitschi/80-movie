@@ -1,11 +1,11 @@
 """Bot API Flask application.
 
-Standalone Flask app exposing health, config, and syndication endpoints
-for the bot worker runtime.
+Standalone Flask app exposing operator dashboard, health, config,
+and syndication endpoints for the bot worker runtime.
 """
 
 from pathlib import Path
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, url_for
 
 from shared.config import load_dotenv_files, get_bot_api_config_values
 from shared.db import init_app as init_db_app
@@ -37,6 +37,11 @@ def create_app() -> Flask:
         view_func=oauth_callback,
         methods=['GET'],
     )
+
+    @app.route('/')
+    def root():
+        """Redirect bare bot API hostname to the operator dashboard."""
+        return redirect(url_for('bot.overview'))
 
     # Register health endpoint
     @app.route('/health')
