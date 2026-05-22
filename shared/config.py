@@ -121,6 +121,18 @@ def get_bot_api_config_values() -> dict:
         "SYNDICATION_SOURCES": get_env_tuple("OMO_SYNDICATION_SOURCES"),
         "SYNDICATION_POLL_SECONDS": get_env_int("OMO_SYNDICATION_POLL_SECONDS", 300),
         "LOG_LEVEL": get_env_str("OMO_LOG_LEVEL", "INFO"),
+        "BOT_OPS_DISCORD_CLIENT_ID": get_env_str(
+            "OMO_DISCORD_CLIENT_ID",
+            get_env_str("DISCORD_CLIENT_ID", ""),
+        ),
+        "BOT_OPS_DISCORD_CLIENT_SECRET": get_env_str(
+            "OMO_DISCORD_CLIENT_SECRET",
+            get_env_str("DISCORD_CLIENT_SECRET", ""),
+        ),
+        "BOT_OPS_DISCORD_REDIRECT_URI": get_env_str(
+            "OMO_DISCORD_REDIRECT_URI",
+            get_env_str("DISCORD_REDIRECT_URI", ""),
+        ),
         "BOT_OPS_ALLOWED_USER_IDS": get_env_tuple("OMO_BOT_OPS_ALLOWED_USER_IDS"),
         "BOT_OPS_DEFAULT_SCOPES": get_env_tuple("OMO_BOT_OPS_DEFAULT_SCOPES", ("ops.read",)),
     }

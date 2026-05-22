@@ -1,12 +1,12 @@
 import pytest
-from control_room.app import create_app as create_control_room_app
+from bot_api.app import create_app as create_bot_api_app
 from bot.omo_bot.models import MileageTotal, MileageEvent
 from bot.omo_bot.repositories import InMemoryMileageRepository
 
 
 @pytest.fixture
 def app():
-    app = create_control_room_app()
+    app = create_bot_api_app()
     app.config['TESTING'] = True
     return app
 
@@ -18,7 +18,7 @@ def client(app):
 
 def test_mileage_lifecycle_via_api(client, monkeypatch):
     from bot.omo_bot.config import BotRuntimeSettings
-    from control_room import admin_bot
+    from bot_api import admin_bot
 
     repo = InMemoryMileageRepository()
 
@@ -87,4 +87,3 @@ def test_mileage_lifecycle_via_api(client, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['total']['total_points'] == 0
-

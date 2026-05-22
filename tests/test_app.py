@@ -403,7 +403,7 @@ class TestAdminFlows:
 
         assert response.status_code == 200
         assert b'Discord Bot' in response.data
-        assert b'/bot' in response.data
+        assert b'api.openmicodyssey.com' in response.data
 
     def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
         app = self._admin_app()

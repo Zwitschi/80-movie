@@ -256,8 +256,8 @@ def test_handle_onboarding_reset_command_requires_actor():
 
 @pytest.fixture
 def app():
-    from control_room.app import create_app as create_control_room_app
-    app = create_control_room_app()
+    from bot_api.app import create_app as create_bot_api_app
+    app = create_bot_api_app()
     app.config['TESTING'] = True
     return app
 
@@ -268,7 +268,7 @@ def client(app):
 
 
 def _set_operator_session(client):
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     with client.session_transaction() as sess:
         sess[admin_bot.BOT_OPS_SESSION_KEY] = 'op-user'
         sess[admin_bot.BOT_OPS_SCOPES_SESSION_KEY] = [
@@ -279,7 +279,7 @@ def _set_operator_session(client):
 
 def test_reset_onboarding_api_calls_service(client, monkeypatch):
     """POST /onboarding/reset delegates to service and returns JSON."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
 
     called_reset: list[dict] = []
 
@@ -329,7 +329,7 @@ def test_reset_onboarding_api_calls_service(client, monkeypatch):
 
 
 def test_reset_onboarding_api_requires_guild_and_user(client, monkeypatch):
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
     _set_operator_session(client)
 
@@ -348,7 +348,7 @@ def test_reset_onboarding_api_requires_operator_scope(client):
 
 def test_reset_onboarding_api_requires_confirm(client, monkeypatch):
     """POST without confirm='reset' returns 400."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
     _set_operator_session(client)
 
@@ -417,7 +417,7 @@ def test_onboarding_reset_dry_run_returns_count_without_deleting():
 
 def test_reset_onboarding_api_dry_run_does_not_require_confirm(client, monkeypatch):
     """dry_run=True skips confirm requirement and does not delete."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
 
     called: list[dict] = []
 
@@ -515,7 +515,7 @@ def test_list_pending_role_cleanups_returns_events():
 
 def test_role_cleanup_api_records_event(client, monkeypatch):
     """POST /onboarding/role-cleanup creates cleanup event."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
 
     called: list[dict] = []
 
@@ -561,7 +561,7 @@ def test_role_cleanup_api_records_event(client, monkeypatch):
 
 
 def test_role_cleanup_api_requires_guild_and_user(client, monkeypatch):
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
     _set_operator_session(client)
 
@@ -583,7 +583,7 @@ def test_role_cleanup_api_requires_operator_scope(client):
 
 def test_diagnostics_api_returns_domain_summary(client, monkeypatch):
     """GET /admin/bot/api/diagnostics returns queue, onboarding, mileage sections."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     from bot.omo_bot.models import QueueSummary
     from datetime import datetime, timezone
 
@@ -716,7 +716,7 @@ def _patch_queue_api(monkeypatch, admin_bot, repo):
 
 def test_queue_clear_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/clear records queue.cleared audit event."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
 
     repo = InMemoryQueueRepository()
     repo.save_queue(
@@ -743,7 +743,7 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
 
 def test_queue_remove_entry_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<entry_id>/remove records queue.entry.removed."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     from bot.omo_bot.services.queue_service import QueueService
 
     repo = InMemoryQueueRepository()
@@ -772,7 +772,7 @@ def test_queue_remove_entry_api_records_audit_event(client, monkeypatch):
 
 def test_queue_move_entry_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<entry_id>/move records queue.entry.moved."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     from bot.omo_bot.services.queue_service import QueueService
 
     repo = InMemoryQueueRepository()
@@ -805,7 +805,7 @@ def test_queue_move_entry_api_records_audit_event(client, monkeypatch):
 
 def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
     """POST /api/mileage/users/<user_id>/adjust records mileage.adjusted."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     from bot.omo_bot.repositories.mileage_repo import InMemoryMileageRepository
     from bot.omo_bot.services.mileage_service import MileageService
 
@@ -839,7 +839,7 @@ def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
 
 def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
     """POST /api/mileage/events/<event_id>/reverse records mileage.reversed."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
     from bot.omo_bot.repositories.mileage_repo import InMemoryMileageRepository
     from bot.omo_bot.services.mileage_service import MileageService
 
@@ -878,7 +878,7 @@ def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
 
 def test_onboarding_reset_api_records_audit_event(client, monkeypatch):
     """POST /onboarding/reset records onboarding.reset via audit service."""
-    import control_room.admin_bot as admin_bot
+    import bot_api.admin_bot as admin_bot
 
     audit_records: list[dict] = []
 
@@ -913,4 +913,3 @@ def test_onboarding_reset_api_records_audit_event(client, monkeypatch):
     assert response.status_code == 200
     assert any(r.get('action_key') ==
                'onboarding.reset' for r in audit_records)
-

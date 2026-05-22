@@ -2,9 +2,9 @@
 
 ## 1. Overview
 
-Open Mic Odyssey currently ships as three Flask-based service surfaces around one shared PostgreSQL database: public website, control room, and bot API. Public site lives at `openmicodyssey.com`.
+Open Mic Odyssey currently ships as four service surfaces around one shared PostgreSQL database: public website, control room, bot API, and bot worker. Public site lives at `openmicodyssey.com`.
 
-Current repository contains a standalone control room for editorial CMS routes under `/admin` plus operator routes under `/admin/bot`, with Discord OAuth operator login, operator/session management, health/config/command views, and syndication control APIs. Repository also contains a scaffolded bot worker runtime focused on configuration, startup lifecycle, and YouTube-first syndication polling. It still does **not** contain a feature-complete Discord gateway automation worker or a separate operator dashboard SPA.
+Current repository contains a standalone control room for editorial CMS routes at `/` and `/content/*`, backed by Flask-Login and local admin credentials or seeded DB users. Repository also contains a standalone bot API for operator routes under `/bot`, with Discord OAuth operator login, operator/session management, health/config/command views, and syndication, queue, mileage, onboarding, and moderation APIs. Bot runtime remains a separate worker focused on configuration, startup lifecycle, and YouTube-first syndication polling. It still does **not** contain a feature-complete Discord gateway automation worker or a separate operator dashboard SPA.
 
 ### Current Product Goals
 
@@ -35,7 +35,7 @@ Current repository contains a standalone control room for editorial CMS routes u
 
 ## 2. Service Boundaries
 
-The codebase is split into three primary services with distinct responsibilities:
+The codebase is split into four primary services with distinct responsibilities:
 
 ### Website (`website/`)
 
@@ -46,15 +46,22 @@ The codebase is split into three primary services with distinct responsibilities
 
 ### Control Room (`control_room/`)
 
-- **Role**: Administrative Backend & CMS.
-- **Responsibility**: Editorial CRUD, operator dashboards, bot management, background tasks, and privileged JSON APIs.
-- **Data Access**: Read-write access to content and bot-specific data.
-- **Authentication**: Flask-Login with local user hash and Discord OAuth for operators.
+- **Role**: Editorial CMS.
+- **Responsibility**: Editorial CRUD, dashboard/navigation for site content, and authenticated server-rendered admin forms.
+- **Data Access**: Read-write access to editorial content.
+- **Authentication**: Flask-Login with local password verification, seeded DB users, and role assignments.
 
-### Bot (`bot/`)
+### Bot API (`bot_api/`)
+
+- **Role**: Operator Dashboard & Ops API.
+- **Responsibility**: Discord OAuth operator login, bot health/config/command views, queue/mileage/onboarding/moderation endpoints, and syndication controls.
+- **Data Access**: Read-write access to bot-specific tables and read-only access to shared content where needed.
+- **Authentication**: Discord OAuth plus locally managed operator scopes.
+
+### Bot Worker (`bot/`)
 
 - **Role**: Automation Worker.
-- **Responsibility**: Discord gateway interaction, event polling, mileage/queue logic, and content syndication.
+- **Responsibility**: Background runtime, event polling, syndication jobs, and future Discord gateway automation.
 - **Data Access**: Read-write access to bot-specific tables and read-only access to movie content.
 
 ## 3. Scope
@@ -64,9 +71,11 @@ The codebase is split into three primary services with distinct responsibilities
 - Flask website runtime in `website/`
 - Public pages, compatibility redirects, sitemap, robots, and hidden map route
 - Standalone control room runtime in `control_room/`
-- Editorial CMS routes under `/admin` on the control room service
-- Operator routes, templates, and ops APIs under `/admin/bot` on the control room service
-- Discord OAuth operator login for the control room
+- Editorial CMS dashboard routes at `/` plus content routes under `/content/*` on the control room service
+- Local username/password login plus seeded DB user and role tables for editorial admin access
+- Standalone bot API runtime in `bot_api/`
+- Operator routes, templates, and ops APIs under `/bot/*` on the bot API service
+- Discord OAuth operator login for the bot API
 - PostgreSQL-backed content read/write layer
 - JSON-LD schema generation from structured content
 - Static export generation to `website/dist`
@@ -89,15 +98,16 @@ Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `websi
 
 ### Current System Context
 
-Public visitors interact with a public Flask website deployed at openmicodyssey.com. Admin editors and bot operators interact with a separate Flask control room deployed at admin.openmicodyssey.com. Website, control room, bot API, and bot worker share one PostgreSQL database. The bot scaffold runtime runs as a separate process for config validation and syndication polling seams.
+Public visitors interact with a public Flask website deployed at openmicodyssey.com. Editors interact with a separate Flask control room deployed at admin.openmicodyssey.com. Bot operators interact with a standalone bot API surface deployed at api.openmicodyssey.com. Website, control room, bot API, and bot worker share one PostgreSQL database. The bot worker runs as a separate process for config validation and syndication polling seams.
 
 ### Future-State Context
 
-Three independent services share one PostgreSQL database:
+Four independent services share one PostgreSQL database:
 
 - **Website** (openmicodyssey.com) serves public pages on port 8880.
-- **Control Room** (admin.openmicodyssey.com) provides operator login, health/config views, and syndication control on port 8480.
-- **Bot API** (api.openmicodyssey.com) exposes health, syndication, and bot management endpoints on port 8787.
+- **Control Room** (admin.openmicodyssey.com) provides editorial login and CMS routes on port 8480.
+- **Bot API** (api.openmicodyssey.com) exposes operator pages plus health, queue, mileage, onboarding, moderation, syndication, and bot management endpoints on port 8787.
+- **Bot Worker** runs as a separate long-lived process with no public HTTP surface.
 
 All traffic routes through Nginx Proxy Manager on the Coolify server. The Discord bot worker connects to Discord's gateway API and reads/writes bot-owned tables in the shared database.
 
@@ -141,22 +151,23 @@ All traffic routes through Nginx Proxy Manager on the Coolify server. The Discor
 
 ### Current Building Blocks
 
-| Building Block                   | Responsibility                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------------- |
-| `website/app.py`                 | Thin WSGI entrypoint exposing `app`                                                   |
-| `website/movie_site/__init__.py` | Public website app factory, config loading, public blueprint registration             |
-| `website/movie_site/views.py`    | Public routes, page context, meta tags, sitemap, robots, hidden map page              |
-| `website/movie_site/config.py`   | Environment-driven defaults and secrets/config                                        |
-| `control_room/app.py`            | Control-room app factory, auth wiring, blueprint registration                         |
-| `control_room/admin.py`          | Editorial CMS routes, login gate, dashboard entry, route delegation                   |
-| `control_room/admin_content.py`  | CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, assets |
-| `control_room/auth.py`           | Flask-Login manager and admin user loader for editorial CMS                           |
-| `control_room/admin_bot.py`      | Operator routes, Discord OAuth flow, health/config/queue/mileage/syndication views    |
-| `shared/db.py`                   | Connection-pool helper functions using `psycopg2`                                     |
-| `shared/content_store.py`        | Content store factory abstraction and read/write implementations                      |
-| `shared/movie_data.py`           | Aggregates content records into page-ready data model                                 |
-| `shared/schema.py` + `parts/`    | Builds JSON-LD graph for SEO/schema.org output                                        |
-| `website/export_static.py`       | Renders public routes into static HTML and validates output                           |
+- `website/app.py`: thin WSGI entrypoint exposing `app`.
+- `website/movie_site/__init__.py`: public website app factory, config loading, and public blueprint registration.
+- `website/movie_site/views.py`: public routes, page context, meta tags, sitemap, robots, and hidden map page.
+- `website/movie_site/config.py`: environment-driven defaults and secrets/config.
+- `control_room/app.py`: control-room app factory, auth wiring, and blueprint registration.
+- `control_room/admin.py`: editorial login/logout, dashboard entry, and top-level auth guard.
+- `control_room/content.py`: editorial CMS route definitions under `/content/*`.
+- `control_room/admin_content.py`: CRUD handlers for film, media, content, events, FAQ, people, connect, reviews, and assets.
+- `control_room/auth.py`: Flask-Login admin user model and role checks for editorial CMS.
+- `control_room/user_repo.py`: editorial user lookup, creation, password verification, and role assignment.
+- `bot_api/app.py`: bot API app factory, config loading, blueprint registration, and health/config endpoints.
+- `bot_api/admin_bot.py`: operator routes, Discord OAuth flow, and bot ops pages and APIs.
+- `shared/db.py`: connection-pool helper functions using `psycopg2`.
+- `shared/content_store.py`: content store factory abstraction and read/write implementations.
+- `shared/movie_data.py`: aggregates content records into a page-ready data model.
+- `shared/schema.py` plus `parts/`: builds the JSON-LD graph for SEO/schema.org output.
+- `website/export_static.py`: renders public routes into static HTML and validates output.
 
 ### Implemented Route Surface
 
@@ -192,24 +203,47 @@ Public routes in current code:
 | `/robots.txt`  | Search crawler policy                                                      |
 | `/sitemap.xml` | Search index of public pages plus discovered static assets                 |
 
-Admin routes in current code:
+Control room routes in current code:
 
-- `/admin`
-- `/admin/login`
-- `/admin/logout`
-- `/admin/film`
-- `/admin/media`
-- `/admin/content`
-- `/admin/events`
-- `/admin/faq`
-- `/admin/people`
-- `/admin/connect`
-- `/admin/connect/social`
-- `/admin/connect/supporters`
-- `/admin/connect/patreon`
-- `/admin/media-assets`
-- `/admin/reviews`
-- `/admin/submissions`
+- `/`
+- `/login`
+- `/logout`
+- `/content`
+- `/content/film`
+- `/content/media`
+- `/content/content`
+- `/content/events`
+- `/content/faq`
+- `/content/people`
+- `/content/connect`
+- `/content/connect/social`
+- `/content/connect/supporters`
+- `/content/connect/patreon`
+- `/content/media-assets`
+- `/content/reviews`
+- `/content/submissions`
+
+Bot API routes in current code:
+
+- `/health`
+- `/api/config`
+- `/oauth/discord/callback`
+- `/bot`
+- `/bot/login`
+- `/bot/oauth/start`
+- `/bot/health`
+- `/bot/onboarding`
+- `/bot/moderation`
+- `/bot/operators`
+- `/bot/syndication`
+- `/bot/config`
+- `/bot/commands`
+- `/bot/mileage`
+- `/bot/queues`
+- `/bot/api/health`
+- `/bot/api/queues`
+- `/bot/api/mileage/users`
+- `/bot/api/syndication/sources`
 
 ### Admin CMS Coverage
 
@@ -224,7 +258,7 @@ Current admin surface supports editing or reviewing these content domains:
 - Connect page sections, supporter links, Patreon messaging, and social links
 - Media assets and review content
 
-Admin dashboard currently uses one authenticated Flask surface rather than separate editorial API and SPA.
+Editorial CMS remains a server-rendered Flask surface. Bot operator tooling is served by the separate `bot_api/` Flask app rather than the CMS shell.
 
 ### Content Source Status
 
@@ -260,16 +294,16 @@ Current code reality:
 
 ### Scenario: Admin Login (Control Room)
 
-1. Editor requests `/admin` or child route on control room service.
-2. `before_request` guard redirects unauthenticated user to `/admin/login`.
-3. Login form checks submitted username against `ADMIN_USERNAME`.
-4. Password is verified against `ADMIN_PASSWORD_HASH` via Werkzeug.
-5. Flask-Login stores session and redirects back to requested admin route.
+1. Editor requests `/` or `/content/*` on the control room service.
+2. `before_request` guard redirects unauthenticated user to `/login`.
+3. Login form first resolves a DB-backed admin user by username.
+4. Password is verified against the stored Werkzeug hash; legacy config-based fallback remains available.
+5. Flask-Login stores session and redirects back to the requested CMS route.
 
 ### Scenario: Admin Content Edit (Control Room)
 
-1. Authenticated editor submits form to control-room admin route.
-2. `control_room/admin.py` delegates to handler in `control_room/admin_content.py`.
+1. Authenticated editor submits form to a control-room `/content/*` route.
+2. `control_room/content.py` delegates to a handler in `control_room/admin_content.py`.
 3. Handler normalizes form data and builds logical content payload.
 4. Content writer persists updates to PostgreSQL-backed content tables.
 5. User is redirected back to editor with success or rendered with validation/save error.
@@ -296,21 +330,21 @@ Current code reality:
 3. Client-side map code reads route data from `website/static/data/map_data.json`.
 4. Map rendering depends on configured `MAPBOX_ACCESS_TOKEN`.
 
-### Scenario: Operator Login (Control Room)
+### Scenario: Operator Login (Bot API)
 
-1. Operator requests `/admin/bot/login` on control room service (port 8480).
-2. Control room renders Discord OAuth start button.
-3. Operator authorizes via Discord; callback returns to `/oauth/discord/callback`.
-4. Control room validates OAuth state, fetches Discord identity, resolves local operator record.
-5. Operator session created with scoped permissions (`ops.read`, `queue.write`, etc.).
-6. Operator redirected to control room overview.
+1. Operator requests `/bot/login` on bot API service (port 8787).
+2. Bot API renders Discord OAuth start button.
+3. Operator authorizes via Discord; callback returns to the configured bot API OAuth callback.
+4. Bot API validates OAuth state, fetches Discord identity, and resolves the local operator record.
+5. Bot API creates an operator session with scoped permissions (`ops.read`, `queue.write`, etc.).
+6. Operator is redirected to `/bot`.
 
-### Scenario: Bot Health Check (Control Room / Bot API)
+### Scenario: Bot Health Check (Bot API)
 
-1. Operator opens Health screen on control room (port 8480).
-2. Control room calls `GET /admin/bot/api/health` on bot API service (port 8787).
-3. Bot API returns runtime state, DB reachability, job freshness, config presence.
-4. Control room renders health dashboard with status indicators.
+1. Operator opens `/bot/health` on the bot API service.
+2. Bot API page or client-side fetch calls `GET /bot/api/health` on the same service.
+3. Bot API returns runtime state, DB reachability, job freshness, and config presence.
+4. The operator health dashboard renders status indicators from that payload.
 
 ### Scenario: Syndication Polling (Bot Worker)
 
@@ -319,15 +353,15 @@ Current code reality:
 3. Job queries YouTube adapter for new content since last checkpoint.
 4. New items are normalized and posted to configured Discord channels.
 5. Checkpoint updated in `bot_syndication_checkpoint` table.
-6. Control room can inspect source status and trigger retries via bot API.
+6. Bot operators can inspect source status and trigger retries via the bot API.
 
-### Scenario: Queue Management (Control Room + Bot API)
+### Scenario: Queue Management (Bot API)
 
-1. Moderator opens Queue screen on control room (port 8480).
-2. Control room fetches queue list from bot API (port 8787).
-3. Moderator advances queue via `POST /admin/bot/api/queues/{queue_id}/advance`.
+1. Moderator opens `/bot/queues` on the bot API service.
+2. Bot API fetches queue list from `GET /bot/api/queues`.
+3. Moderator advances queue via `POST /bot/api/queues/{queue_id}/advance`.
 4. Bot API validates scope (`queue.write`), updates queue state, emits audit entry.
-5. Control room refreshes queue detail view with updated state.
+5. Bot API refreshes the queue detail view with updated state.
 
 ## 7. Deployment View
 
@@ -345,26 +379,27 @@ All services deploy on a single Coolify server at `coolify.allucanget.biz` (inte
 
 ### Database
 
-PostgreSQL is always available at `192.168.88.35`. All three services connect to the same database instance with separate table ownership:
+PostgreSQL is always available at `192.168.88.35`. All four service surfaces connect to the same database instance with separate table ownership:
 
 - Website owns editorial tables (`movie`, `gallery_item`, `faq_item`, etc.)
-- Bot owns operational tables (`bot_guild_config`, `bot_queue`, `bot_mileage_event`, `bot_syndication_source`, etc.)
+- Control room writes editorial data through the shared content store and admin user tables
+- Bot API and bot worker own operational tables (`bot_guild_config`, `bot_queue`, `bot_mileage_event`, `bot_syndication_source`, etc.)
 - Shared integration tables exist for cross-surface read models
 
 ### Coolify Deployment
 
 Each service deploys as an independent Coolify Application resource:
 
-| Service      | Base Directory  | Start Command                                      | Port | Health Check                |
-| ------------ | --------------- | -------------------------------------------------- | ---- | --------------------------- |
-| Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | `GET /robots.txt`           |
-| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | `GET /admin/bot/api/health` |
-| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | `GET /health`               |
-| Bot Worker   | `/` (repo root) | `python -m bot.omo_bot`                            | none | process alive               |
+| Service      | Base Directory  | Start Command                                      | Port | Health Check      |
+| ------------ | --------------- | -------------------------------------------------- | ---- | ----------------- |
+| Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | `GET /robots.txt` |
+| Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | `GET /login`      |
+| Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | `GET /health`     |
+| Bot Worker   | `/` (repo root) | `python -m bot.omo_bot`                            | none | process alive     |
 
 ### Nginx Proxy Manager
 
-Nginx Proxy Manager is pre-configured with proxy hosts for all three domains. Each proxy host:
+Nginx Proxy Manager is pre-configured with proxy hosts for all public HTTP domains. Each proxy host:
 
 - Routes to the corresponding internal IP and port
 - Handles TLS via Let's Encrypt (managed by NPM)
@@ -381,7 +416,9 @@ Repository also supports generating static HTML output from same public routes. 
 - `CURRENT_YEAR` feeds shared page/footer context.
 - `MAPBOX_ACCESS_TOKEN` is only required for hidden map experience.
 - Website `SECRET_KEY` governs public-site session state.
-- Control room `SECRET_KEY`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD_HASH` govern editorial CMS session auth.
+- Control room `SECRET_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and DB-backed admin user records govern editorial CMS session auth.
+- `BOT_API_URL` lets the control room link out to the standalone bot operator surface.
+- Bot API `SECRET_KEY` plus `BOT_OPS_DISCORD_*` values govern Discord OAuth operator sessions.
 - `DATABASE_URL` controls PostgreSQL connection pool target (points to `192.168.88.35`).
 - `DATA_SOURCE` is present in config surface, but does not currently switch runtime away from DB-backed content store.
 
@@ -406,9 +443,29 @@ Repository also supports generating static HTML output from same public routes. 
 ### Control Room Optional Environment Variables
 
 - `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `OMO_BOT_API_URL`
 - `OMO_DISCORD_CLIENT_ID` / `DISCORD_CLIENT_ID`
 - `OMO_DISCORD_CLIENT_SECRET` / `DISCORD_CLIENT_SECRET`
 - `OMO_DISCORD_REDIRECT_URI` / `DISCORD_REDIRECT_URI`
+
+### Bot API Required Environment Variables
+
+- `SECRET_KEY`
+- `DATABASE_URL` or `OMO_DATABASE_URL`
+
+### Bot API Optional Environment Variables
+
+- `OMO_DISCORD_TOKEN` / `DISCORD_TOKEN`
+- `OMO_DISCORD_GUILD_ID`
+- `OMO_SYNDICATION_SOURCES`
+- `OMO_SYNDICATION_POLL_SECONDS`
+- `OMO_LOG_LEVEL`
+- `OMO_DISCORD_CLIENT_ID` / `DISCORD_CLIENT_ID`
+- `OMO_DISCORD_CLIENT_SECRET` / `DISCORD_CLIENT_SECRET`
+- `OMO_DISCORD_REDIRECT_URI` / `DISCORD_REDIRECT_URI`
+- `OMO_BOT_OPS_ALLOWED_USER_IDS`
+- `OMO_BOT_OPS_DEFAULT_SCOPES`
 
 ### Testing Notes
 
@@ -419,14 +476,14 @@ Tests should not rely on a live database connection. Use in-memory repositories 
 ### Current Security Model
 
 - Public site is anonymous-read.
-- Admin CMS uses Flask session auth with configured username and password hash.
-- Embedded control-room operator auth uses Discord OAuth plus locally managed operator scopes and session idle timeout rules.
+- Admin CMS uses Flask session auth with configured credentials or DB-backed admin users and roles.
+- Bot API operator auth uses Discord OAuth plus locally managed operator scopes and session idle timeout rules.
 - Secrets are environment-based.
 - Hidden `/map` page still depends on public Mapbox token for client-side rendering.
 
 ### Current Operational Characteristics
 
-- App is small modular Flask codebase with public, editorial admin, and embedded control-room blueprints.
+- App is a small modular Flask/Python codebase with public website, editorial CMS, standalone bot API, and standalone worker surfaces.
 - Structured content is assembled dynamically for page render and sitemap generation.
 - Static export path gives additional confidence in route renderability and schema validity.
 - Bot worker runtime can start independently for config validation, lifecycle smoke checks, and syndication polling seam wiring, but it is not yet a feature-complete Discord automation service.
@@ -566,29 +623,30 @@ Confirmed near-term product decision:
 Current and planned auth boundaries should stay separate at first:
 
 - Website admin auth remains Flask-Login session auth for editorial CMS.
-- Bot service auth should use service-level secrets/config, not website session cookies.
-- Future control room should use its own operator auth layer and call internal website/bot APIs with explicit credentials.
-- Discord OAuth is already the operator login path for the embedded `/admin/bot` control room and is not a prerequisite for the editorial CMS.
+- Bot API operator auth uses Discord OAuth plus local scope checks, not website or control-room session cookies.
+- Control room editorial auth and bot operator auth are intentionally separate and should remain so.
+- Bot worker runtime uses service-level config and secrets rather than browser session state.
 
 Confirmed near-term product decision:
 
-- Keep Discord OAuth as the control-room operator authentication path through the embedded-first phase and the first extracted control-room phase.
+- Keep Discord OAuth as the bot operator authentication path for the standalone `bot_api/` service.
 - Keep authorization local through explicit operator scopes rather than Discord guild membership alone.
-- Do not converge control-room auth with the editorial CMS credential model.
+- Do not converge bot operator auth with the editorial CMS credential model.
 - Keep onboarding and role-automation operator workflows on the same Discord-OAuth-backed operator boundary instead of introducing a second auth system first.
 
 ### Deployment Relationship
 
 - Website remains independently deployable on Coolify as web app.
-- Current bot scaffold can already run as a separate process, and the future bot should mature into a long-lived worker/service process.
-- Future control room may be separate SPA or separate Flask/API surface, but should deploy independently from public website shell when possible.
+- Control room remains independently deployable as the editorial CMS.
+- Bot API is independently deployable as the operator-facing web/API surface.
+- Current bot scaffold already runs as a separate process, and the future bot should mature into a long-lived worker/service process.
 - Shared database migrations must preserve subsystem ownership to avoid one surface breaking another during deploy.
 
 Post-stability revisit outcome:
 
-- Keep the control room embedded through the next onboarding and role-automation phase.
-- Do not extract a separate control-room deployment until onboarding and operator workflows create clear pressure for independent release cadence, richer realtime UX, or a different auth model.
-- Preserve `/admin/bot/api/*` as the extraction seam so later separation is incremental instead of a rewrite.
+- Keep the editorial CMS and bot operator surface deployed separately.
+- Revisit a separate SPA only if operator workflows create clear pressure for richer realtime UX or a distinct frontend stack.
+- Preserve `/bot/api/*` as the operator API seam so later frontend changes remain incremental instead of a rewrite.
 
 ### Current Bot Status And Planned Discord Bot
 
@@ -597,7 +655,8 @@ Implemented today:
 - bot runtime config parsing and env loading
 - runtime startup and shutdown lifecycle scaffold
 - YouTube-first syndication adapter, repository, and polling job seams
-- embedded control-room operator auth, health/config/commands pages, and syndication actions
+- standalone bot API operator auth, health/config/commands pages, and syndication actions
+- standalone bot API queue, mileage, onboarding, moderation, and diagnostics routes
 - bot operator and syndication persistence migrations
 
 Still planned:
@@ -833,68 +892,55 @@ Recommended test order:
 - Jobs call services; they should not embed alternate business logic.
 - Shared website/bot concerns should cross package boundary only through explicit contracts.
 
-### Planned Control Room
+### Current Control Surfaces
 
-Future control-room surface should likely separate operational tooling from website editorial CMS. Current Flask admin already serves editorial content management well, but bot operations will need different data, auth, and UI flows.
+The repo now separates editorial tooling from operator tooling.
+
+- `control_room/` owns editorial login, dashboard navigation, and CMS routes for website content.
+- `bot_api/` owns operator login, operator HTML pages, and machine-readable ops endpoints under `/bot/api/*`.
+- `bot/` remains the worker/runtime surface and should continue to own background execution rather than browser-facing routes.
 
 ### Control Room Scope
 
-Planned control room should focus on operator workflows that span systems rather than duplicate website page editing.
+Current control room scope is intentionally narrow.
 
 Primary responsibilities:
 
-- Bot health and runtime status
-- Queue visibility and moderator operations
-- Mileage / XP inspection and admin adjustments
-- Syndication status, checkpoints, and retry tools
-- Cross-system sync visibility for website events or announcements
-- Audit/log views for sensitive operator actions
+- Editorial login/logout and admin landing page
+- Content editing for film, media, events, FAQ, people, connect, reviews, assets, and submissions
+- Linking operators out to the standalone bot API surface when they need bot operations
 
 Should remain outside control-room scope:
 
-- Public page rendering
-- Jinja/template editing concerns
+- Bot health and runtime dashboards
+- Queue, mileage, onboarding, moderation, and syndication operations
+- Direct Discord OAuth operator login
 - Direct Discord gateway ownership
-- Replacement of current editorial CMS for basic website content work
 
 ### Dashboard Architecture Options
 
-| Option                           | Description                                                                              | Pros                                                                                                         | Cons                                                                                           |
-| -------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| A. Extend Flask admin            | Keep website CMS and future bot ops inside current Flask admin surface                   | Reuses existing deployment path, fastest path to usable operator tooling, easiest way to prototype UI flows  | Couples unrelated workflows, mixes editorial UI with ops UI, makes long-term separation harder |
-| B. Separate control-room surface | Keep editorial CMS in Flask, create separate operator dashboard backed by bot/admin APIs | Cleaner boundaries, independent deploy cadence, auth can evolve separately, easier to model cross-system ops | Requires extra API and UI scaffolding                                                          |
+Current implemented direction is the separated surface approach.
 
-Recommended direction: phased approach.
+- Control Room: server-rendered Flask CMS for editorial workflows. It keeps content editing simple, but intentionally excludes bot ops.
+- Bot API: standalone Flask operator UI plus JSON APIs under `/bot` and `/bot/api/*`. It keeps auth and deploy boundaries cleaner, but duplicates some shell concerns.
 
-Phase 1 decision:
+Next revisit trigger:
 
-- Start inside the existing Flask app under `/admin/bot`.
-- Keep operator routes, templates, and auth/session handling isolated from the editorial CMS.
-- Use Discord OAuth for control-room operator login instead of reusing the single shared editorial credential.
-
-Phase 2 direction:
-
-- Re-evaluate extraction into a separate control-room surface once bot operations outgrow the embedded admin shell or require independent scaling/deploy cadence.
-
-Reason:
-
-- Embedded-first is the lowest-friction way to get operators a usable surface while bot domains are still being defined.
-- Separate auth and route boundaries prevent the first version from becoming "just more CMS".
-- Longer-term architectural pressure still points toward separation if live ops, richer permissions, or independent release cadence become important.
+- Re-evaluate a separate SPA only if operator workflows outgrow server-rendered templates or need richer realtime behavior.
 
 ### Planned API Boundaries
 
-Control room should talk to backend service boundaries, not directly to Discord APIs.
+Control surfaces should talk to backend service boundaries, not directly to Discord gateway code.
 
 Preferred API split:
 
 - Website CMS APIs remain optional and narrow, only for shared editorial or sync tasks.
-- Bot admin/API surface owns queue controls, mileage adjustments, syndication controls, health endpoints, and ops read models.
-- Control room consumes those APIs with explicit operator auth.
+- Bot API owns queue controls, mileage adjustments, syndication controls, health endpoints, and ops read models.
+- Control room links to the bot API rather than proxying or embedding its operator session.
 
 ### Ops API Surface
 
-For the embedded-first phase, keep operator-facing endpoints under the Flask-hosted control-room boundary, but treat them as ops APIs rather than page handlers. A practical initial namespace is `/admin/bot/api/*` even if the logical domain is still referred to as `/ops/*` in docs.
+Operator-facing endpoints now live on the standalone bot API service under `/bot/api/*`. HTML pages stay under `/bot/*`; API routes return machine-readable data only.
 
 #### API Conventions
 
@@ -925,55 +971,47 @@ Suggested error contract:
 
 #### Health Endpoints
 
-| Endpoint                                                         | Purpose                                                | Returns                                                                                    | Notes                               |
-| ---------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------- |
-| `GET /admin/bot/api/health`                                      | Overview health snapshot for control-room landing page | bot runtime status, bot API reachability, job freshness, config presence, degraded domains | Main operator heartbeat endpoint    |
-| `GET /admin/bot/api/health/services`                             | Dependency-level detail                                | Discord connectivity state, DB reachability, scheduler state, background worker status     | Use for Health screen drill-down    |
-| `GET /admin/bot/api/health/jobs`                                 | Background job execution status                        | last run, next run, last success, consecutive failures, stale flag per job                 | Covers polling, sync, reminder jobs |
-| `POST /admin/bot/api/health/incidents/{incident_id}/acknowledge` | Mark an active incident acknowledged                   | updated incident state and actor metadata                                                  | Write action must be audited        |
+- `GET /bot/api/health`: overview health snapshot for the operator landing page. Returns bot runtime status, bot API reachability, job freshness, config presence, and degraded domains.
+- `GET /bot/api/health/services`: dependency-level detail. Returns Discord connectivity state, DB reachability, scheduler state, and background worker status.
+- `GET /bot/api/health/jobs`: background job execution status. Returns last run, next run, last success, consecutive failures, and stale flags per job.
+- `POST /bot/api/health/incidents/{incident_id}/acknowledge`: marks an active incident acknowledged. Returns updated incident state and actor metadata.
 
 Health payload should be optimized for operator triage, not low-level metrics dumping.
 
 #### Queue Endpoints
 
-| Endpoint                                                          | Purpose                                                | Returns                                                                           | Notes                                             |
-| ----------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `GET /admin/bot/api/queues`                                       | List queues by guild/event/channel with summary status | queue ids, labels, sizes, paused state, active entry, waiting count, last updated | Supports Overview and Queue index                 |
-| `GET /admin/bot/api/queues/{queue_id}`                            | Queue detail                                           | queue metadata, ordered entries, moderator flags, last transition summary         | Primary queue detail view                         |
-| `GET /admin/bot/api/queues/{queue_id}/events`                     | Queue history stream                                   | append-only queue transitions and moderator actions                               | Paginated; stable reverse-chronological ordering  |
-| `POST /admin/bot/api/queues/{queue_id}/advance`                   | Advance active queue                                   | updated queue snapshot plus emitted transition summary                            | Require `queue.write`                             |
-| `POST /admin/bot/api/queues/{queue_id}/entries/{entry_id}/remove` | Remove a queued entry                                  | updated queue snapshot and removal event                                          | Include reason in request body                    |
-| `POST /admin/bot/api/queues/{queue_id}/entries/{entry_id}/move`   | Reorder an entry                                       | updated queue snapshot and move event                                             | Body should include target position               |
-| `POST /admin/bot/api/queues/{queue_id}/pause`                     | Pause queue operations                                 | queue state                                                                       | Should support reason/comment                     |
-| `POST /admin/bot/api/queues/{queue_id}/resume`                    | Resume queue operations                                | queue state                                                                       | Complement to pause                               |
-| `POST /admin/bot/api/queues/{queue_id}/clear`                     | Clear queue intentionally                              | queue state and clear event summary                                               | High-risk action; confirmation and audit required |
+- `GET /bot/api/queues`: lists queues by guild, event, or channel with summary status.
+- `GET /bot/api/queues/{queue_id}`: returns queue detail with metadata, ordered entries, moderator flags, and last transition summary.
+- `GET /bot/api/queues/{queue_id}/events`: returns paginated queue history in stable reverse-chronological order.
+- `POST /bot/api/queues/{queue_id}/advance`: advances the active queue and returns the updated snapshot plus transition summary.
+- `POST /bot/api/queues/{queue_id}/entries/{entry_id}/remove`: removes a queued entry and should include a reason in the request body.
+- `POST /bot/api/queues/{queue_id}/entries/{entry_id}/move`: reorders an entry and should include the target position.
+- `POST /bot/api/queues/{queue_id}/pause`: pauses queue operations and should support a reason or comment.
+- `POST /bot/api/queues/{queue_id}/resume`: resumes queue operations.
+- `POST /bot/api/queues/{queue_id}/clear`: clears a queue intentionally and should require confirmation and audit logging.
 
 Queue write endpoints should return both current-state data and a lightweight event summary so UI state and audit history stay aligned.
 
 #### Mileage Endpoints
 
-| Endpoint                                                | Purpose                                        | Returns                                                        | Notes                                                                  |
-| ------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `GET /admin/bot/api/mileage/users`                      | Search/list mileage users                      | user summaries with totals, current tier, most recent activity | Filter by guild, tier, name, Discord id                                |
-| `GET /admin/bot/api/mileage/users/{user_id}`            | Mileage user detail                            | totals, tier state, recent event ledger, pending flags         | Primary Mileage detail view                                            |
-| `GET /admin/bot/api/mileage/users/{user_id}/events`     | Full mileage ledger                            | append-only mileage events and manual corrections              | Paginated event history                                                |
-| `POST /admin/bot/api/mileage/users/{user_id}/adjust`    | Manual mileage adjustment                      | updated totals plus adjustment event                           | Request body should include delta, reason, and optional correlation id |
-| `POST /admin/bot/api/mileage/events/{event_id}/reverse` | Reverse a prior event without deleting history | updated totals plus reversal event                             | Prefer reversal rows over destructive deletes                          |
-| `GET /admin/bot/api/mileage/tiers`                      | Tier definitions and thresholds                | tier config list and counts by tier                            | Useful for config inspection and disputes                              |
+- `GET /bot/api/mileage/users`: searches or lists mileage users with totals, current tier, and recent activity.
+- `GET /bot/api/mileage/users/{user_id}`: returns mileage user detail with totals, tier state, recent ledger entries, and pending flags.
+- `GET /bot/api/mileage/users/{user_id}/events`: returns paginated mileage event history.
+- `POST /bot/api/mileage/users/{user_id}/adjust`: performs a manual mileage adjustment and should include delta, reason, and optional correlation id.
+- `POST /bot/api/mileage/events/{event_id}/reverse`: reverses a prior event without deleting history.
+- `GET /bot/api/mileage/tiers`: returns tier definitions, thresholds, and counts by tier.
 
 Mileage domain should preserve ledger semantics: no endpoint should hard-delete history that affects totals.
 
 #### Syndication Endpoints
 
-| Endpoint                                                                                | Purpose                                  | Returns                                                                     | Notes                                      |
-| --------------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
-| `GET /admin/bot/api/syndication/sources`                                                | List configured sources                  | source config summary, enabled state, last checkpoint, last success/failure | Supports Overview and Syndication index    |
-| `GET /admin/bot/api/syndication/sources/{source_id}`                                    | Source detail                            | source config, current checkpoint, recent deliveries, dedup state           | Primary source detail view                 |
-| `GET /admin/bot/api/syndication/sources/{source_id}/deliveries`                         | Delivery/retry history                   | successful posts, suppressed duplicates, recent failures                    | Paginated                                  |
-| `POST /admin/bot/api/syndication/sources/{source_id}/retry`                             | Retry failed or pending syndication work | updated source status and retry job summary                                 | Require `syndication.write`                |
-| `POST /admin/bot/api/syndication/sources/{source_id}/disable`                           | Disable a source                         | updated enabled state                                                       | Include reason/comment                     |
-| `POST /admin/bot/api/syndication/sources/{source_id}/checkpoint/reset`                  | Reset checkpoint intentionally           | updated checkpoint state                                                    | High-risk action; audit required           |
-| `POST /admin/bot/api/syndication/sources/{source_id}/deliveries/{delivery_id}/suppress` | Mark delivery suppressed or ignored      | updated delivery state                                                      | Use for operator-managed duplicate control |
+- `GET /bot/api/syndication/sources`: lists configured sources with enabled state, checkpoint, and recent success or failure summary.
+- `GET /bot/api/syndication/sources/{source_id}`: returns source detail, checkpoint state, recent deliveries, and dedup information.
+- `GET /bot/api/syndication/sources/{source_id}/deliveries`: returns paginated delivery and retry history.
+- `POST /bot/api/syndication/sources/{source_id}/retry`: retries failed or pending syndication work.
+- `POST /bot/api/syndication/sources/{source_id}/disable`: disables a source and should include a reason or comment.
+- `POST /bot/api/syndication/sources/{source_id}/checkpoint/reset`: intentionally resets a checkpoint and should be audited.
+- `POST /bot/api/syndication/sources/{source_id}/deliveries/{delivery_id}/suppress`: marks a delivery suppressed or ignored for duplicate control.
 
 Syndication endpoints should expose enough payload metadata for debugging, but should not leak tokens, raw credentials, or unsafe upstream secrets.
 
@@ -981,14 +1019,14 @@ Syndication endpoints should expose enough payload metadata for debugging, but s
 
 If the first release needs a smaller scope, start with these:
 
-- `GET /admin/bot/api/health`
-- `GET /admin/bot/api/queues`
-- `GET /admin/bot/api/queues/{queue_id}`
-- `POST /admin/bot/api/queues/{queue_id}/advance`
-- `GET /admin/bot/api/mileage/users/{user_id}`
-- `POST /admin/bot/api/mileage/users/{user_id}/adjust`
-- `GET /admin/bot/api/syndication/sources`
-- `POST /admin/bot/api/syndication/sources/{source_id}/retry`
+- `GET /bot/api/health`
+- `GET /bot/api/queues`
+- `GET /bot/api/queues/{queue_id}`
+- `POST /bot/api/queues/{queue_id}/advance`
+- `GET /bot/api/mileage/users/{user_id}`
+- `POST /bot/api/mileage/users/{user_id}/adjust`
+- `GET /bot/api/syndication/sources`
+- `POST /bot/api/syndication/sources/{source_id}/retry`
 
 This keeps the first control-room pass aligned with the highest-value operator workflows while leaving room for Sync and Audit APIs to grow later.
 
@@ -996,84 +1034,84 @@ This keeps the first control-room pass aligned with the highest-value operator w
 
 Current decision:
 
-- Build the first control-room backend inside the existing Flask app.
-- Mount it under dedicated `/admin/bot` routes and separate templates from editorial CMS pages.
-- Keep auth/session policy separate from current editorial login; use Discord OAuth for operator identity.
-- Treat the Flask-hosted control room as an operator shell over explicit bot/admin service boundaries, not as the new owner of bot business logic.
+- Keep the editorial CMS in `control_room/` and the operator backend in `bot_api/`.
+- Mount operator HTML routes under `/bot` and operator JSON routes under `/bot/api/*`.
+- Keep auth/session policy separate from editorial login; use Discord OAuth for operator identity.
+- Treat the standalone bot API as an operator shell over explicit bot service boundaries, not as the new owner of worker business logic.
 
 Guardrails:
 
-- Control-room routes should call explicit service/repository boundaries or internal bot/admin APIs, not reach into Discord gateway code directly.
-- New operator pages should stay under a distinct template namespace so editorial and ops UI do not drift together accidentally.
-- Operator auth, audit logging, and permission checks should be modeled independently from the current single-user editorial admin.
-- If live status, websocket needs, or release cadence start fighting the website shell, extraction to a separate surface becomes the next architectural step rather than a redesign.
+- Operator routes should call explicit service/repository boundaries or worker-facing seams, not reach into Discord gateway code directly.
+- Operator pages should stay under a distinct `bot_api/templates/` namespace so editorial and ops UI do not drift together accidentally.
+- Operator auth, audit logging, and permission checks should remain independent from editorial admin users.
+- If live status, websocket needs, or release cadence outgrow the Flask templates, extraction to a dedicated frontend becomes the next architectural step rather than a redesign.
 
-#### Initial `/admin/bot` Route Map And Template Namespace
+#### Current `/bot` Route Map And Template Namespace
 
-Even in the embedded-first phase, the control room should behave like a separate application slice.
+The bot API should behave like a separate application slice even though it shares the repo and database.
 
-Recommended Flask structure:
+Current Flask structure:
 
-- Add a dedicated `admin_bot` blueprint mounted at `/admin/bot` rather than extending the current editorial handlers inline.
-- Keep HTML pages under `website/templates/admin/bot/`.
-- Keep operator APIs under `/admin/bot/api/*` and out of Jinja page routes.
-- Use a dedicated base template such as `admin/bot/_bot_base.html` so bot ops navigation, auth chrome, and alerts can evolve without editing the editorial CMS shell.
+- Use a dedicated `admin_bot` blueprint mounted at `/bot`.
+- Keep HTML pages under `bot_api/templates/`.
+- Keep operator APIs under `/bot/api/*` and out of Jinja page routes.
+- Use a dedicated base template such as `_bot_base.html` so bot ops navigation, auth chrome, and alerts can evolve without editing the editorial CMS shell.
 
 Suggested first page route map:
 
-| Route                                    | Purpose                                             | Initial template                    | Backing API dependencies                                                                                              |
-| ---------------------------------------- | --------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `GET /admin/bot`                         | Control-room landing / overview redirect target     | `admin/bot/index.html`              | `GET /admin/bot/api/health`, summary queue/syndication reads                                                          |
-| `GET /admin/bot/health`                  | Runtime and dependency health screen                | `admin/bot/health.html`             | `GET /admin/bot/api/health`, `GET /admin/bot/api/health/services`, `GET /admin/bot/api/health/jobs`                   |
-| `GET /admin/bot/queues`                  | Queue list and active queue summary                 | `admin/bot/queues.html`             | `GET /admin/bot/api/queues`                                                                                           |
-| `GET /admin/bot/queues/<queue_id>`       | Queue detail and moderator action surface           | `admin/bot/queue_detail.html`       | `GET /admin/bot/api/queues/{queue_id}`, `GET /admin/bot/api/queues/{queue_id}/events`                                 |
-| `GET /admin/bot/mileage`                 | Mileage search and user summary table               | `admin/bot/mileage.html`            | `GET /admin/bot/api/mileage/users`, `GET /admin/bot/api/mileage/tiers`                                                |
-| `GET /admin/bot/mileage/<user_id>`       | Mileage user detail and ledger drill-down           | `admin/bot/mileage_detail.html`     | `GET /admin/bot/api/mileage/users/{user_id}`, `GET /admin/bot/api/mileage/users/{user_id}/events`                     |
-| `GET /admin/bot/syndication`             | Source list and status dashboard                    | `admin/bot/syndication.html`        | `GET /admin/bot/api/syndication/sources`                                                                              |
-| `GET /admin/bot/syndication/<source_id>` | Source checkpoint, delivery, and retry detail       | `admin/bot/syndication_detail.html` | `GET /admin/bot/api/syndication/sources/{source_id}`, `GET /admin/bot/api/syndication/sources/{source_id}/deliveries` |
-| `GET /admin/bot/sync`                    | Cross-system sync visibility                        | `admin/bot/sync.html`               | future sync/read-model endpoints                                                                                      |
-| `GET /admin/bot/audit`                   | Audit log search and investigation view             | `admin/bot/audit.html`              | future audit endpoints                                                                                                |
-| `GET /admin/bot/login`                   | Operator login start / OAuth handoff page if needed | `admin/bot/login.html`              | Discord OAuth initiation only                                                                                         |
+- `GET /bot`: operator landing or overview redirect target. Uses `index.html` and depends on `GET /bot/api/health` plus summary queue and syndication reads.
+- `GET /bot/health`: runtime and dependency health screen. Uses `health.html` and depends on `GET /bot/api/health`, `GET /bot/api/health/services`, and `GET /bot/api/health/jobs`.
+- `GET /bot/queues`: queue list and active queue summary. Uses `queues.html` and depends on `GET /bot/api/queues`.
+- `GET /bot/queues/<queue_id>`: queue detail and moderator action surface. Uses `queue_detail.html` and depends on `GET /bot/api/queues/{queue_id}` plus `GET /bot/api/queues/{queue_id}/events`.
+- `GET /bot/mileage`: mileage search and user summary table. Uses `mileage.html` and depends on `GET /bot/api/mileage/users` plus `GET /bot/api/mileage/tiers`.
+- `GET /bot/mileage/<user_id>`: mileage user detail and ledger drill-down. Uses `mileage_detail.html` and depends on `GET /bot/api/mileage/users/{user_id}` plus `GET /bot/api/mileage/users/{user_id}/events`.
+- `GET /bot/syndication`: source list and status dashboard. Uses `syndication.html` and depends on `GET /bot/api/syndication/sources`.
+- `GET /bot/onboarding`: onboarding config and events view. Uses `onboarding.html` and depends on onboarding read endpoints and event feeds.
+- `GET /bot/moderation`: moderation queue and diagnostic surface. Uses `moderation.html` and depends on moderation and diagnostics endpoints.
+- `GET /bot/operators`: operator roster and scope visibility. Uses `operators.html` and depends on `GET /bot/api/operators`.
+- `GET /bot/config`: bot configuration inspection. Uses `config.html` and depends on `GET /bot/api/config`.
+- `GET /bot/commands`: command catalog and runtime help. Uses `commands.html` and depends on `GET /bot/api/commands`.
+- `GET /bot/login`: operator login start or OAuth handoff page. Uses `login.html` and depends on Discord OAuth initiation only.
 
 Suggested first API route map:
 
-| Route group                   | Responsibility                                           |
-| ----------------------------- | -------------------------------------------------------- |
-| `/admin/bot/api/health*`      | Health snapshots, job freshness, dependency state        |
-| `/admin/bot/api/queues*`      | Queue read/write operations and queue event history      |
-| `/admin/bot/api/mileage*`     | Mileage summaries, ledger reads, adjustments, reversals  |
-| `/admin/bot/api/syndication*` | Source status, checkpoints, retries, suppression actions |
-| `/admin/bot/api/sync*`        | Shared event/read-model sync visibility and repair hooks |
-| `/admin/bot/api/audit*`       | Operator action history and investigation queries        |
+| Route group             | Responsibility                                           |
+| ----------------------- | -------------------------------------------------------- |
+| `/bot/api/health*`      | Health snapshots, job freshness, dependency state        |
+| `/bot/api/queues*`      | Queue read/write operations and queue event history      |
+| `/bot/api/mileage*`     | Mileage summaries, ledger reads, adjustments, reversals  |
+| `/bot/api/syndication*` | Source status, checkpoints, retries, suppression actions |
+| `/bot/api/onboarding*`  | Onboarding config, role bindings, and event history      |
+| `/bot/api/operators*`   | Operator roster, scopes, and access visibility           |
+| `/bot/api/diagnostics*` | Runtime diagnostics and troubleshooting payloads         |
 
 Suggested template namespace:
 
 ```text
-website/templates/
-    admin/
-        _admin_base.html
-        ...existing editorial templates...
-        bot/
-            _bot_base.html
-            _bot_nav.html
-            index.html
-            login.html
-            health.html
-            queues.html
-            queue_detail.html
-            mileage.html
-            mileage_detail.html
-            syndication.html
-            syndication_detail.html
-            sync.html
-            audit.html
+bot_api/templates/
+    _bot_base.html
+    _bot_nav.html
+    index.html
+    login.html
+    health.html
+    queues.html
+    queue_detail.html
+    mileage.html
+    mileage_detail.html
+    syndication.html
+    syndication_detail.html
+    onboarding.html
+    moderation.html
+    operators.html
+    config.html
+    commands.html
 ```
 
 Template rules:
 
-- `admin/bot/_bot_base.html` may extend `admin/_admin_base.html` initially for shared static assets, but bot-specific navigation and operator notices should live in bot partials.
+- `bot_api/templates/_bot_base.html` may reuse shared assets, but bot-specific navigation and operator notices should live in bot partials.
 - Editorial templates should never import bot partials.
-- Bot pages should prefer client-side fetches against `/admin/bot/api/*` for dynamic panels rather than embedding operational logic directly in template rendering.
+- Bot pages should prefer client-side fetches against `/bot/api/*` for dynamic panels rather than embedding operational logic directly in template rendering.
 - Page titles, breadcrumbs, and nav labels should use operator language such as Health, Queues, Mileage, Syndication, Sync, and Audit instead of editorial terms.
 
 #### Operator Auth And Session Boundary
@@ -1108,19 +1146,17 @@ Cookie and request boundary rules:
 
 - Do not reuse the editorial admin login cookie as proof of operator identity.
 - If a shared Flask session cookie remains in place technically, treat control-room auth as a separate logical session with its own required keys and guards.
-- Apply dedicated decorators or request guards for `/admin/bot` and `/admin/bot/api/*` instead of piggybacking on the current editorial `before_request` login check.
-- Operator API routes should return `401` or `403` JSON responses; page routes may redirect to `/admin/bot/login`.
+- Apply dedicated decorators or request guards for `/bot` and `/bot/api/*` instead of piggybacking on the control-room editorial `before_request` login check.
+- Operator API routes should return `401` or `403` JSON responses; page routes may redirect to `/bot/login`.
 
 Suggested auth flow:
 
-| Step | Route / action                  | Result                                                                                              |
-| ---- | ------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 1    | `GET /admin/bot/login`          | Render operator login page with Discord OAuth start button and safe explanation of required access. |
-| 2    | `GET /admin/bot/oauth/start`    | Create CSRF state, redirect to Discord OAuth authorize URL.                                         |
-| 3    | `GET /admin/bot/oauth/callback` | Validate state, exchange code, fetch Discord identity, resolve local operator record/scopes.        |
-| 4    | Session creation                | Store minimal `bot_ops_*` session data and audit successful login.                                  |
-| 5    | `GET /admin/bot`                | Redirect to Overview if operator has `ops.read`; otherwise show denied state.                       |
-| 6    | `POST /admin/bot/logout`        | Clear only operator session keys and audit logout without disturbing editorial session state.       |
+1. `GET /bot/login`: render operator login page with Discord OAuth start button and a safe explanation of required access.
+2. `GET /bot/oauth/start`: create CSRF state and redirect to the Discord OAuth authorize URL.
+3. `GET /oauth/discord/callback` or configured bot API callback: validate state, exchange code, fetch Discord identity, and resolve local operator scopes.
+4. Session creation: store minimal `bot_ops_*` session data and audit successful login.
+5. `GET /bot`: redirect to Overview if the operator has `ops.read`; otherwise show a denied state.
+6. Logout route: clear only operator session keys and audit logout without disturbing editorial session state.
 
 Authorization rules:
 
@@ -1141,12 +1177,12 @@ Audit and security rules:
 Initial implementation guidance:
 
 - Start with a simple local operator allowlist backed by config or a bot-owned operator table.
-- Keep operator auth decorators, session helpers, and scope checks in dedicated control-room modules rather than mixing them into the existing editorial auth code.
+- Keep operator auth decorators, session helpers, and scope checks in dedicated bot API modules rather than mixing them into the editorial auth code.
 - If the current Flask-Login setup becomes awkward for parallel editorial and operator auth, prefer a separate lightweight operator session helper over forcing both models through one user class.
 
 ### Control Room UI Information Architecture
 
-The first control-room UI should optimize for operator triage and intervention, not for content authoring. Whether it initially lives under `/admin/bot` or later moves into a separate surface, the information architecture should stay domain-oriented.
+The operator UI should optimize for triage and intervention, not for content authoring. Now that it lives under the standalone `/bot` surface, the information architecture should stay domain-oriented.
 
 #### Primary Navigation
 

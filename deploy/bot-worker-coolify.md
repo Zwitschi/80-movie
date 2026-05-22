@@ -30,4 +30,4 @@ OMO_LOG_LEVEL=INFO
 - Confirm the worker process stays running after deploy
 - Confirm startup logs show Discord REST auth success
 - Confirm startup logs show the first syndication poll completes
-- Confirm control room health views reflect the worker as healthy
+- Confirm bot operator health views at `https://api.openmicodyssey.com/bot/health` reflect the worker as healthy

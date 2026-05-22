@@ -1,12 +1,12 @@
 import pytest
-from control_room.app import create_app as create_control_room_app
+from bot_api.app import create_app as create_bot_api_app
 from bot.omo_bot.models import QueueSnapshot, QueueEvent
 from bot.omo_bot.repositories import InMemoryQueueRepository
 
 
 @pytest.fixture
 def app():
-    app = create_control_room_app()
+    app = create_bot_api_app()
     app.config['TESTING'] = True
     return app
 
@@ -19,7 +19,7 @@ def client(app):
 def test_queue_lifecycle_via_api(client, monkeypatch):
     # Mock settings and repository to use in-memory for testing
     from bot.omo_bot.config import BotRuntimeSettings
-    from control_room import admin_bot
+    from bot_api import admin_bot
 
     repo = InMemoryQueueRepository()
 
@@ -97,4 +97,3 @@ def test_queue_lifecycle_via_api(client, monkeypatch):
     assert response.status_code == 200
     data = response.get_json()['data']
     assert data['summary']['total_entries'] == 0
-

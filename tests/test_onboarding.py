@@ -169,8 +169,8 @@ def test_onboarding_list_events():
 
 @pytest.fixture
 def app():
-    from control_room.app import create_app as create_control_room_app
-    app = create_control_room_app()
+    from bot_api.app import create_app as create_bot_api_app
+    app = create_bot_api_app()
     app.config['TESTING'] = True
     return app
 
@@ -185,7 +185,7 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     from bot.omo_bot.repositories.onboarding_repo import InMemoryOnboardingRepository
     from bot.omo_bot.services.onboarding_service import OnboardingService
     from bot.omo_bot.models import OnboardingConfig, OnboardingRoleBinding
-    from control_room import admin_bot
+    from bot_api import admin_bot
 
     repo = InMemoryOnboardingRepository()
     svc = OnboardingService(onboarding_repository=repo)
@@ -271,4 +271,3 @@ def test_onboarding_events_and_replay_via_api(client, monkeypatch):
     result = resp.get_json()
     assert result['data']['skipped'] is True
     assert result['data']['replayed_events'] == 0
-

@@ -64,7 +64,7 @@ endblock %} {% block admin_content %}
     <span class="card-link">Edit &rarr;</span>
   </a>
   <a
-    href="{{ current_app.config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
+    href="{{ config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
     target="_blank"
     rel="noopener noreferrer"
     class="admin-card"

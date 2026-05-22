@@ -3,6 +3,8 @@
 - Service: Control Room (admin.openmicodyssey.com)
 - Port: 8480
 
+Deploy this as the editorial CMS only. Bot operator tooling now lives on the separate Bot API service.
+
 ## Coolify Settings
 
 - Resource type: Application
@@ -11,7 +13,7 @@
 - Build command: (leave empty)
 - Start command: gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2
 - Port: 8480
-- Health check path: /admin/bot/api/health
+- Health check path: /login
 
 ## Environment Variables (set in Coolify)
 
@@ -20,12 +22,14 @@ DATABASE_URL=postgresql://user:pass@192.168.88.35:5432/omo
 SECRET_KEY=<generate-with-python-c-import-secrets-print-secrets.token-hex-32>
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD_HASH=<generate: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('your-password'))">
-OMO_DISCORD_CLIENT_ID=<discord-oauth-app-client-id>
-OMO_DISCORD_CLIENT_SECRET=<discord-oauth-app-client-secret>
-OMO_DISCORD_REDIRECT_URI=https://admin.openmicodyssey.com/oauth/discord/callback
-OMO_BOT_OPS_ALLOWED_USER_IDS=<comma-separated-discord-user-ids>
-OMO_BOT_OPS_DEFAULT_SCOPES=ops.read
-OMO_BOT_OPS_SESSION_IDLE_MINUTES=60
+ADMIN_PASSWORD=<optional-seed-password-for-first-run>
+OMO_BOT_API_URL=https://api.openmicodyssey.com
 ```
 
-> `ADMIN_USERNAME` / `ADMIN_PASSWORD_HASH` guard the editorial CMS login. For bot operator login use the Discord OAuth variables and `OMO_BOT_OPS_ALLOWED_USER_IDS`.
+> `ADMIN_USERNAME` and `ADMIN_PASSWORD_HASH` guard the editorial CMS login. `ADMIN_PASSWORD` is only needed if you want the app to seed the default admin user on startup. `OMO_BOT_API_URL` controls the external bot dashboard links in the CMS UI.
+
+## Verification
+
+- Confirm `GET /login` returns the editorial login page.
+- Confirm authenticated editors can reach `/` and `/content/*` routes.
+- Confirm the CMS navigation links out to `https://api.openmicodyssey.com` for bot operations.
