@@ -1,12 +1,28 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash
+from secrets import compare_digest
 
 from .auth import AdminUser
 from .admin_content import _ctx
 
 admin_blueprint = Blueprint(
     'admin', __name__, url_prefix='/', static_folder='static')
+
+
+def _matches_config_password(password: str) -> bool:
+    valid_password = current_app.config.get('ADMIN_PASSWORD')
+    if isinstance(valid_password, str) and valid_password:
+        return compare_digest(valid_password, password)
+
+    valid_hash = current_app.config.get('ADMIN_PASSWORD_HASH')
+    if not isinstance(valid_hash, str) or not valid_hash:
+        return False
+
+    try:
+        return check_password_hash(valid_hash, password)
+    except (TypeError, ValueError):
+        return False
 
 
 @admin_blueprint.before_request
@@ -40,11 +56,9 @@ def login():
 
         # Legacy config-based fallback
         valid_username = current_app.config.get('ADMIN_USERNAME')
-        valid_hash = current_app.config.get('ADMIN_PASSWORD_HASH')
         if (
             username == valid_username
-            and isinstance(valid_hash, str)
-            and check_password_hash(valid_hash, password)
+            and _matches_config_password(password)
         ):
             user = AdminUser(username)
             login_user(user)

@@ -88,6 +88,29 @@ def create_user(username: str, email: str, password: str) -> dict[str, Any] | No
         cursor.close()
 
 
+def create_user_with_password_hash(username: str, email: str, password_hash: str) -> dict[str, Any] | None:
+    if not _users_table_exists():
+        return None
+
+    cursor = get_dict_cursor()
+    conn = get_conn()
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, email, password_hash) "
+            "VALUES (%s, %s, %s) "
+            "RETURNING id, username, email, is_active, created_at",
+            (username, email, password_hash),
+        )
+        record = cursor.fetchone()
+        conn.commit()
+        return record
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+
+
 def assign_role(user_id: str, role_name: str) -> bool:
     if not _users_table_exists():
         return False
@@ -154,16 +177,32 @@ def user_exists() -> bool:
         cursor.close()
 
 
-def seed_default_admin(config_username: str, config_password: str) -> dict[str, Any] | None:
+def seed_default_admin(
+    config_username: str,
+    config_password: str | None = None,
+    config_password_hash: str | None = None,
+) -> dict[str, Any] | None:
     if user_exists():
         return None
 
-    user = create_user(
-        config_username, f"{config_username}@localhost", config_password)
+    user = None
+    if config_password:
+        user = create_user(
+            config_username, f"{config_username}@localhost", config_password)
+    elif config_password_hash:
+        user = create_user_with_password_hash(
+            config_username,
+            f"{config_username}@localhost",
+            config_password_hash,
+        )
+
     if user:
         assign_role(user['id'], 'admin')
     return user
 
 
 def verify_password(stored_hash: str, password: str) -> bool:
-    return check_password_hash(stored_hash, password)
+    try:
+        return check_password_hash(stored_hash, password)
+    except (TypeError, ValueError):
+        return False

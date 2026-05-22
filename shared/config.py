@@ -83,7 +83,8 @@ def get_control_room_config_values() -> dict:
         "DATABASE_URL": get_env_str("DATABASE_URL", "postgresql://user:password@localhost/omo"),
         "SECRET_KEY": get_env_str("SECRET_KEY", "dev-secret-key-change-in-production"),
         "ADMIN_USERNAME": get_env_str("ADMIN_USERNAME", "admin"),
-        "ADMIN_PASSWORD_HASH": get_env_str("ADMIN_PASSWORD_HASH", generate_password_hash("admin-password")),
+        "ADMIN_PASSWORD": get_env_str("ADMIN_PASSWORD", ""),
+        "ADMIN_PASSWORD_HASH": get_env_str("ADMIN_PASSWORD_HASH", generate_password_hash("admin")),
         "BOT_OPS_DISCORD_CLIENT_ID": get_env_str(
             "OMO_DISCORD_CLIENT_ID",
             get_env_str("DISCORD_CLIENT_ID", ""),

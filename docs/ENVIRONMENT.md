@@ -25,14 +25,13 @@ It covers service runtime config only. Historical or deploy-workflow-only values
 
 ## Control Room (`admin.openmicodyssey.com`)
 
-| Variable                   | Default / fallback                           | Notes                                                                                               |
-| -------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`             | `postgresql://user:password@localhost/omo`   | PostgreSQL DSN                                                                                      |
-| `SECRET_KEY`               | `dev-secret-key-change-in-production`        | Flask session secret                                                                                |
-| `ADMIN_USERNAME`           | `admin`                                      | Editorial login username                                                                            |
-| `ADMIN_PASSWORD_HASH`      | generated Werkzeug hash for `admin-password` | Set explicitly in any real environment                                                              |
-| `OMO_BOT_API_URL`          | `https://api.openmicodyssey.com`             | External link target for bot dashboard shortcuts in CMS templates                                   |
-| `CONTROL_ROOM_AUTO_CREATE` | `1`                                          | Gunicorn/module bootstrap flag; set to `0` only when you need to suppress module-level app creation |
+- `DATABASE_URL`: defaults to `postgresql://user:password@localhost/omo`; PostgreSQL DSN.
+- `SECRET_KEY`: defaults to `dev-secret-key-change-in-production`; Flask session secret.
+- `ADMIN_USERNAME`: defaults to `admin`; editorial login username.
+- `ADMIN_PASSWORD`: defaults to empty; optional plain-text admin password for first-run seeding or hosts that mangle `$` in hash env values.
+- `ADMIN_PASSWORD_HASH`: defaults to a generated Werkzeug hash for `admin`; preferred hashed admin credential and should be set explicitly in any real environment.
+- `OMO_BOT_API_URL`: defaults to `https://api.openmicodyssey.com`; external link target for bot dashboard shortcuts in CMS templates.
+- `CONTROL_ROOM_AUTO_CREATE`: defaults to `1`; gunicorn/module bootstrap flag, set to `0` only when you need to suppress module-level app creation.
 
 ## Bot API (`api.openmicodyssey.com`)
 

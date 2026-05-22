@@ -392,6 +392,40 @@ class TestAdminFlows:
         assert response.status_code == 302
         assert response.headers['Location'].endswith('/content/film')
 
+    def test_admin_login_accepts_plaintext_password_env(self):
+        app = self._admin_app()
+        app.config.update(
+            ADMIN_PASSWORD='secret-pass',
+            ADMIN_PASSWORD_HASH='not-a-valid-hash',
+        )
+        client = app.test_client()
+
+        response = self._login(client)
+
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/')
+
+    def test_admin_login_falls_back_when_db_hash_is_invalid(self, monkeypatch):
+        app = self._admin_app()
+        client = app.test_client()
+
+        from control_room import user_repo
+
+        monkeypatch.setattr(
+            user_repo,
+            'get_user_by_username',
+            lambda username: {
+                'id': 1,
+                'username': username,
+                'password_hash': 'invalid-hash-format',
+            },
+        )
+
+        response = self._login(client)
+
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/')
+
     def test_admin_dashboard_links_to_bot_control_room(self):
         app = self._admin_app()
         client = app.test_client()

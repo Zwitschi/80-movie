@@ -43,8 +43,8 @@ def create_app() -> Flask:
 
     @login_manager.user_loader
     def load_user(user_id):
-        from .auth import AdminUser
-        return AdminUser(user_id)
+        from .auth import load_user as load_admin_user
+        return load_admin_user(user_id)
 
     # Register auth + dashboard blueprint
     from .admin import admin_blueprint
@@ -61,8 +61,13 @@ def create_app() -> Flask:
             from .user_repo import seed_default_admin
             admin_user = _current_app.config.get('ADMIN_USERNAME')
             admin_pass = _current_app.config.get('ADMIN_PASSWORD')
-            if admin_user and admin_pass:
-                seed_default_admin(admin_user, admin_pass)
+            admin_hash = _current_app.config.get('ADMIN_PASSWORD_HASH')
+            if admin_user and (admin_pass or admin_hash):
+                seed_default_admin(
+                    admin_user,
+                    config_password=admin_pass,
+                    config_password_hash=admin_hash,
+                )
         except Exception:
             pass
 
