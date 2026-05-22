@@ -16,7 +16,9 @@ Added static site generation with asset copy, HTML and JSON-LD validation, sitem
 
 ## Bot and control room
 
-Delivered the embedded `/admin/bot` control room with Discord OAuth operator auth, operator management, config/commands/syndication pages, PostgreSQL-backed config and syndication repositories, YouTube-first adapter + polling job + delivery sink, runtime health reporting, audit logging, shared website-content read contracts, queue and mileage domains, architecture/ADR updates, and the post-stability onboarding/extraction revisit.
+Delivered first embedded `/admin/bot` control-room phase, then extracted it into standalone `bot_api` surface with Discord OAuth operator auth, operator management, config/commands/syndication pages, PostgreSQL-backed config and syndication repositories, YouTube-first adapter + polling job + delivery sink, runtime health reporting, audit logging, shared website-content read contracts, queue and mileage domains, architecture/deploy updates, and post-extraction follow-through.
+
+Historical ADRs for the embedded phase remain in `docs/adr/`, but active runtime ownership is now `control_room` for editorial CMS and `bot_api` for bot operator UI/API.
 
 ## Hardening and follow-through
 

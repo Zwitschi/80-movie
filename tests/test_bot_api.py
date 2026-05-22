@@ -20,7 +20,7 @@ class _FailingAuditRepository:
         raise RuntimeError('audit unavailable')
 
 
-def test_admin_bot_overview_renders_in_testing_mode():
+def test_bot_api_overview_renders_in_testing_mode():
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -32,7 +32,7 @@ def test_admin_bot_overview_renders_in_testing_mode():
     assert b'Component Snapshot' in response.data
 
 
-def test_admin_bot_health_api_returns_snapshot_in_testing_mode():
+def test_bot_api_health_api_returns_snapshot_in_testing_mode():
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -47,7 +47,7 @@ def test_admin_bot_health_api_returns_snapshot_in_testing_mode():
     assert payload['data']['links']['health'].endswith('/bot/api/health')
 
 
-def test_admin_bot_health_page_renders_syndication_summary(monkeypatch):
+def test_bot_api_health_page_renders_syndication_summary(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -88,7 +88,7 @@ def test_admin_bot_health_page_renders_syndication_summary(monkeypatch):
     assert b'Attention sources' in response.data
 
 
-def test_admin_bot_services_api_returns_component_details():
+def test_bot_api_services_api_returns_component_details():
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -101,7 +101,7 @@ def test_admin_bot_services_api_returns_component_details():
     assert 'jobs' in payload['data']
 
 
-def test_admin_bot_page_redirects_without_operator_session_when_not_testing():
+def test_bot_api_page_redirects_without_operator_session_when_not_testing():
     app = create_app()
     client = app.test_client()
 
@@ -111,7 +111,7 @@ def test_admin_bot_page_redirects_without_operator_session_when_not_testing():
     assert '/bot/login' in response.headers['Location']
 
 
-def test_admin_bot_api_requires_operator_session_when_not_testing():
+def test_bot_api_api_requires_operator_session_when_not_testing():
     app = create_app()
     client = app.test_client()
 
@@ -122,13 +122,13 @@ def test_admin_bot_api_requires_operator_session_when_not_testing():
     assert payload['error']['code'] == 'operator_auth_required'
 
 
-def test_admin_bot_oauth_start_redirects_and_sets_state():
+def test_bot_api_oauth_start_redirects_and_sets_state():
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
     )
     client = app.test_client()
 
@@ -141,7 +141,7 @@ def test_admin_bot_oauth_start_redirects_and_sets_state():
     assert parsed.netloc == 'discord.com'
     assert query['client_id'] == ['client-id']
     assert query['redirect_uri'] == [
-        'https://example.com/admin/bot/oauth/callback']
+        'https://example.com/oauth/discord/callback']
     assert query['scope'] == ['identify']
 
     with client.session_transaction() as flask_session:
@@ -149,12 +149,12 @@ def test_admin_bot_oauth_start_redirects_and_sets_state():
         assert flask_session[admin_bot.BOT_OPS_NEXT_URL_KEY] == '/bot/health'
 
 
-def test_admin_bot_oauth_start_uses_env_driven_config(monkeypatch):
+def test_bot_api_oauth_start_uses_env_driven_config(monkeypatch):
     monkeypatch.setenv('OMO_DISCORD_CLIENT_ID', 'env-client-id')
     monkeypatch.setenv('OMO_DISCORD_CLIENT_SECRET', 'env-client-secret')
     monkeypatch.setenv(
         'OMO_DISCORD_REDIRECT_URI',
-        'https://example.com/admin/bot/oauth/callback',
+        'https://example.com/oauth/discord/callback',
     )
 
     app = create_app()
@@ -169,16 +169,16 @@ def test_admin_bot_oauth_start_uses_env_driven_config(monkeypatch):
     query = parse_qs(parsed.query)
     assert query['client_id'] == ['env-client-id']
     assert query['redirect_uri'] == [
-        'https://example.com/admin/bot/oauth/callback']
+        'https://example.com/oauth/discord/callback']
 
 
-def test_admin_bot_oauth_callback_rejects_state_mismatch():
+def test_bot_api_oauth_callback_rejects_state_mismatch():
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
     )
     client = app.test_client()
 
@@ -198,7 +198,7 @@ def test_discord_oauth_callback_alias_is_reachable(monkeypatch):
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://admin.openmicodyssey.com/oauth/discord/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://api.openmicodyssey.com/oauth/discord/callback',
         BOT_OPS_ALLOWED_USER_IDS=('123456',),
         BOT_OPS_DEFAULT_SCOPES=('ops.read',),
     )
@@ -239,7 +239,7 @@ def test_exchange_code_for_discord_identity_surfaces_http_error_as_operator_auth
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://admin.openmicodyssey.com/oauth/discord/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://api.openmicodyssey.com/oauth/discord/callback',
     )
     requests: list[object] = []
 
@@ -268,13 +268,13 @@ def test_exchange_code_for_discord_identity_surfaces_http_error_as_operator_auth
     assert requests[0].headers['User-agent'] == admin_bot.DISCORD_HTTP_USER_AGENT
 
 
-def test_admin_bot_oauth_callback_sets_operator_session_for_allowed_user(monkeypatch):
+def test_bot_api_oauth_callback_sets_operator_session_for_allowed_user(monkeypatch):
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
         BOT_OPS_ALLOWED_USER_IDS=('123456',),
         BOT_OPS_DEFAULT_SCOPES=('ops.read', 'queue.write'),
     )
@@ -314,13 +314,13 @@ def test_admin_bot_oauth_callback_sets_operator_session_for_allowed_user(monkeyp
         assert admin_bot.BOT_OPS_OAUTH_STATE_KEY not in flask_session
 
 
-def test_admin_bot_oauth_callback_rejects_disallowed_operator(monkeypatch):
+def test_bot_api_oauth_callback_rejects_disallowed_operator(monkeypatch):
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
         BOT_OPS_ALLOWED_USER_IDS=('999999',),
     )
     client = app.test_client()
@@ -348,13 +348,13 @@ def test_admin_bot_oauth_callback_rejects_disallowed_operator(monkeypatch):
     assert b'not on the control-room allowlist' in response.data
 
 
-def test_admin_bot_oauth_callback_accepts_db_backed_operator_record(monkeypatch):
+def test_bot_api_oauth_callback_accepts_db_backed_operator_record(monkeypatch):
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
         BOT_OPS_ALLOWED_USER_IDS=(),
         BOT_OPS_DEFAULT_SCOPES=('ops.read',),
     )
@@ -396,13 +396,13 @@ def test_admin_bot_oauth_callback_accepts_db_backed_operator_record(monkeypatch)
             'ops.read', 'syndication.write']
 
 
-def test_admin_bot_oauth_callback_persists_operator_profile_metadata(monkeypatch):
+def test_bot_api_oauth_callback_persists_operator_profile_metadata(monkeypatch):
     app = create_app()
     app.config.update(
         TESTING=True,
         BOT_OPS_DISCORD_CLIENT_ID='client-id',
         BOT_OPS_DISCORD_CLIENT_SECRET='client-secret',
-        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/admin/bot/oauth/callback',
+        BOT_OPS_DISCORD_REDIRECT_URI='https://example.com/oauth/discord/callback',
         BOT_OPS_ALLOWED_USER_IDS=('123456',),
         BOT_OPS_DEFAULT_SCOPES=('ops.read', 'queue.write'),
     )
@@ -448,7 +448,7 @@ def test_admin_bot_oauth_callback_persists_operator_profile_metadata(monkeypatch
     assert persisted['last_login_at']
 
 
-def test_admin_bot_logout_clears_only_operator_session_keys():
+def test_bot_api_logout_clears_only_operator_session_keys():
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -473,7 +473,7 @@ def test_admin_bot_logout_clears_only_operator_session_keys():
         assert flask_session['editorial_marker'] == 'keep-me'
 
 
-def test_admin_bot_page_redirects_when_operator_session_is_idle_timed_out():
+def test_bot_api_page_redirects_when_operator_session_is_idle_timed_out():
     app = create_app()
     app.config['BOT_OPS_SESSION_IDLE_MINUTES'] = 5
     client = app.test_client()
@@ -491,7 +491,7 @@ def test_admin_bot_page_redirects_when_operator_session_is_idle_timed_out():
         assert admin_bot.BOT_OPS_SESSION_KEY not in flask_session
 
 
-def test_admin_bot_api_returns_session_expired_for_idle_timeout():
+def test_bot_api_api_returns_session_expired_for_idle_timeout():
     app = create_app()
     app.config['BOT_OPS_SESSION_IDLE_MINUTES'] = 5
     client = app.test_client()
@@ -508,7 +508,7 @@ def test_admin_bot_api_returns_session_expired_for_idle_timeout():
     assert payload['error']['code'] == 'operator_session_expired'
 
 
-def test_admin_bot_authenticated_request_refreshes_last_seen():
+def test_bot_api_authenticated_request_refreshes_last_seen():
     app = create_app()
     app.config['BOT_OPS_SESSION_IDLE_MINUTES'] = 60
     client = app.test_client()
@@ -526,7 +526,7 @@ def test_admin_bot_authenticated_request_refreshes_last_seen():
         assert refreshed != older
 
 
-def test_admin_bot_operators_page_renders_list(monkeypatch):
+def test_bot_api_operators_page_renders_list(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -555,7 +555,7 @@ def test_admin_bot_operators_page_renders_list(monkeypatch):
     assert b'queue.write' in response.data
 
 
-def test_admin_bot_operators_api_returns_records(monkeypatch):
+def test_bot_api_operators_api_returns_records(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -583,7 +583,7 @@ def test_admin_bot_operators_api_returns_records(monkeypatch):
     assert payload['data'][0]['discord_user_id'] == '123456'
 
 
-def test_admin_bot_queues_page_renders_queue_summary(monkeypatch):
+def test_bot_api_queues_page_renders_queue_summary(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -624,7 +624,7 @@ def test_admin_bot_queues_page_renders_queue_summary(monkeypatch):
     assert b'guild-1:open-mic' in response.data
 
 
-def test_admin_bot_advance_queue_api_updates_snapshot_and_emits_audit_entry(monkeypatch):
+def test_bot_api_advance_queue_api_updates_snapshot_and_emits_audit_entry(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -686,7 +686,7 @@ def test_admin_bot_advance_queue_api_updates_snapshot_and_emits_audit_entry(monk
     assert audit_repository.entries[0].action_key == 'queue.advanced'
 
 
-def test_admin_bot_mileage_page_renders_user_summary_and_tiers(monkeypatch):
+def test_bot_api_mileage_page_renders_user_summary_and_tiers(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -729,7 +729,7 @@ def test_admin_bot_mileage_page_renders_user_summary_and_tiers(monkeypatch):
     assert b'Bronze' in response.data
 
 
-def test_admin_bot_adjust_mileage_user_api_updates_total_and_emits_audit_entry(monkeypatch):
+def test_bot_api_adjust_mileage_user_api_updates_total_and_emits_audit_entry(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -786,7 +786,7 @@ def test_admin_bot_adjust_mileage_user_api_updates_total_and_emits_audit_entry(m
     assert audit_repository.entries[0].action_key == 'mileage.adjusted'
 
 
-def test_admin_bot_reverse_mileage_event_api_appends_reversal_and_audit(monkeypatch):
+def test_bot_api_reverse_mileage_event_api_appends_reversal_and_audit(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -845,7 +845,7 @@ def test_admin_bot_reverse_mileage_event_api_appends_reversal_and_audit(monkeypa
     assert audit_repository.entries[0].action_key == 'mileage.reversed'
 
 
-def test_admin_bot_syndication_page_renders_configured_sources(monkeypatch):
+def test_bot_api_syndication_page_renders_configured_sources(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -887,7 +887,7 @@ def test_admin_bot_syndication_page_renders_configured_sources(monkeypatch):
     assert b'announcements' in response.data
 
 
-def test_admin_bot_syndication_page_renders_retry_controls_for_writer(monkeypatch):
+def test_bot_api_syndication_page_renders_retry_controls_for_writer(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -926,7 +926,7 @@ def test_admin_bot_syndication_page_renders_retry_controls_for_writer(monkeypatc
     assert b'Reset checkpoint' in response.data
 
 
-def test_admin_bot_syndication_sources_api_returns_snapshot(monkeypatch):
+def test_bot_api_syndication_sources_api_returns_snapshot(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -967,7 +967,7 @@ def test_admin_bot_syndication_sources_api_returns_snapshot(monkeypatch):
     assert payload['data'][0]['checkpoint'] == 'video-123'
 
 
-def test_admin_bot_syndication_channels_api_returns_bindings(monkeypatch):
+def test_bot_api_syndication_channels_api_returns_bindings(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -997,7 +997,7 @@ def test_admin_bot_syndication_channels_api_returns_bindings(monkeypatch):
     ]
 
 
-def test_admin_bot_config_page_renders_sources_and_channel_bindings(monkeypatch):
+def test_bot_api_config_page_renders_sources_and_channel_bindings(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1044,7 +1044,7 @@ def test_admin_bot_config_page_renders_sources_and_channel_bindings(monkeypatch)
     assert b'moderator' in response.data
 
 
-def test_admin_bot_config_api_returns_repository_managed_bindings(monkeypatch):
+def test_bot_api_config_api_returns_repository_managed_bindings(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1088,7 +1088,7 @@ def test_admin_bot_config_api_returns_repository_managed_bindings(monkeypatch):
     assert payload['data']['role_bindings'][0]['role_id'] == 400
 
 
-def test_admin_bot_upsert_channel_binding_api_updates_repository(monkeypatch):
+def test_bot_api_upsert_channel_binding_api_updates_repository(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1137,7 +1137,7 @@ def test_admin_bot_upsert_channel_binding_api_updates_repository(monkeypatch):
     ]
 
 
-def test_admin_bot_upsert_channel_binding_api_succeeds_when_audit_is_degraded(monkeypatch):
+def test_bot_api_upsert_channel_binding_api_succeeds_when_audit_is_degraded(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1189,7 +1189,7 @@ def test_admin_bot_upsert_channel_binding_api_succeeds_when_audit_is_degraded(mo
     ]
 
 
-def test_admin_bot_disable_syndication_source_api_updates_enabled_state(monkeypatch):
+def test_bot_api_disable_syndication_source_api_updates_enabled_state(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1229,7 +1229,7 @@ def test_admin_bot_disable_syndication_source_api_updates_enabled_state(monkeypa
     assert payload['data']['enabled'] is False
 
 
-def test_admin_bot_disable_syndication_source_api_emits_audit_entry(monkeypatch):
+def test_bot_api_disable_syndication_source_api_emits_audit_entry(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1295,7 +1295,7 @@ def test_admin_bot_disable_syndication_source_api_emits_audit_entry(monkeypatch)
     }
 
 
-def test_admin_bot_disable_syndication_source_api_succeeds_when_audit_is_degraded(monkeypatch):
+def test_bot_api_disable_syndication_source_api_succeeds_when_audit_is_degraded(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1341,7 +1341,7 @@ def test_admin_bot_disable_syndication_source_api_succeeds_when_audit_is_degrade
     assert repository.get_by_source_key('youtube').enabled is False
 
 
-def test_admin_bot_commands_page_renders_poll_all_command(monkeypatch):
+def test_bot_api_commands_page_renders_poll_all_command(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1380,7 +1380,7 @@ def test_admin_bot_commands_page_renders_poll_all_command(monkeypatch):
     assert b'Poll all sources now' in response.data
 
 
-def test_admin_bot_poll_all_sources_api_rejects_missing_scope():
+def test_bot_api_poll_all_sources_api_rejects_missing_scope():
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1396,7 +1396,7 @@ def test_admin_bot_poll_all_sources_api_rejects_missing_scope():
     assert payload['error']['required_scopes'] == ['syndication.write']
 
 
-def test_admin_bot_poll_all_sources_api_returns_summary(monkeypatch):
+def test_bot_api_poll_all_sources_api_returns_summary(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1466,7 +1466,7 @@ class _FakeRetryAdapter:
         return self.result
 
 
-def test_admin_bot_retry_syndication_api_rejects_missing_scope(monkeypatch):
+def test_bot_api_retry_syndication_api_rejects_missing_scope(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1482,7 +1482,7 @@ def test_admin_bot_retry_syndication_api_rejects_missing_scope(monkeypatch):
     assert payload['error']['required_scopes'] == ['syndication.write']
 
 
-def test_admin_bot_retry_syndication_api_updates_source_state(monkeypatch):
+def test_bot_api_retry_syndication_api_updates_source_state(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1542,7 +1542,7 @@ def test_admin_bot_retry_syndication_api_updates_source_state(monkeypatch):
     assert payload['data']['last_poll_result'] == 'succeeded'
 
 
-def test_admin_bot_reset_syndication_checkpoint_api_clears_checkpoint(monkeypatch):
+def test_bot_api_reset_syndication_checkpoint_api_clears_checkpoint(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1582,7 +1582,7 @@ def test_admin_bot_reset_syndication_checkpoint_api_clears_checkpoint(monkeypatc
     assert payload['data']['checkpoint'] is None
 
 
-def test_admin_bot_disable_operator_api_disables_record(monkeypatch):
+def test_bot_api_disable_operator_api_disables_record(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1613,7 +1613,7 @@ def test_admin_bot_disable_operator_api_disables_record(monkeypatch):
     assert payload['data']['is_active'] is False
 
 
-def test_admin_bot_disable_operator_api_emits_audit_entry(monkeypatch):
+def test_bot_api_disable_operator_api_emits_audit_entry(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1669,7 +1669,7 @@ def test_admin_bot_disable_operator_api_emits_audit_entry(monkeypatch):
     assert entry.after_state['is_active'] is False
 
 
-def test_admin_bot_disable_operator_api_succeeds_when_audit_is_degraded(monkeypatch):
+def test_bot_api_disable_operator_api_succeeds_when_audit_is_degraded(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1706,7 +1706,7 @@ def test_admin_bot_disable_operator_api_succeeds_when_audit_is_degraded(monkeypa
     assert payload['data']['is_active'] is False
 
 
-def test_admin_bot_disable_operator_api_rejects_missing_scope(monkeypatch):
+def test_bot_api_disable_operator_api_rejects_missing_scope(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1735,7 +1735,7 @@ def test_admin_bot_disable_operator_api_rejects_missing_scope(monkeypatch):
     assert called['value'] is False
 
 
-def test_admin_bot_enable_operator_api_enables_record(monkeypatch):
+def test_bot_api_enable_operator_api_enables_record(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1766,7 +1766,7 @@ def test_admin_bot_enable_operator_api_enables_record(monkeypatch):
     assert payload['data']['is_active'] is True
 
 
-def test_admin_bot_update_operator_scopes_api_updates_scopes(monkeypatch):
+def test_bot_api_update_operator_scopes_api_updates_scopes(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1800,7 +1800,7 @@ def test_admin_bot_update_operator_scopes_api_updates_scopes(monkeypatch):
     assert payload['data']['scopes'] == ['ops.read', 'queue.write']
 
 
-def test_admin_bot_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
+def test_bot_api_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
     app = create_app()
     app.config['TESTING'] = True
     client = app.test_client()
@@ -1830,6 +1830,3 @@ def test_admin_bot_update_operator_scopes_api_rejects_empty_scopes(monkeypatch):
     payload = response.get_json()
     assert payload['error']['code'] == 'invalid_operator_scopes'
     assert called['value'] is False
-
-
-

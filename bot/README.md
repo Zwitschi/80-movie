@@ -53,10 +53,10 @@ Current runtime is still scaffold-level. It is useful for config validation, sta
 
 ## OAuth note
 
-Discord OAuth login for `/admin/bot` belongs to the Flask website, not this worker process. Those vars are read by the website app:
+Discord OAuth login for `/bot/*` belongs to standalone `bot_api` service, not this worker process. Those vars are read by bot API app:
 
 - `OMO_DISCORD_CLIENT_ID`
 - `OMO_DISCORD_CLIENT_SECRET`
 - `OMO_DISCORD_REDIRECT_URI`
 
-Use `website/.env.example` and `docs/ENVIRONMENT.md` for the full combined matrix.
+Use `.env.bot_api.example` and `docs/ENVIRONMENT.md` for full matrix.

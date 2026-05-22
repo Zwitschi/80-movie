@@ -6,7 +6,7 @@ This folder contains the Flask website for Open Mic Odyssey.
 
 The website is a Flask application that uses a PostgreSQL database as its content store. The database schema is defined in `database/schema.sql`.
 
-Environment variables for the website, embedded control room, and planned bot worker are documented centrally in [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md).
+Environment variables for website, control room, bot API, bot worker are documented centrally in [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md).
 
 `DATA_SOURCE` still exists in configuration, but the current runtime content-store factory is DB-backed only. Treat JSON mode as a planned or historical path, not the active production path.
 
@@ -16,8 +16,6 @@ Environment variables for the website, embedded control room, and planned bot wo
 - `database/`: contains the PostgreSQL schema and migration plan.
 - `data/`: JSON files containing structured content data for easy editing and maintenance.
 - `movie_site/__init__.py`: app factory and Flask configuration wiring.
-- `movie_site/admin.py`: admin UI dashboard and CRUD forms.
-- `movie_site/auth.py`: Flask-Login user management and authentication.
 - `movie_site/config.py`: Flask application configuration settings.
 - `movie_site/content_store.py`: factory for getting the content reader/writer (JSON or DB).
 - `movie_site/content_store_db.py`: database content reader/writer.
@@ -42,7 +40,7 @@ Environment variables for the website, embedded control room, and planned bot wo
 - `templates/media.html`: seeded media page shown at `/media`.
 - `templates/connect.html`: broad public hub for social links, campaign updates, and lightweight support actions shown at `/connect`.
 - `templates/patreon.html`: supporter-membership page shown at `/patreon`.
-- `templates/admin/`: CRUD form templates for managing site data.
+- `templates/admin/`: legacy templates retained in repo; active editorial CMS templates live under `control_room/templates/`.
 - `templates/schema/*.json`: Jinja templates for schema.org nodes such as `Movie`, `Person`, `Organization`, `VideoObject`, `ScreeningEvent`, `Review`, `AggregateRating`, `Offer`, and `FAQPage`.
 - `static/css/site.css`: shared site styles.
 - `static/js/scripts.js`: client-side JavaScript functionality.
@@ -78,7 +76,8 @@ The main routes are:
 - `/patreon`: dedicated supporter-membership conversion page
 - `/film`: detailed film page
 - `/credits`: compatibility redirect to the credits section on `/film`
-- `/admin`: secure content management dashboard (requires login)
+
+Editorial CMS does not run inside website app. Use control room service for login, dashboard, content editing.
 
 ## Deployment
 
@@ -88,7 +87,7 @@ Use [../docs/ENVIRONMENT.md](../docs/ENVIRONMENT.md) for the current environment
 
 The Discord bot worker runs separately from the website process. Local worker startup and env-loading notes live in [../bot/README.md](../bot/README.md).
 
-Use [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) for the current deployment topology, release-order guidance, and the planned split between the website, embedded control room, and future bot worker.
+Use [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md) for current deployment topology, release-order guidance, and service boundaries between website, control room, bot API, bot worker.
 
 ## Schema Generation
 
@@ -124,7 +123,7 @@ To add a new schema node type:
 
 ## Updating Movie Content
 
-Movie content is stored in a PostgreSQL database. The admin dashboard at `/admin` provides a user interface for managing the content.
+Movie content is stored in PostgreSQL database. Use control room service at `admin.openmicodyssey.com` for login, dashboard, content editing.
 
 The `data/` directory remains the structured content source used for templates, tests, and historical import paths, but the current runtime content-store implementation writes through the PostgreSQL-backed path.
 

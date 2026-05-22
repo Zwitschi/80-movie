@@ -1,7 +1,19 @@
 # ADR-001: Embedded-First Control Room
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-05-18
+
+## Superseded Note
+
+This ADR recorded the first delivery phase for bot operations while they lived inside the control-room Flask app.
+
+Current state has moved beyond this phase:
+
+- bot operator routes now live in standalone `bot_api/` service under `/bot/*`
+- operator APIs now live under `/bot/api/*`
+- old embedded `control_room/admin_bot.py` slice has been removed
+
+This ADR remains useful as historical rationale for why the project started embedded first, but it no longer describes the active deployment boundary.
 
 ## Context
 
@@ -76,6 +88,5 @@ Revisit this ADR when one or more of these become true:
 
 ## Follow-On Work
 
-- Keep new control-room features inside the dedicated `admin_bot` slice.
-- Preserve separate operator auth and scope enforcement.
-- Treat later extraction as a deployment and boundary step, not as a reason to rewrite the domain model.
+- Preserve separate operator auth and scope enforcement in `bot_api/`.
+- Treat extraction as completed deployment and boundary step rather than a reason to rewrite the domain model.

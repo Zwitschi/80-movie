@@ -1,7 +1,19 @@
 # ADR-003: Onboarding Scope And Control-Room Extraction Revisit
 
-- Status: Accepted
+- Status: Superseded
 - Date: 2026-05-19
+
+## Superseded Note
+
+This ADR captured decision to delay extraction for one more phase while onboarding and operator workflows were still settling.
+
+Current state has changed:
+
+- control-room extraction has happened
+- bot operator UI and APIs now deploy as standalone `bot_api/` service
+- embedded `/admin/bot` surface and templates are no longer active runtime paths
+
+This ADR remains useful as historical context for why extraction was deferred briefly, but it no longer reflects current deployment topology.
 
 ## Context
 
@@ -77,6 +89,6 @@ Revisit control-room extraction when one or more of these become true:
 
 ## Follow-On Work
 
-- Implement onboarding and role automation as the next bot-owned domain slice rather than as Flask-first behavior.
+- Implement onboarding and role automation as bot-owned domain behavior rather than Flask-first behavior.
 - Reuse current config and audit conventions so onboarding actions stay inspectable.
-- Keep extraction as a future deployment and boundary step, not a prerequisite for onboarding delivery.
+- Treat extraction as completed boundary step while continuing to evolve operator workflows in `bot_api/`.

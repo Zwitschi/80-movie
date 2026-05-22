@@ -1,11 +1,11 @@
-"""Moderation domain unit tests and E2E tests for control_room API.
+"""Moderation domain unit tests and E2E tests for bot API.
 
 Covers:
 - Queue moderation commands: remove_entry, move_entry
 - Onboarding reset: full-reset + replay via OnboardingService
 - Dry-run paths for queue_clear and onboarding_reset
 - Role cleanup: request_role_cleanup domain + API
-- Diagnostics: GET /admin/bot/api/diagnostics
+- Diagnostics: GET /bot/api/diagnostics
 - Control-room onboarding reset API (E2E with monkeypatched service)
 """
 
@@ -582,7 +582,7 @@ def test_role_cleanup_api_requires_operator_scope(client):
 # ---------------------------------------------------------------------------
 
 def test_diagnostics_api_returns_domain_summary(client, monkeypatch):
-    """GET /admin/bot/api/diagnostics returns queue, onboarding, mileage sections."""
+    """GET /bot/api/diagnostics returns queue, onboarding, mileage sections."""
     import bot_api.admin_bot as admin_bot
     from bot.omo_bot.models import QueueSummary
     from datetime import datetime, timezone

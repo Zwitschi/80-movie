@@ -23,6 +23,16 @@ Current repository contains a standalone control room for editorial CMS routes a
 
 - [ADR-001: Embedded-First Control Room](adr/ADR-001-embedded-first-control-room.md)
 - [ADR-002: Shared Data Ownership And Integration Strategy](adr/ADR-002-shared-data-ownership-and-integration.md)
+- [ADR-004: Extract Bot API Into Standalone Service](adr/ADR-004-extract-bot-api-into-standalone-service.md)
+
+### Service Boundary Change Checklist
+
+When route ownership, auth ownership, deployment topology, or service responsibilities change, update these docs in the same change:
+
+- `docs/ARCHITECTURE.md` for service boundaries, ownership, and runtime responsibilities
+- `docs/DEPLOYMENT.md` for topology, env vars, domains, and health checks
+- `docs/TESTING.md` for affected test files, service names, and verification commands
+- related ADRs and `CHANGELOG.md` when the boundary change is architectural rather than just wording cleanup
 
 ### Stakeholders
 

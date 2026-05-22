@@ -1,21 +1,23 @@
 # Testing Strategy
 
-This document is the source of truth for how tests are organized across the current website, embedded control room, and planned bot worker surfaces.
+This document is source of truth for how tests are organized across current website, control room CMS, standalone bot API, bot worker surfaces.
 
 ## Goals
 
 - Keep the Flask website stable as the current production baseline.
-- Catch regressions in the embedded `/admin/bot` control-room surface without having to run unrelated slices.
+- Catch regressions in standalone `/bot/*` and `/bot/api/*` bot API surface without having to run unrelated slices.
+- Keep editorial CMS behavior covered without coupling it to bot operator workflows.
 - Keep the bot scaffold testable as it grows from config parsing into a real worker.
-- Make CI reflect the actual architecture by running separate slices for website, bot scaffold, and control room.
+- Make CI reflect actual architecture by running separate slices for website, bot API, bot scaffold, and related domains.
 
 ## Current test surfaces
 
-| Surface      | Primary files                                                              | Purpose                                                                                |
-| ------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Website      | `tests/test_app.py`, `tests/test_schema.py`, `tests/test_content_store.py` | Public routes, admin auth/save path, schema output, and DB/pool behavior               |
-| Control room | `tests/test_admin_bot.py`                                                  | `/admin/bot` auth, OAuth flow, session lifecycle, operator management, and health APIs |
-| Bot scaffold | `tests/test_bot_scaffold.py`                                               | Bot config parsing and runtime bootstrap/shutdown behavior                             |
+- Website: `tests/test_app.py`, `tests/test_schema.py`, `tests/test_content_store.py`
+  Purpose: public routes, schema output, shared content-store behavior, DB/pool behavior.
+- Bot API: `tests/test_bot_api.py`, `tests/test_onboarding.py`, `tests/test_queue_domain.py`, `tests/test_queue_e2e.py`, `tests/test_mileage_*`
+  Purpose: `/bot/*` auth/session flow, operator pages, queue/mileage/onboarding/moderation APIs.
+- Bot scaffold: `tests/test_bot_scaffold.py`
+  Purpose: bot config parsing, runtime bootstrap, shutdown behavior.
 
 ## Test layers
 
@@ -44,7 +46,7 @@ Current examples:
 
 - Schema JSON-LD structure and required entity coverage in `tests/test_schema.py`
 - Content payload shape and logical-file expectations in `tests/test_app.py`
-- Control-room JSON API response structure in `tests/test_admin_bot.py`
+- Bot API JSON response structure in `tests/test_bot_api.py`
 
 Preferred characteristics:
 
@@ -73,7 +75,7 @@ Current examples:
 
 - Public page route checks in `tests/test_app.py`
 - Bot runtime start/stop cycle in `tests/test_bot_scaffold.py`
-- Control-room health and overview checks in `tests/test_admin_bot.py`
+- Bot API health and overview checks in `tests/test_bot_api.py`
 
 Use smoke tests to guard startup, route registration, and the most important happy paths. They should stay narrow and cheap.
 
@@ -81,11 +83,12 @@ Use smoke tests to guard startup, route registration, and the most important hap
 
 CI is intentionally split by architecture surface in `/.github/workflows/ci.yml`.
 
-| CI job             | Command                                                                               | Scope                                                   |
-| ------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Website tests      | `python -m pytest tests/test_app.py tests/test_schema.py tests/test_content_store.py` | Public site, admin auth/save path, schema, DB lifecycle |
-| Bot scaffold tests | `python -m pytest tests/test_bot_scaffold.py`                                         | Bot config and runtime scaffold                         |
-| Control-room tests | `python -m pytest tests/test_admin_bot.py`                                            | `/admin/bot` routes, auth, operator management          |
+- Website tests: `python -m pytest tests/test_app.py tests/test_schema.py tests/test_content_store.py`
+  Scope: public site, schema, shared DB lifecycle.
+- Bot scaffold tests: `python -m pytest tests/test_bot_scaffold.py`
+  Scope: bot config and runtime scaffold.
+- Bot API tests: `python -m pytest tests/test_bot_api.py`
+  Scope: `/bot/*` routes, auth, operator management.
 
 When adding new tests, keep them inside the slice that owns the behavior unless there is a strong reason to widen scope.
 
@@ -102,7 +105,7 @@ Run the same slices as CI:
 ```powershell
 python -m pytest tests/test_app.py tests/test_schema.py tests/test_content_store.py
 python -m pytest tests/test_bot_scaffold.py
-python -m pytest tests/test_admin_bot.py
+python -m pytest tests/test_bot_api.py
 ```
 
 The convenience runner in `run_tests.py` still supports a few historical selectors, but direct `pytest` commands are the preferred path because they match CI exactly.
@@ -116,11 +119,11 @@ The convenience runner in `run_tests.py` still supports a few historical selecto
 - Add DB lifecycle or pool behavior checks in `tests/test_content_store.py` when touching `db.py` or content-store plumbing.
 - For admin save paths, stub the content reader/writer seam instead of mocking unrelated Flask internals.
 
-### Control room
+### Bot API
 
-- Keep `/admin/bot` behavior in `tests/test_admin_bot.py`.
+- Keep `/bot/*` and `/bot/api/*` behavior in `tests/test_bot_api.py`.
 - Verify both page and API behavior when auth, scope, or operator-management logic changes.
-- Prefer session-based setup through `client.session_transaction()` over bypassing the control-room auth flow globally.
+- Prefer session-based setup through `client.session_transaction()` over bypassing operator auth flow globally.
 
 ### Bot scaffold
 
