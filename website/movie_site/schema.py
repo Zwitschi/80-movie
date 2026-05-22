@@ -2,8 +2,8 @@ import json
 
 from flask import current_app
 
-from .schema_parts.graph import build_movie_schema_graph
-from .schema_parts.social import build_org_social_schema_json as build_org_social_schema_json_for_site
+from shared.schema_parts.graph import build_movie_schema_graph
+from shared.schema_parts.social import build_org_social_schema_json as build_org_social_schema_json_for_site
 
 
 def build_movie_schema_json(movie):

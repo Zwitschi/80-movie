@@ -1,7 +1,7 @@
 import json
 import pytest
 from website.movie_site.schema import build_movie_schema_json, build_org_social_schema_json
-from website.movie_site.schema_parts.graph import build_movie_schema_graph
+from shared.schema_parts.graph import build_movie_schema_graph
 from website.movie_site.movie_data import get_movie_data
 
 
@@ -184,4 +184,3 @@ class TestSchemaBuilder:
         """Test schema generation with minimal movie data."""
         # Skip this test for now as it requires too many fields
         pytest.skip("Minimal data test requires extensive setup")
-
