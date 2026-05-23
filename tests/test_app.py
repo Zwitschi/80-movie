@@ -452,6 +452,43 @@ class TestAdminFlows:
         assert response.status_code == 200
         assert b'Manage Media Gallery' in response.data
 
+    @pytest.mark.parametrize(
+        ('path', 'marker'),
+        [
+            ('/content/content', b'Manage per-page SEO content'),
+            ('/content/faq', b'Add FAQ Entry'),
+            ('/content/people', b'Manage People'),
+            ('/content/connect/social', b'Social Links'),
+            ('/content/connect/supporters', b'Supporter Links'),
+            ('/content/connect/patreon', b'Page Copy'),
+            ('/content/media-assets', b'Poster image URL'),
+            ('/content/reviews', b'Manage Reviews'),
+        ],
+    )
+    def test_admin_extracted_content_pages_render(self, path, marker):
+        app = self._admin_app()
+        client = app.test_client()
+
+        login_response = self._login(client)
+        assert login_response.status_code == 302
+
+        response = client.get(path)
+
+        assert response.status_code == 200
+        assert marker in response.data
+
+    def test_admin_connect_root_redirects_to_social(self):
+        app = self._admin_app()
+        client = app.test_client()
+
+        login_response = self._login(client)
+        assert login_response.status_code == 302
+
+        response = client.get('/content/connect', follow_redirects=False)
+
+        assert response.status_code == 302
+        assert response.headers['Location'].endswith('/content/connect/social')
+
     def test_admin_film_post_writes_updated_movie_payload(self, monkeypatch):
         app = self._admin_app()
         client = app.test_client()

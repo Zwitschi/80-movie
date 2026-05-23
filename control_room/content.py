@@ -1,21 +1,20 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 from flask_login import current_user
 from .content_common import _ctx
-
-from .admin_content import (
-    _handle_film_request,
-    _handle_media_request,
-    _handle_content_request,
-    _handle_events_request,
-    _handle_faq_request,
-    _handle_people_request,
+from .content_connect import (
+    _handle_connect_patreon_request,
     _handle_connect_request,
     _handle_connect_social_request,
     _handle_connect_supporters_request,
-    _handle_connect_patreon_request,
-    _handle_media_assets_request,
-    _handle_reviews_request,
 )
+from .content_events import _handle_events_request
+from .content_faq import _handle_faq_request
+from .content_film import _handle_film_request
+from .content_media import _handle_media_request
+from .content_media_assets import _handle_media_assets_request
+from .content_pages import _handle_content_request
+from .content_people import _handle_people_request
+from .content_reviews import _handle_reviews_request
 
 content_blueprint = Blueprint(
     'content', __name__, url_prefix='/content', static_folder='static')
