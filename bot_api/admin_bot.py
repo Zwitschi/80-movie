@@ -47,6 +47,7 @@ from .onboarding_routes import (
     reset_onboarding_api,
     request_onboarding_role_cleanup_api,
 )
+from .onboarding_runtime import _build_onboarding_service
 from .diagnostics_routes import diagnostics_api
 from .command_routes import (
     commands_page,
