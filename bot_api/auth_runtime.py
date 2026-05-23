@@ -139,6 +139,7 @@ def _sanitize_next_url(next_url: object) -> str:
 
 def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
     from . import admin_bot
+    from . import bot_utils
 
     oauth = admin_bot._oauth_config()
     if not all(oauth.values()):
@@ -218,5 +219,5 @@ def exchange_code_for_discord_identity(code: str) -> dict[str, object]:
         'user_id': user_id,
         'username': identity_payload.get('username', ''),
         'global_name': identity_payload.get('global_name', ''),
-        'avatar_url': admin_bot._discord_avatar_url(identity_payload),
+        'avatar_url': bot_utils._discord_avatar_url(identity_payload),
     }

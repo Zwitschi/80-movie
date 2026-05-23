@@ -19,6 +19,7 @@ def client(app):
 def test_queue_lifecycle_via_api(client, monkeypatch):
     # Mock settings and repository to use in-memory for testing
     from bot.omo_bot.config import BotRuntimeSettings
+    from bot.omo_bot.models import QueueSummary
     from bot_api import admin_bot
 
     repo = InMemoryQueueRepository()
@@ -63,7 +64,7 @@ def test_queue_lifecycle_via_api(client, monkeypatch):
 
     # Initialize a queue
     repo.save_queue(
-        summary=admin_bot.QueueSummary(
+        summary=QueueSummary(
             queue_id="test-queue",
             guild_id=123,
             label="Test Queue",
