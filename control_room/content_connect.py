@@ -1,11 +1,18 @@
 from flask import redirect, render_template, url_for
+from .admin_utils import (
+    _social_from_form,
+    _link_from_form,
+    _benefit_from_form,
+    _tier_from_form,
+)
+from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
+from .content_common import _ctx
+from shared.utils import process_list_action
 
 
 def _connect_admin_state():
-    from . import admin_content
-
-    reader = admin_content.get_content_reader()
-    writer = admin_content.get_content_writer()
+    reader = get_content_reader()
+    writer = get_content_writer()
 
     social_payload = reader.read('social.json')
     connect_payload = reader.read('connect.json')
@@ -48,7 +55,6 @@ def _connect_admin_state():
 
 
 def _render_connect_template(template_name, save_error, save_success, state):
-    from . import admin_content
 
     return render_template(
         template_name,
@@ -60,12 +66,11 @@ def _render_connect_template(template_name, save_error, save_success, state):
         page=state['page'],
         benefits=state['benefits'],
         tiers=state['tiers'],
-        **admin_content._ctx(),
+        **_ctx(),
     )
 
 
 def _render_connect_read_error(template_name, exc):
-    from . import admin_content
 
     return render_template(
         template_name,
@@ -77,18 +82,17 @@ def _render_connect_read_error(template_name, exc):
         page={},
         benefits=[],
         tiers=[],
-        **admin_content._ctx(),
+        **_ctx(),
     )
 
 
 def _handle_connect_social_request(request):
-    from . import admin_content
 
     template_name = 'admin/connect_social.html'
 
     try:
         state = _connect_admin_state()
-    except admin_content.ContentReadError as exc:
+    except ContentReadError as exc:
         return _render_connect_read_error(template_name, exc)
 
     writer = state['writer']
@@ -101,7 +105,7 @@ def _handle_connect_social_request(request):
         action = request.form.get('action', '').strip().lower()
 
         if action == 'add_social':
-            entry, err = admin_content._social_from_form(request.form, prefix='social_')
+            entry, err = _social_from_form(request.form, prefix='social_')
             if err:
                 save_error = err
             else:
@@ -109,7 +113,7 @@ def _handle_connect_social_request(request):
                 try:
                     writer.write('social.json', social_payload)
                     return redirect(url_for('content.edit_connect_social', saved='1'))
-                except admin_content.ContentWriteError as exc:
+                except ContentWriteError as exc:
                     save_error = str(exc)
 
         elif action == 'remove_social':
@@ -121,13 +125,13 @@ def _handle_connect_social_request(request):
                     social_payload['social'] = updated
                     writer.write('social.json', social_payload)
                     return redirect(url_for('content.edit_connect_social', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action == 'update_social':
             try:
                 idx = int(request.form.get('social_index', ''))
-                entry, err = admin_content._social_from_form(request.form, prefix='social_')
+                entry, err = _social_from_form(request.form, prefix='social_')
                 if err:
                     save_error = err
                 else:
@@ -137,13 +141,13 @@ def _handle_connect_social_request(request):
                         social_payload['social'] = updated
                         writer.write('social.json', social_payload)
                         return redirect(url_for('content.edit_connect_social', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action in {'move_up_social', 'move_down_social'}:
             try:
                 mapped_action = 'move_up' if action == 'move_up_social' else 'move_down'
-                updated = admin_content.process_list_action(
+                updated = process_list_action(
                     social,
                     mapped_action,
                     request.form.get('social_index', '').strip(),
@@ -151,7 +155,7 @@ def _handle_connect_social_request(request):
                 social_payload['social'] = updated
                 writer.write('social.json', social_payload)
                 return redirect(url_for('content.edit_connect_social', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
     save_success = (save_error is None and request.method == 'POST') or (
@@ -161,13 +165,12 @@ def _handle_connect_social_request(request):
 
 
 def _handle_connect_supporters_request(request):
-    from . import admin_content
 
     template_name = 'admin/connect_supporters.html'
 
     try:
         state = _connect_admin_state()
-    except admin_content.ContentReadError as exc:
+    except ContentReadError as exc:
         return _render_connect_read_error(template_name, exc)
 
     writer = state['writer']
@@ -181,7 +184,7 @@ def _handle_connect_supporters_request(request):
         action = request.form.get('action', '').strip().lower()
 
         if action == 'add_campaign':
-            entry, err = admin_content._link_from_form(request.form, prefix='campaign_')
+            entry, err = _link_from_form(request.form, prefix='campaign_')
             if err:
                 save_error = err
             else:
@@ -191,7 +194,7 @@ def _handle_connect_supporters_request(request):
                 try:
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
-                except admin_content.ContentWriteError as exc:
+                except ContentWriteError as exc:
                     save_error = str(exc)
 
         elif action == 'remove_campaign':
@@ -204,13 +207,13 @@ def _handle_connect_supporters_request(request):
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action == 'update_campaign':
             try:
                 idx = int(request.form.get('campaign_index', ''))
-                entry, err = admin_content._link_from_form(request.form, prefix='campaign_')
+                entry, err = _link_from_form(request.form, prefix='campaign_')
                 if err:
                     save_error = err
                 else:
@@ -221,13 +224,13 @@ def _handle_connect_supporters_request(request):
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
                         return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action in {'move_up_campaign', 'move_down_campaign'}:
             try:
                 mapped_action = 'move_up' if action == 'move_up_campaign' else 'move_down'
-                updated = admin_content.process_list_action(
+                updated = process_list_action(
                     campaigns,
                     mapped_action,
                     request.form.get('campaign_index', '').strip(),
@@ -236,11 +239,11 @@ def _handle_connect_supporters_request(request):
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
                 return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
         elif action == 'add_supporter':
-            entry, err = admin_content._link_from_form(request.form, prefix='supporter_')
+            entry, err = _link_from_form(request.form, prefix='supporter_')
             if err:
                 save_error = err
             else:
@@ -250,7 +253,7 @@ def _handle_connect_supporters_request(request):
                 try:
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
-                except admin_content.ContentWriteError as exc:
+                except ContentWriteError as exc:
                     save_error = str(exc)
 
         elif action == 'remove_supporter':
@@ -263,13 +266,13 @@ def _handle_connect_supporters_request(request):
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action == 'update_supporter':
             try:
                 idx = int(request.form.get('supporter_index', ''))
-                entry, err = admin_content._link_from_form(request.form, prefix='supporter_')
+                entry, err = _link_from_form(request.form, prefix='supporter_')
                 if err:
                     save_error = err
                 else:
@@ -280,13 +283,13 @@ def _handle_connect_supporters_request(request):
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
                         return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action in {'move_up_supporter', 'move_down_supporter'}:
             try:
                 mapped_action = 'move_up' if action == 'move_up_supporter' else 'move_down'
-                updated = admin_content.process_list_action(
+                updated = process_list_action(
                     channels,
                     mapped_action,
                     request.form.get('supporter_index', '').strip(),
@@ -295,7 +298,7 @@ def _handle_connect_supporters_request(request):
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
                 return redirect(url_for('content.edit_connect_supporters', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
     save_success = (save_error is None and request.method == 'POST') or (
@@ -305,13 +308,12 @@ def _handle_connect_supporters_request(request):
 
 
 def _handle_connect_patreon_request(request):
-    from . import admin_content
 
     template_name = 'admin/connect_patreon.html'
 
     try:
         state = _connect_admin_state()
-    except admin_content.ContentReadError as exc:
+    except ContentReadError as exc:
         return _render_connect_read_error(template_name, exc)
 
     writer = state['writer']
@@ -328,21 +330,26 @@ def _handle_connect_patreon_request(request):
         if action == 'save_page':
             page['title'] = request.form.get('page_title', '').strip()
             page['intro'] = request.form.get('page_intro', '').strip()
-            page['membership_pitch'] = request.form.get('page_membership_pitch', '').strip()
-            page.setdefault('primary_link', {})['label'] = request.form.get('page_primary_label', '').strip()
-            page['primary_link']['url'] = request.form.get('page_primary_url', '').strip()
-            page.setdefault('secondary_link', {})['label'] = request.form.get('page_secondary_label', '').strip()
-            page['secondary_link']['url'] = request.form.get('page_secondary_url', '').strip()
+            page['membership_pitch'] = request.form.get(
+                'page_membership_pitch', '').strip()
+            page.setdefault('primary_link', {})['label'] = request.form.get(
+                'page_primary_label', '').strip()
+            page['primary_link']['url'] = request.form.get(
+                'page_primary_url', '').strip()
+            page.setdefault('secondary_link', {})['label'] = request.form.get(
+                'page_secondary_label', '').strip()
+            page['secondary_link']['url'] = request.form.get(
+                'page_secondary_url', '').strip()
             connect['page'] = page
             connect_payload['connect'] = connect
             try:
                 writer.write('connect.json', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
         elif action == 'add_benefit':
-            entry, err = admin_content._benefit_from_form(request.form, prefix='benefit_')
+            entry, err = _benefit_from_form(request.form, prefix='benefit_')
             if err:
                 save_error = err
             else:
@@ -352,7 +359,7 @@ def _handle_connect_patreon_request(request):
                 try:
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
-                except admin_content.ContentWriteError as exc:
+                except ContentWriteError as exc:
                     save_error = str(exc)
 
         elif action == 'remove_benefit':
@@ -366,13 +373,14 @@ def _handle_connect_patreon_request(request):
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action == 'update_benefit':
             try:
                 idx = int(request.form.get('benefit_index', ''))
-                entry, err = admin_content._benefit_from_form(request.form, prefix='benefit_')
+                entry, err = _benefit_from_form(
+                    request.form, prefix='benefit_')
                 if err:
                     save_error = err
                 else:
@@ -384,13 +392,13 @@ def _handle_connect_patreon_request(request):
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
                         return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action in {'move_up_benefit', 'move_down_benefit'}:
             try:
                 mapped_action = 'move_up' if action == 'move_up_benefit' else 'move_down'
-                updated = admin_content.process_list_action(
+                updated = process_list_action(
                     benefits,
                     mapped_action,
                     request.form.get('benefit_index', '').strip(),
@@ -400,11 +408,12 @@ def _handle_connect_patreon_request(request):
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
         elif action == 'add_tier':
-            entry, err = admin_content._tier_from_form(request.form, prefix='tier_')
+            entry, err = _tier_from_form(
+                request.form, prefix='tier_')
             if err:
                 save_error = err
             else:
@@ -414,7 +423,7 @@ def _handle_connect_patreon_request(request):
                 try:
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
-                except admin_content.ContentWriteError as exc:
+                except ContentWriteError as exc:
                     save_error = str(exc)
 
         elif action == 'remove_tier':
@@ -428,13 +437,14 @@ def _handle_connect_patreon_request(request):
                     connect_payload['connect'] = connect
                     writer.write('connect.json', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action == 'update_tier':
             try:
                 idx = int(request.form.get('tier_index', ''))
-                entry, err = admin_content._tier_from_form(request.form, prefix='tier_')
+                entry, err = _tier_from_form(
+                    request.form, prefix='tier_')
                 if err:
                     save_error = err
                 else:
@@ -446,13 +456,13 @@ def _handle_connect_patreon_request(request):
                         connect_payload['connect'] = connect
                         writer.write('connect.json', connect_payload)
                         return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except (ValueError, admin_content.ContentWriteError) as exc:
+            except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
 
         elif action in {'move_up_tier', 'move_down_tier'}:
             try:
                 mapped_action = 'move_up' if action == 'move_up_tier' else 'move_down'
-                updated = admin_content.process_list_action(
+                updated = process_list_action(
                     tiers,
                     mapped_action,
                     request.form.get('tier_index', '').strip(),
@@ -462,7 +472,7 @@ def _handle_connect_patreon_request(request):
                 connect_payload['connect'] = connect
                 writer.write('connect.json', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
     save_success = (save_error is None and request.method == 'POST') or (

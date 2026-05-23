@@ -4,6 +4,10 @@ from .admin_utils import (
     _event_from_form,
     _offer_from_form,
     _review_from_form,
+    _person_from_form,
+    _contributor_from_form,
+    _credit_from_form,
+    _org_from_form,
     _validate_aggregate,
 )
 from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
