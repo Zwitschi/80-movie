@@ -78,6 +78,8 @@ def _patch_queue_api(monkeypatch, admin_bot, repo):
         admin_bot, 'build_postgres_queue_repository', lambda url: repo)
     monkeypatch.setattr(admin_bot, '_build_bot_audit_service', lambda: None)
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
+    monkeypatch.setattr(admin_bot, 'require_operator_scope',
+                        lambda *scopes: None)
 
 
 # ---------------------------------------------------------------------------
@@ -371,16 +373,23 @@ def test_mileage_reverse_api_requires_mileage_write(client):
 def test_queue_remove_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<eid>/remove records entry_removed audit event."""
     import bot_api.admin_bot as admin_bot
+    from datetime import datetime, timezone
+    from bot.omo_bot.models.queue import QueueSummary, QueueEntry
 
     repo = InMemoryQueueRepository()
-    from bot.omo_bot.models.queue import QueueSummary
     repo.save_queue(
         summary=QueueSummary(
             queue_id='q1', guild_id=100, label='Test', is_paused=False,
             paused_reason='', active_entry_id=None, waiting_count=0,
             total_entries=0, updated_at=None,
         ),
-        entries=(),
+        entries=(
+            QueueEntry(
+                entry_id='e1', queue_id='q1', discord_user_id='u1',
+                display_name='User 1', state='waiting', position=1, note='',
+                joined_at=datetime.now(timezone.utc),
+            ),
+        ),
     )
 
     audit_calls: list[dict] = []
@@ -395,23 +404,30 @@ def test_queue_remove_api_records_audit_event(client, monkeypatch):
     )
 
     assert response.status_code == 200
-    assert any(call.get('action_key') == 'entry_removed'
+    assert any(call.get('action_key') == 'queue.entry.removed'
                for call in audit_calls)
 
 
 def test_queue_move_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<eid>/move records entry_moved audit event."""
     import bot_api.admin_bot as admin_bot
+    from datetime import datetime, timezone
+    from bot.omo_bot.models.queue import QueueSummary, QueueEntry
 
     repo = InMemoryQueueRepository()
-    from bot.omo_bot.models.queue import QueueSummary
     repo.save_queue(
         summary=QueueSummary(
             queue_id='q1', guild_id=100, label='Test', is_paused=False,
             paused_reason='', active_entry_id=None, waiting_count=0,
             total_entries=0, updated_at=None,
         ),
-        entries=(),
+        entries=(
+            QueueEntry(
+                entry_id='e1', queue_id='q1', discord_user_id='u1',
+                display_name='User 1', state='waiting', position=1, note='',
+                joined_at=datetime.now(timezone.utc),
+            ),
+        ),
     )
 
     audit_calls: list[dict] = []
@@ -426,7 +442,7 @@ def test_queue_move_api_records_audit_event(client, monkeypatch):
     )
 
     assert response.status_code == 200
-    assert any(call.get('action_key') == 'entry_moved'
+    assert any(call.get('action_key') == 'queue.entry.moved'
                for call in audit_calls)
 
 
@@ -455,7 +471,7 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
                            json={'confirm': 'clear', 'reason': 'test'})
 
     assert response.status_code == 200
-    assert any(call.get('action_key') == 'queue_cleared'
+    assert any(call.get('action_key') == 'queue.cleared'
                for call in audit_calls)
 
 
@@ -473,13 +489,15 @@ def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
         admin_bot, 'build_postgres_mileage_repository', lambda url: InMemoryMileageRepository())
     monkeypatch.setattr(admin_bot, '_build_bot_audit_service', lambda: None)
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
+    monkeypatch.setattr(admin_bot, 'require_operator_scope',
+                        lambda *scopes: None)
     monkeypatch.setattr(admin_bot, '_record_bot_audit_event',
                         lambda **kwargs: audit_calls.append(kwargs))
     _make_mileage_api_session(client, admin_bot)
 
     response = client.post(
         '/bot/api/mileage/users/user1/adjust',
-        json={'points_delta': 10, 'reason': 'test'},
+        json={'delta': 10, 'reason': 'test'},
     )
 
     assert response.status_code == 200
@@ -491,6 +509,17 @@ def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
     """POST /api/mileage/events/<id>/reverse records mileage.reversed audit event."""
     import bot_api.admin_bot as admin_bot
     from bot.omo_bot.config import BotRuntimeSettings
+    from datetime import datetime, timezone
+    from bot.omo_bot.models import MileageEvent
+
+    repo = InMemoryMileageRepository()
+    repo.append_event(MileageEvent(
+        event_id='ev1', guild_id=100, discord_user_id='user1',
+        display_name='User 1', event_type='adjusted', points_delta=10,
+        reason='test', actor_user_id=None, correlation_id=None,
+        reversed_event_id=None, metadata={},
+        created_at=datetime.now(timezone.utc),
+    ))
 
     audit_calls: list[dict] = []
     monkeypatch.setattr(admin_bot, '_load_bot_runtime_settings', lambda: BotRuntimeSettings(
@@ -498,9 +527,11 @@ def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
         channel_map={}, syndication_sources=[], syndication_poll_seconds=300, role_map={},
     ))
     monkeypatch.setattr(
-        admin_bot, 'build_postgres_mileage_repository', lambda url: InMemoryMileageRepository())
+        admin_bot, 'build_postgres_mileage_repository', lambda url: repo)
     monkeypatch.setattr(admin_bot, '_build_bot_audit_service', lambda: None)
     monkeypatch.setattr(admin_bot, '_operator_can', lambda scope: True)
+    monkeypatch.setattr(admin_bot, 'require_operator_scope',
+                        lambda *scopes: None)
     monkeypatch.setattr(admin_bot, '_record_bot_audit_event',
                         lambda **kwargs: audit_calls.append(kwargs))
     _make_mileage_api_session(client, admin_bot)
