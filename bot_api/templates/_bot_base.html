@@ -1,6 +1,6 @@
-{% extends 'admin/_admin_base.html' %} {% block title %}Bot Ops | {{ super()
-}}{% endblock %} {% block admin_title %}Bot Control Room{% endblock %} {% block
-admin_content %}
+{% extends '_base.html' %} {% block title %}Bot Ops | {{ super() }}{% endblock
+%} {% block admin_title %}Bot Control Room{% endblock %} {% block admin_content
+%}
 <section>
   <p>
     Embedded operator surface for bot health and future queue, mileage,
@@ -31,4 +31,3 @@ admin_content %}
   </form>
 </section>
 {% block bot_content %}{% endblock %} {% endblock %}
-
