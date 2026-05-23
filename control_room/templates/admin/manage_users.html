@@ -1,0 +1,183 @@
+{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Users{%
+endblock %} {% block admin_content %} {% if success %}
+<p class="alert alert-success"><strong>{{ success }}</strong></p>
+{% endif %} {% if error %}
+<p class="alert alert-error"><strong>Error:</strong> {{ error }}</p>
+{% endif %}
+
+<!-- Create User -->
+<section class="stack-md">
+  <h2>Create User</h2>
+  <form
+    method="post"
+    action="{{ url_for('admin.manage_users') }}"
+    class="stack-sm"
+    style="max-width: 400px"
+  >
+    <input type="hidden" name="action" value="create" />
+    <label>Username <input type="text" name="username" required /></label>
+    <label>Email <input type="email" name="email" required /></label>
+    <label>Password <input type="password" name="password" required /></label>
+    <button type="submit" class="btn btn-primary">Create</button>
+  </form>
+</section>
+
+<hr />
+
+<!-- User List -->
+<section class="stack-md">
+  <h2>Users</h2>
+  {% if users %}
+  <table class="admin-table" style="width: 100%; border-collapse: collapse">
+    <thead>
+      <tr style="text-align: left; border-bottom: 2px solid #ddd">
+        <th>Username</th>
+        <th>Email</th>
+        <th>Active</th>
+        <th>Roles</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr style="border-bottom: 1px solid #eee">
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ 'Yes' if user.is_active else 'No' }}</td>
+        <td>{{ user.roles | join(', ') if user.roles else '—' }}</td>
+        <td>
+          {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}
+        </td>
+        <td>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            onclick="toggleEdit('{{ user.id }}')"
+          >
+            Edit
+          </button>
+          <form
+            method="post"
+            action="{{ url_for('admin.manage_users') }}"
+            style="display: inline"
+            onsubmit="return confirm('Delete user {{ user.username }}?')"
+          >
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="user_id" value="{{ user.id }}" />
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            onclick="togglePw('{{ user.id }}')"
+          >
+            Reset PW
+          </button>
+        </td>
+      </tr>
+      <!-- Inline Edit Row -->
+      <tr
+        id="edit-{{ user.id }}"
+        style="display: none; border-bottom: 1px solid #eee"
+      >
+        <td colspan="6">
+          <form
+            method="post"
+            action="{{ url_for('admin.manage_users') }}"
+            class="stack-sm"
+            style="padding: 8px"
+          >
+            <input type="hidden" name="action" value="update" />
+            <input type="hidden" name="user_id" value="{{ user.id }}" />
+            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+              <label
+                >Username
+                <input type="text" name="username" value="{{ user.username }}"
+              /></label>
+              <label
+                >Email
+                <input type="email" name="email" value="{{ user.email }}"
+              /></label>
+              <label
+                >Active
+                <select name="is_active">
+                  <option value="1" {% if user.is_active %}selected{% endif %}>
+                    Yes
+                  </option>
+                  <option
+                    value="0"
+                    {%
+                    if
+                    not
+                    user.is_active
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    No
+                  </option>
+                </select>
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              onclick="toggleEdit('{{ user.id }}')"
+            >
+              Cancel
+            </button>
+          </form>
+        </td>
+      </tr>
+      <!-- Password Reset Row -->
+      <tr
+        id="pw-{{ user.id }}"
+        style="display: none; border-bottom: 1px solid #eee"
+      >
+        <td colspan="6">
+          <form
+            method="post"
+            action="{{ url_for('admin.manage_users') }}"
+            class="stack-sm"
+            style="padding: 8px"
+          >
+            <input type="hidden" name="action" value="reset_password" />
+            <input type="hidden" name="user_id" value="{{ user.id }}" />
+            <label
+              >New Password <input type="password" name="new_password" required
+            /></label>
+            <button type="submit" class="btn btn-primary btn-sm">Reset</button>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              onclick="togglePw('{{ user.id }}')"
+            >
+              Cancel
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No users found.</p>
+  {% endif %}
+</section>
+
+<script>
+  function toggleEdit(id) {
+    const row = document.getElementById("edit-" + id);
+    if (row)
+      row.style.display = row.style.display === "none" ? "table-row" : "none";
+  }
+  function togglePw(id) {
+    const row = document.getElementById("pw-" + id);
+    if (row)
+      row.style.display = row.style.display === "none" ? "table-row" : "none";
+  }
+</script>
+
+{% endblock %}

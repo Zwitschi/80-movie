@@ -127,6 +127,13 @@
             <li><span class="nav-section-label">System</span></li>
             <li>
               <a
+                href="{{ url_for('admin.manage_users') }}"
+                class="{{ 'active' if request.endpoint == 'admin.manage_users' else '' }}"
+                >Manage Users</a
+              >
+            </li>
+            <li>
+              <a
                 href="{{ config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
                 target="_blank"
                 rel="noopener noreferrer"

@@ -206,3 +206,109 @@ def verify_password(stored_hash: str, password: str) -> bool:
         return check_password_hash(stored_hash, password)
     except (TypeError, ValueError):
         return False
+
+
+def list_users() -> list[dict[str, Any]]:
+    """Return all users with their roles."""
+    if not _users_table_exists():
+        return []
+
+    cursor = get_dict_cursor()
+    try:
+        cursor.execute(
+            "SELECT id, username, email, is_active, created_at, updated_at "
+            "FROM users ORDER BY created_at DESC"
+        )
+        users = cursor.fetchall() or []
+        for user in users:
+            user['roles'] = list_user_roles(user['id'])
+        return users
+    finally:
+        cursor.close()
+
+
+def update_user(
+    user_id: str,
+    username: str | None = None,
+    email: str | None = None,
+    is_active: bool | None = None,
+) -> dict[str, Any] | None:
+    """Update user fields. Returns updated user or None."""
+    if not _users_table_exists():
+        return None
+
+    fields = []
+    params = []
+    if username is not None:
+        fields.append("username = %s")
+        params.append(username)
+    if email is not None:
+        fields.append("email = %s")
+        params.append(email)
+    if is_active is not None:
+        fields.append("is_active = %s")
+        params.append(is_active)
+
+    if not fields:
+        return get_user_by_id(user_id)
+
+    fields.append("updated_at = now()")
+    params.append(user_id)
+
+    cursor = get_dict_cursor()
+    conn = get_conn()
+    try:
+        cursor.execute(
+            f"UPDATE users SET {', '.join(fields)} WHERE id = %s "
+            "RETURNING id, username, email, is_active, created_at, updated_at",
+            params,
+        )
+        record = cursor.fetchone()
+        conn.commit()
+        return record
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+
+
+def delete_user(user_id: str) -> bool:
+    """Delete a user by ID. Returns True if deleted."""
+    if not _users_table_exists():
+        return False
+
+    cursor = get_dict_cursor()
+    conn = get_conn()
+    try:
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        deleted = cursor.rowcount > 0
+        conn.commit()
+        return deleted
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+
+
+def update_password(user_id: str, new_password: str) -> bool:
+    """Update a user's password. Returns True on success."""
+    if not _users_table_exists():
+        return False
+
+    cursor = get_dict_cursor()
+    conn = get_conn()
+    try:
+        cursor.execute(
+            "UPDATE users SET password_hash = %s, updated_at = now() WHERE id = %s",
+            (generate_password_hash(new_password), user_id),
+        )
+        updated = cursor.rowcount > 0
+        conn.commit()
+        return updated
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()

@@ -80,3 +80,84 @@ def logout():
 @admin_blueprint.get('/')
 def dashboard():
     return render_template('admin/admin.html', **_ctx())
+
+
+@admin_blueprint.route('/users', methods=['GET', 'POST'])
+def manage_users():
+    from .user_repo import list_users, create_user, update_user, delete_user, update_password
+
+    error = None
+    success = None
+
+    if request.method == 'POST':
+        action = request.form.get('action', '').strip().lower()
+
+        if action == 'create':
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            password = request.form.get('password', '').strip()
+            if username and email and password:
+                try:
+                    user = create_user(username, email, password)
+                    if user:
+                        from .user_repo import assign_role
+                        assign_role(user['id'], 'admin')
+                        success = f"User '{username}' created."
+                    else:
+                        error = 'Users table not available.'
+                except Exception as exc:
+                    error = str(exc)
+            else:
+                error = 'Username, email, and password required.'
+
+        elif action == 'update':
+            user_id = request.form.get('user_id', '').strip()
+            username = request.form.get('username', '').strip()
+            email = request.form.get('email', '').strip()
+            is_active = request.form.get('is_active')
+            is_active_bool = is_active == '1' if is_active else None
+            if user_id:
+                try:
+                    update_user(
+                        user_id,
+                        username=username or None,
+                        email=email or None,
+                        is_active=is_active_bool,
+                    )
+                    success = 'User updated.'
+                except Exception as exc:
+                    error = str(exc)
+            else:
+                error = 'User ID required.'
+
+        elif action == 'delete':
+            user_id = request.form.get('user_id', '').strip()
+            if user_id:
+                try:
+                    delete_user(user_id)
+                    success = 'User deleted.'
+                except Exception as exc:
+                    error = str(exc)
+            else:
+                error = 'User ID required.'
+
+        elif action == 'reset_password':
+            user_id = request.form.get('user_id', '').strip()
+            new_password = request.form.get('new_password', '').strip()
+            if user_id and new_password:
+                try:
+                    update_password(user_id, new_password)
+                    success = 'Password reset.'
+                except Exception as exc:
+                    error = str(exc)
+            else:
+                error = 'User ID and new password required.'
+
+    users = list_users()
+    return render_template(
+        'admin/manage_users.html',
+        users=users,
+        error=error,
+        success=success,
+        **_ctx(),
+    )

@@ -76,5 +76,10 @@ endblock %} {% block admin_content %}
     </p>
     <span class="card-link">Open bot API &rarr;</span>
   </a>
+  <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
+    <h2>Manage Users</h2>
+    <p>Create, edit, and delete admin users. Reset passwords.</p>
+    <span class="card-link">Manage &rarr;</span>
+  </a>
 </div>
 {% endblock %}
