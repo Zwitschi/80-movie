@@ -70,16 +70,23 @@
     <tbody>
       {% for item in gallery_items %}
       <tr>
-        <td>{{ item.get('title', '') }}</td>
-        <td>{{ item.get('category', '') }}</td>
-        <td><a href="{{ item.get('image_url', '') }}" target="_blank">View Image</a></td>
-        <td>{{ item.get('alt', '') }}</td>
-        <td>{{ item.get('description', '') }}</td>
-        <td>
-          <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
-            <input type="hidden" name="action" value="update" />
-            <input type="hidden" name="index" value="{{ loop.index0 }}" />
-            <button type="submit" class="btn btn-primary btn-sm">Edit</button>
+        <form method="post" action="{{ url_for('content.manage_media') }}">
+          <input type="hidden" name="action" value="update" />
+          <input type="hidden" name="index" value="{{ loop.index0 }}" />
+          <td><input type="text" name="title" value="{{ item.get('title', '') }}" style="width:100%;" /></td>
+          <td>
+            <select name="category" style="width:100%;">
+              <option value="">—</option>
+              {% for cat in categories %}
+              <option value="{{ cat }}" {% if item.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td><input type="url" name="image_url" value="{{ item.get('image_url', '') }}" style="width:100%;" /></td>
+          <td><input type="text" name="alt" value="{{ item.get('alt', '') }}" style="width:100%;" /></td>
+          <td><input type="text" name="description" value="{{ item.get('description', '') }}" style="width:100%;" /></td>
+          <td>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
           </form>
           <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
             <input type="hidden" name="action" value="remove" />
