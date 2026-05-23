@@ -1,10 +1,12 @@
 from flask import redirect, render_template, url_for
+from .admin_utils import _review_from_form, _validate_aggregate
+from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
+from shared.utils import _build_content_previews, _content_page_form_fields, _validate_content_pages, process_list_action, save_json, load_json
+from .content_common import _ctx
 
 
 def _handle_reviews_request(request):
-    from . import admin_content
-
-    reviews_payload = admin_content.load_json('reviews.json')
+    reviews_payload = load_json('reviews.json')
     reviews = reviews_payload.get('reviews', [])
     if not isinstance(reviews, list):
         reviews = []
@@ -18,25 +20,29 @@ def _handle_reviews_request(request):
         action = request.form.get('action', '').strip().lower()
 
         if action == 'add_review':
-            entry, err = admin_content._review_from_form(request.form, prefix='review_')
+            entry, err = _review_from_form(
+                request.form, prefix='review_')
             if err:
                 save_error = err
             else:
-                reviews = admin_content.process_list_action(reviews, 'add', '', entry)
+                reviews = process_list_action(
+                    reviews, 'add', '', entry)
                 reviews_payload['reviews'] = reviews
-                success, err = admin_content.save_json('reviews.json', reviews_payload)
+                success, err = save_json(
+                    'reviews.json', reviews_payload)
                 if success:
                     return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err
 
         elif action == 'remove_review':
-            reviews = admin_content.process_list_action(
+            reviews = process_list_action(
                 reviews,
                 'remove',
                 request.form.get('review_index', ''),
             )
             reviews_payload['reviews'] = reviews
-            success, err = admin_content.save_json('reviews.json', reviews_payload)
+            success, err = save_json(
+                'reviews.json', reviews_payload)
             if success:
                 return redirect(url_for('content.edit_reviews', saved='1'))
             save_error = err
@@ -57,12 +63,13 @@ def _handle_reviews_request(request):
                 'rating_count': _int_or_none(request.form.get('agg_rating_count', '')),
                 'review_count': _int_or_none(request.form.get('agg_review_count', '')),
             }
-            err = admin_content._validate_aggregate(candidate)
+            err = _validate_aggregate(candidate)
             if err:
                 save_error = err
             else:
                 reviews_payload['aggregate_rating'] = candidate
-                success, err = admin_content.save_json('reviews.json', reviews_payload)
+                success, err = save_json(
+                    'reviews.json', reviews_payload)
                 if success:
                     return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err
@@ -76,5 +83,5 @@ def _handle_reviews_request(request):
         save_success=save_success,
         reviews=reviews,
         aggregate=aggregate,
-        **admin_content._ctx(),
+        **_ctx(),
     )

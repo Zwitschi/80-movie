@@ -1,4 +1,8 @@
 from flask import redirect, render_template, url_for
+from .admin_utils import REQUIRED_CONTENT_PAGES
+from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
+from shared.utils import _build_content_previews, _content_page_form_fields, _validate_content_pages, process_list_action, save_json, load_json
+from .content_common import _ctx
 
 
 def _render_content_form(*, page_context, save_error, save_success, form_pages, previews):
@@ -13,10 +17,8 @@ def _render_content_form(*, page_context, save_error, save_success, form_pages, 
 
 
 def _handle_content_post(request, content_payload, pages_payload, page_context, writer):
-    from . import admin_content
-
     updated_pages = dict(pages_payload)
-    for key in admin_content.REQUIRED_CONTENT_PAGES:
+    for key in REQUIRED_CONTENT_PAGES:
         raw = request.form.get(f'{key}_keywords', '')
         keywords = [item.strip() for item in raw.split(',') if item.strip()]
         updated_pages[key] = {
@@ -26,16 +28,17 @@ def _handle_content_post(request, content_payload, pages_payload, page_context, 
             'path': request.form.get(f'{key}_path', '').strip(),
         }
 
-    validation_error = admin_content._validate_content_pages(
+    validation_error = _validate_content_pages(
         updated_pages,
-        admin_content.REQUIRED_CONTENT_PAGES,
+        REQUIRED_CONTENT_PAGES,
     )
     if validation_error:
         form_pages = {
-            key: admin_content._content_page_form_fields(updated_pages.get(key, {}))
-            for key in admin_content.REQUIRED_CONTENT_PAGES
+            key: _content_page_form_fields(
+                updated_pages.get(key, {}))
+            for key in REQUIRED_CONTENT_PAGES
         }
-        previews = admin_content._build_content_previews(
+        previews = _build_content_previews(
             updated_pages,
             page_context['movie_title'],
         )
@@ -50,12 +53,13 @@ def _handle_content_post(request, content_payload, pages_payload, page_context, 
     content_payload['pages'] = updated_pages
     try:
         writer.write('content.json', content_payload)
-    except admin_content.ContentWriteError as exc:
+    except ContentWriteError as exc:
         form_pages = {
-            key: admin_content._content_page_form_fields(updated_pages.get(key, {}))
-            for key in admin_content.REQUIRED_CONTENT_PAGES
+            key: _content_page_form_fields(
+                updated_pages.get(key, {}))
+            for key in REQUIRED_CONTENT_PAGES
         }
-        previews = admin_content._build_content_previews(
+        previews = _build_content_previews(
             updated_pages,
             page_context['movie_title'],
         )
@@ -71,15 +75,13 @@ def _handle_content_post(request, content_payload, pages_payload, page_context, 
 
 
 def _handle_content_request(request):
-    from . import admin_content
-
-    reader = admin_content.get_content_reader()
-    writer = admin_content.get_content_writer()
-    page_context = admin_content._ctx()
+    reader = get_content_reader()
+    writer = get_content_writer()
+    page_context = _ctx()
 
     try:
         content_payload = reader.read('content.json')
-    except admin_content.ContentReadError as exc:
+    except ContentReadError as exc:
         return _render_content_form(
             page_context=page_context,
             save_error=str(exc),
@@ -96,10 +98,11 @@ def _handle_content_request(request):
         return _handle_content_post(request, content_payload, pages_payload, page_context, writer)
 
     form_pages = {
-        key: admin_content._content_page_form_fields(pages_payload.get(key, {}))
-        for key in admin_content.REQUIRED_CONTENT_PAGES
+        key: _content_page_form_fields(
+            pages_payload.get(key, {}))
+        for key in REQUIRED_CONTENT_PAGES
     }
-    previews = admin_content._build_content_previews(
+    previews = _build_content_previews(
         pages_payload,
         page_context['movie_title'],
     )

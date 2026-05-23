@@ -1,11 +1,15 @@
 from flask import redirect, render_template, url_for
+from shared.utils import (
+    load_json,
+    save_json,
+    process_list_action,
+)
+from .content_common import _ctx
 
 
 def _handle_faq_request(request):
-    from . import admin_content
-
     save_error = None
-    faq_payload = admin_content.load_json('faq.json')
+    faq_payload = load_json('faq.json')
     faq_items = faq_payload.get('faq', [])
     if not isinstance(faq_items, list):
         faq_items = []
@@ -25,15 +29,14 @@ def _handle_faq_request(request):
                 candidate = {'question': question, 'answer': answer}
 
         if not save_error:
-            updated = admin_content.process_list_action(
+            updated = process_list_action(
                 faq_items,
                 action,
                 request.form.get('index', '').strip(),
                 candidate,
             )
             faq_payload['faq'] = updated
-            success, save_error = admin_content.save_json(
-                'faq.json', faq_payload)
+            success, save_error = save_json('faq.json', faq_payload)
             if success:
                 return redirect(url_for('content.edit_faq', saved='1'))
 
@@ -45,5 +48,5 @@ def _handle_faq_request(request):
         save_error=save_error,
         save_success=save_success,
         faq_items=faq_items,
-        **admin_content._ctx(),
+        **_ctx(),
     )

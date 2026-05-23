@@ -209,8 +209,6 @@ class TestAdminFlows:
                 'release_date': '2026-08-18',
                 'release_status_label': 'Post-Production',
                 'release_status_headline': 'Trailer streaming now',
-                'release_status_summary': 'Fresh summary',
-                'release_status_detail': 'Fresh detail',
             },
             follow_redirects=False,
         )

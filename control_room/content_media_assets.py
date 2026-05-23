@@ -1,22 +1,22 @@
 from flask import redirect, render_template, url_for
+from shared.content_store import ContentReadError, ContentWriteError, get_content_reader, get_content_writer
+from .content_common import _ctx
 
 
 def _handle_media_assets_request(request):
-    from . import admin_content
-
-    reader = admin_content.get_content_reader()
-    writer = admin_content.get_content_writer()
+    reader = get_content_reader()
+    writer = get_content_writer()
 
     try:
         assets_payload = reader.read('media_assets.json')
-    except admin_content.ContentReadError as exc:
+    except ContentReadError as exc:
         return render_template(
             'admin/media_assets.html',
             save_error=str(exc),
             save_success=False,
             media={},
             trailer={},
-            **admin_content._ctx(),
+            **_ctx(),
         )
 
     media = assets_payload.get('media', {})
@@ -32,10 +32,13 @@ def _handle_media_assets_request(request):
         action = request.form.get('action', '').strip().lower()
 
         if action == 'save_media':
-            media['date_published'] = request.form.get('date_published', '').strip() or None
+            media['date_published'] = request.form.get(
+                'date_published', '').strip() or None
             media['in_language'] = request.form.get('in_language', '').strip()
-            media['content_rating'] = request.form.get('content_rating', '').strip()
-            media['contact_email'] = request.form.get('contact_email', '').strip()
+            media['content_rating'] = request.form.get(
+                'content_rating', '').strip()
+            media['contact_email'] = request.form.get(
+                'contact_email', '').strip()
             poster = request.form.get('poster_image', '').strip()
             media['poster_image'] = poster or None
 
@@ -43,28 +46,34 @@ def _handle_media_assets_request(request):
             try:
                 writer.write('media_assets.json', assets_payload)
                 return redirect(url_for('content.edit_media_assets', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
         elif action == 'save_trailer':
             trailer['name'] = request.form.get('trailer_name', '').strip()
-            trailer['description'] = request.form.get('trailer_description', '').strip()
+            trailer['description'] = request.form.get(
+                'trailer_description', '').strip()
             trailer['url'] = request.form.get('trailer_url', '').strip()
             embed_url = request.form.get('trailer_embed_url', '').strip()
             trailer['embed_url'] = embed_url or None
-            trailer['thumbnail_url'] = request.form.get('trailer_thumbnail_url', '').strip() or None
-            trailer['upload_date'] = request.form.get('trailer_upload_date', '').strip() or None
-            trailer['duration_iso'] = request.form.get('trailer_duration_iso', '').strip()
-            trailer['encoding_format'] = request.form.get('trailer_encoding_format', '').strip()
+            trailer['thumbnail_url'] = request.form.get(
+                'trailer_thumbnail_url', '').strip() or None
+            trailer['upload_date'] = request.form.get(
+                'trailer_upload_date', '').strip() or None
+            trailer['duration_iso'] = request.form.get(
+                'trailer_duration_iso', '').strip()
+            trailer['encoding_format'] = request.form.get(
+                'trailer_encoding_format', '').strip()
             is_family = request.form.get('trailer_is_family_friendly', '')
-            trailer['is_family_friendly'] = is_family.lower() in ('1', 'true', 'yes', 'on')
+            trailer['is_family_friendly'] = is_family.lower() in (
+                '1', 'true', 'yes', 'on')
 
             media['trailer'] = trailer
             assets_payload['media'] = media
             try:
                 writer.write('media_assets.json', assets_payload)
                 return redirect(url_for('content.edit_media_assets', saved='1'))
-            except admin_content.ContentWriteError as exc:
+            except ContentWriteError as exc:
                 save_error = str(exc)
 
     save_success = (save_error is None and request.method == 'POST') or (
@@ -76,5 +85,5 @@ def _handle_media_assets_request(request):
         save_success=save_success,
         media=media,
         trailer=trailer,
-        **admin_content._ctx(),
+        **_ctx(),
     )
