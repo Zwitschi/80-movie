@@ -57,47 +57,60 @@
   <h2>Current Gallery Items</h2>
   <p class="text-muted"><em>Drag items to reorder. Changes saved automatically.</em></p>
   {% if gallery_items %}
-  <ul id="gallery-sortable" class="stack-md">
+  <ul id="gallery-sortable" class="stack-sm">
     {% for item in gallery_items %}
-    <li data-index="{{ loop.index0 }}" class="gallery-item">
-      <article class="stack-sm">
-        <div class="gallery-preview">
-          {% if item.get('image_url') %}
-          <img src="{{ item.get('image_url') }}" alt="{{ item.get('alt', '') }}" style="max-width:200px;max-height:150px;object-fit:cover;" />
-          {% else %}
-          <div class="no-image" style="width:200px;height:150px;background:#eee;display:flex;align-items:center;justify-content:center;">No Image</div>
-          {% endif %}
+    <li data-index="{{ loop.index0 }}" class="gallery-item" style="border:1px solid #ddd;padding:8px;margin-bottom:4px;border-radius:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="cursor:grab;color:#999;">⠿</span>
+      <span><strong>{{ item.get('title', 'Untitled') }}</strong></span>
+      <span style="color:#666;font-size:0.9em;">{{ item.get('category', '—') }}</span>
+      <span style="color:#888;font-size:0.85em;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.get('image_url', '') }}</span>
+      <span style="color:#888;font-size:0.85em;">{{ item.get('alt', '') }}</span>
+      <span style="color:#888;font-size:0.85em;">{{ item.get('description', '') }}</span>
+
+      <button type="button" class="btn btn-secondary btn-sm" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">Edit</button>
+
+      <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
+        <input type="hidden" name="action" value="remove" />
+        <input type="hidden" name="index" value="{{ loop.index0 }}" />
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+      </form>
+
+      <!-- Inline Edit Form (hidden by default) -->
+      <form method="post" action="{{ url_for('content.manage_media') }}" class="inline-edit stack-sm" style="display:none;width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #eee;">
+        <input type="hidden" name="action" value="update" />
+        <input type="hidden" name="index" value="{{ loop.index0 }}" />
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="flex:1;min-width:120px;">
+            Title
+            <input type="text" name="title" value="{{ item.get('title', '') }}" style="width:100%;" />
+          </label>
+          <label style="flex:1;min-width:120px;">
+            Category
+            <select name="category" style="width:100%;">
+              <option value="">—</option>
+              {% for cat in categories %}
+              <option value="{{ cat }}" {% if item.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label style="flex:2;min-width:200px;">
+            Image URL
+            <input type="url" name="image_url" value="{{ item.get('image_url', '') }}" style="width:100%;" />
+          </label>
         </div>
-        <div class="gallery-details">
-          <h3>{{ item.get('title', 'Untitled') }}</h3>
-          <p><strong>Category:</strong> {{ item.get('category', '') }}</p>
-          <p><strong>Image URL:</strong> {{ item.get('image_url', '') }}</p>
-
-          <!-- Inline Edit Form -->
-          <form method="post" action="{{ url_for('content.manage_media') }}" class="inline-edit stack-sm">
-            <input type="hidden" name="action" value="update" />
-            <input type="hidden" name="index" value="{{ loop.index0 }}" />
-
-            <label>
-              Alt Text
-              <input type="text" name="alt" value="{{ item.get('alt', '') }}" />
-            </label>
-
-            <label>
-              Description
-              <textarea name="description" rows="2">{{ item.get('description', '') }}</textarea>
-            </label>
-
-            <button type="submit" class="btn btn-secondary btn-sm">Update</button>
-          </form>
-
-          <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
-            <input type="hidden" name="action" value="remove" />
-            <input type="hidden" name="index" value="{{ loop.index0 }}" />
-            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-          </form>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <label style="flex:1;min-width:150px;">
+            Alt Text
+            <input type="text" name="alt" value="{{ item.get('alt', '') }}" style="width:100%;" />
+          </label>
+          <label style="flex:2;min-width:200px;">
+            Description
+            <input type="text" name="description" value="{{ item.get('description', '') }}" style="width:100%;" />
+          </label>
         </div>
-      </article>
+        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      </form>
     </li>
     {% endfor %}
   </ul>
@@ -153,9 +166,7 @@
 
     <label>
       Description
-      <textarea name="description" rows="4">
-{{ form_data.get('description', '') }}</textarea
-      >
+    <textarea name="description" rows="4">{{ form_data.get('description', '') }}</textarea>
     </label>
 
     <button type="submit" class="btn btn-primary">Add Gallery Item</button>

@@ -17,7 +17,7 @@ def create_app() -> Flask:
     repo_root = Path(__file__).resolve().parents[1]
 
     # Load env files
-    load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
+    load_dotenv_files(repo_root / ".env", repo_root / ".env.control_room")
 
     # Resolve template folder from control_room package
     control_room_templates = str(Path(__file__).parent / "templates")

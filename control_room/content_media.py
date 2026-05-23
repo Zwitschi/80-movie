@@ -3,12 +3,15 @@ from shared.utils import _gallery_form_fields, process_list_action, save_json, l
 from .content_common import _ctx
 
 
-def _render_media_error(save_error, gallery_items):
+def _render_media_error(save_error, gallery_items, categories=None):
+    if categories is None:
+        categories = []
     return render_template(
         'admin/manage_media.html',
         save_error=save_error,
         save_success=False,
         gallery_items=gallery_items,
+        categories=categories,
         form_data=_gallery_form_fields(),
         **_ctx(),
     )
@@ -16,6 +19,9 @@ def _render_media_error(save_error, gallery_items):
 
 def _handle_media_request_post(request, gallery_payload, gallery_items):
     action = request.form.get('action', '').strip().lower()
+    categories = gallery_payload.get('categories', [])
+    if not isinstance(categories, list):
+        categories = []
 
     if action == 'add_category':
         category_name = request.form.get('category_name', '').strip()
@@ -30,7 +36,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     'gallery.json', gallery_payload)
                 if success:
                     return redirect(url_for('content.manage_media', saved='1'))
-                return _render_media_error(save_error, gallery_items)
+                return _render_media_error(save_error, gallery_items, categories)
         return redirect(url_for('content.manage_media'))
 
     if action == 'remove_category':
@@ -48,7 +54,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
             success, save_error = save_json('gallery.json', gallery_payload)
             if success:
                 return redirect(url_for('content.manage_media', saved='1'))
-            return _render_media_error(save_error, gallery_items)
+            return _render_media_error(save_error, gallery_items, categories)
         return redirect(url_for('content.manage_media'))
 
     if action == 'rename_category':
@@ -68,7 +74,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
             success, save_error = save_json('gallery.json', gallery_payload)
             if success:
                 return redirect(url_for('content.manage_media', saved='1'))
-            return _render_media_error(save_error, gallery_items)
+            return _render_media_error(save_error, gallery_items, categories)
         return redirect(url_for('content.manage_media'))
 
     if action == 'reorder':
@@ -107,7 +113,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                     'gallery.json', gallery_payload)
                 if success:
                     return redirect(url_for('content.manage_media', saved='1'))
-                return _render_media_error(save_error, gallery_items)
+                return _render_media_error(save_error, gallery_items, categories)
         except ValueError:
             pass
         return redirect(url_for('content.manage_media'))
@@ -139,7 +145,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
     success, save_error = save_json('gallery.json', gallery_payload)
     if success:
         return redirect(url_for('content.manage_media', saved='1'))
-    return _render_media_error(save_error, gallery_items)
+    return _render_media_error(save_error, gallery_items, categories)
 
 
 def _handle_media_request(request):
