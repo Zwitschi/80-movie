@@ -63,20 +63,20 @@
         <input type="hidden" name="action" value="update" />
         <input type="hidden" name="index" value="{{ loop.index0 }}" />
 
-        <input type="text" name="title" value="{{ item.get('title', '') }}" placeholder="Title" style="flex:1;min-width:80px;" />
+        <input type="text" name="title" value="{{ item.get('title', '') }}" placeholder="Title" style="flex:1;min-width:140px;" />
 
-        <select name="category" style="flex:1;min-width:80px;">
+        <select name="category" style="flex:1;min-width:120px;">
           <option value="">—</option>
           {% for cat in categories %}
           <option value="{{ cat }}" {% if item.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
           {% endfor %}
         </select>
 
-        <input type="url" name="image_url" value="{{ item.get('image_url', '') }}" placeholder="Image URL" style="flex:2;min-width:140px;" />
+        <input type="url" name="image_url" value="{{ item.get('image_url', '') }}" placeholder="Image URL" style="flex:2;min-width:240px;" />
 
-        <input type="text" name="alt" value="{{ item.get('alt', '') }}" placeholder="Alt text" style="flex:1;min-width:80px;" />
+        <input type="text" name="alt" value="{{ item.get('alt', '') }}" placeholder="Alt text" style="flex:1;min-width:200px;" />
 
-        <input type="text" name="description" value="{{ item.get('description', '') }}" placeholder="Description" style="flex:1;min-width:80px;" />
+        <input type="text" name="description" value="{{ item.get('description', '') }}" placeholder="Description" style="flex:1;min-width:200px;" />
 
         <button type="submit" class="btn btn-primary btn-sm">Save</button>
       </form>
