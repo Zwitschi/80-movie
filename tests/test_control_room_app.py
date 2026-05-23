@@ -121,7 +121,7 @@ class TestAdminFlows:
     @pytest.mark.parametrize(
         ('path', 'marker'),
         [
-            ('/content/content', b'Manage per-page SEO content'),
+            ('/content/content', b'Edit Metadata &'),
             ('/content/faq', b'Add FAQ Entry'),
             ('/content/people', b'Manage People'),
             ('/content/connect/social', b'Social Links'),
