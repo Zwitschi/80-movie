@@ -52,15 +52,13 @@
   </form>
 </section>
 
-<!-- Gallery Items with Drag-and-Drop -->
+<!-- Gallery Items -->
 <section class="stack-md">
   <h2>Current Gallery Items</h2>
-  <p class="text-muted"><em>Drag items to reorder. Changes saved automatically.</em></p>
   {% if gallery_items %}
-  <ul id="gallery-sortable" class="stack-sm">
+  <ul class="stack-sm">
     {% for item in gallery_items %}
     <li data-index="{{ loop.index0 }}" class="gallery-item" style="border:1px solid #ddd;padding:8px;margin-bottom:4px;border-radius:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span style="cursor:grab;color:#999;">⠿</span>
       <span><strong>{{ item.get('title', 'Untitled') }}</strong></span>
       <span style="color:#666;font-size:0.9em;">{{ item.get('category', '—') }}</span>
       <span style="color:#888;font-size:0.85em;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.get('image_url', '') }}</span>
@@ -172,36 +170,6 @@
     <button type="submit" class="btn btn-primary">Add Gallery Item</button>
   </form>
 </section>
-
-<!-- SortableJS for drag-and-drop -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const el = document.getElementById('gallery-sortable');
-    if (el) {
-      Sortable.create(el, {
-        animation: 150,
-        handle: '.gallery-item',
-        onEnd: function(evt) {
-          const order = [];
-          el.querySelectorAll('li').forEach(li => {
-            order.push(li.getAttribute('data-index'));
-          });
-          // Submit reorder via hidden form
-          const form = document.createElement('form');
-          form.method = 'post';
-          form.action = '{{ url_for("content.manage_media") }}';
-          form.innerHTML = `
-            <input type="hidden" name="action" value="reorder" />
-            <input type="hidden" name="order" value="${order.join(',')}" />
-          `;
-          document.body.appendChild(form);
-          form.submit();
-        }
-      });
-    }
-  });
-</script>
 
 {% endblock %}
 
