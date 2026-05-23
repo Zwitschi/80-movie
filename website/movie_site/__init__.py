@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from flask import Flask
 
@@ -16,7 +15,7 @@ def create_app():
 
     # Load env files
     repo_root = Path(__file__).resolve().parents[2]
-    load_dotenv_files(repo_root / ".env", repo_root / "website" / ".env")
+    load_dotenv_files(repo_root / ".env", repo_root / ".env.website")
 
     # Apply config
     app.config.update(get_website_config_values())
