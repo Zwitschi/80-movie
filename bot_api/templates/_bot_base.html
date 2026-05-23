@@ -1,33 +1,86 @@
-{% extends '_base.html' %} {% block title %}Bot Ops | {{ super() }}{% endblock
-%} {% block admin_title %}Bot Control Room{% endblock %} {% block admin_content
-%}
-<section>
-  <p>
-    Embedded operator surface for bot health and future queue, mileage,
-    syndication, sync, and audit workflows.
-  </p>
-  <nav aria-label="Bot control room sections">
-    <ul>
-      <li><a href="{{ url_for('bot.overview') }}">Overview</a></li>
-      <li><a href="{{ url_for('bot.health_page') }}">Health</a></li>
-      <li><a href="{{ url_for('bot.queues_page') }}">Queues</a></li>
-      <li><a href="{{ url_for('bot.mileage_page') }}">Mileage</a></li>
-      <li><a href="{{ url_for('bot.config_page') }}">Config</a></li>
-      <li><a href="{{ url_for('bot.commands_page') }}">Commands</a></li>
-      <li>
-        <a href="{{ url_for('bot.syndication_page') }}">Syndication</a>
-      </li>
-      <li>
-        <a href="{{ url_for('bot.onboarding_page') }}">Onboarding</a>
-      </li>
-      <li>
-        <a href="{{ url_for('bot.moderation_page') }}">Moderation</a>
-      </li>
-      <li><a href="{{ url_for('bot.operators_page') }}">Operators</a></li>
-    </ul>
-  </nav>
-  <form method="post" action="{{ url_for('bot.logout') }}">
-    <button type="submit">Sign out</button>
-  </form>
-</section>
-{% block bot_content %}{% endblock %} {% endblock %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bot Ops | Bot API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <style>
+      body {
+        font-family: Inter, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+      }
+      nav ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      nav a {
+        text-decoration: none;
+        color: #2563eb;
+      }
+      nav a:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin-top: 0;
+      }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      <header><h1>Bot Control Room</h1></header>
+      <main>
+        <section>
+          <p>
+            Embedded operator surface for bot health and future queue, mileage,
+            syndication, sync, and audit workflows.
+          </p>
+          <nav aria-label="Bot control room sections">
+            <ul>
+              <li><a href="{{ url_for('bot.overview') }}">Overview</a></li>
+              <li><a href="{{ url_for('bot.health_page') }}">Health</a></li>
+              <li><a href="{{ url_for('bot.queues_page') }}">Queues</a></li>
+              <li><a href="{{ url_for('bot.mileage_page') }}">Mileage</a></li>
+              <li><a href="{{ url_for('bot.config_page') }}">Config</a></li>
+              <li><a href="{{ url_for('bot.commands_page') }}">Commands</a></li>
+              <li>
+                <a href="{{ url_for('bot.syndication_page') }}">Syndication</a>
+              </li>
+              <li>
+                <a href="{{ url_for('bot.onboarding_page') }}">Onboarding</a>
+              </li>
+              <li>
+                <a href="{{ url_for('bot.moderation_page') }}">Moderation</a>
+              </li>
+              <li>
+                <a href="{{ url_for('bot.operators_page') }}">Operators</a>
+              </li>
+            </ul>
+          </nav>
+          <form method="post" action="{{ url_for('bot.logout') }}">
+            <button type="submit">Sign out</button>
+          </form>
+        </section>
+        {% block bot_content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>
