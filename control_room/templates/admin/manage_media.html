@@ -58,56 +58,33 @@
   {% if gallery_items %}
   <ul class="stack-sm">
     {% for item in gallery_items %}
-    <li data-index="{{ loop.index0 }}" class="gallery-item" style="border:1px solid #ddd;padding:8px;margin-bottom:4px;border-radius:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span><strong>{{ item.get('title', 'Untitled') }}</strong></span>
-      <span style="color:#666;font-size:0.9em;">{{ item.get('category', '—') }}</span>
-      <span style="color:#888;font-size:0.85em;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.get('image_url', '') }}</span>
-      <span style="color:#888;font-size:0.85em;">{{ item.get('alt', '') }}</span>
-      <span style="color:#888;font-size:0.85em;">{{ item.get('description', '') }}</span>
-
-      <button type="button" class="btn btn-secondary btn-sm" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">Edit</button>
-
-      <form method="post" action="{{ url_for('content.manage_media') }}" style="display:inline;">
-        <input type="hidden" name="action" value="remove" />
-        <input type="hidden" name="index" value="{{ loop.index0 }}" />
-        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-      </form>
-
-      <!-- Inline Edit Form (hidden by default) -->
-      <form method="post" action="{{ url_for('content.manage_media') }}" class="inline-edit stack-sm" style="display:none;width:100%;margin-top:8px;padding-top:8px;border-top:1px solid #eee;">
+    <li data-index="{{ loop.index0 }}" class="gallery-item" style="border:1px solid #ddd;padding:8px;margin-bottom:4px;border-radius:4px;">
+      <form method="post" action="{{ url_for('content.manage_media') }}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <input type="hidden" name="action" value="update" />
         <input type="hidden" name="index" value="{{ loop.index0 }}" />
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <label style="flex:1;min-width:120px;">
-            Title
-            <input type="text" name="title" value="{{ item.get('title', '') }}" style="width:100%;" />
-          </label>
-          <label style="flex:1;min-width:120px;">
-            Category
-            <select name="category" style="width:100%;">
-              <option value="">—</option>
-              {% for cat in categories %}
-              <option value="{{ cat }}" {% if item.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
-              {% endfor %}
-            </select>
-          </label>
-          <label style="flex:2;min-width:200px;">
-            Image URL
-            <input type="url" name="image_url" value="{{ item.get('image_url', '') }}" style="width:100%;" />
-          </label>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <label style="flex:1;min-width:150px;">
-            Alt Text
-            <input type="text" name="alt" value="{{ item.get('alt', '') }}" style="width:100%;" />
-          </label>
-          <label style="flex:2;min-width:200px;">
-            Description
-            <input type="text" name="description" value="{{ item.get('description', '') }}" style="width:100%;" />
-          </label>
-        </div>
+        <input type="text" name="title" value="{{ item.get('title', '') }}" placeholder="Title" style="flex:1;min-width:80px;" />
+
+        <select name="category" style="flex:1;min-width:80px;">
+          <option value="">—</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {% if item.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+
+        <input type="url" name="image_url" value="{{ item.get('image_url', '') }}" placeholder="Image URL" style="flex:2;min-width:140px;" />
+
+        <input type="text" name="alt" value="{{ item.get('alt', '') }}" placeholder="Alt text" style="flex:1;min-width:80px;" />
+
+        <input type="text" name="description" value="{{ item.get('description', '') }}" placeholder="Description" style="flex:1;min-width:80px;" />
+
         <button type="submit" class="btn btn-primary btn-sm">Save</button>
+      </form>
+
+      <form method="post" action="{{ url_for('content.manage_media') }}" style="margin-top:4px;">
+        <input type="hidden" name="action" value="remove" />
+        <input type="hidden" name="index" value="{{ loop.index0 }}" />
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
       </form>
     </li>
     {% endfor %}
