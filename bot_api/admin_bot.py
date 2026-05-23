@@ -1,15 +1,31 @@
 from __future__ import annotations
 from .auth_runtime import (
+    _audit_database_url,
+    _build_bot_audit_service,
+    _mark_bot_audit_degraded,
     _record_bot_audit_event,
     _apply_bot_audit_status,
+    _read_env,
+    _oauth_config,
+    _oauth_ready,
+    _sanitize_next_url,
+    exchange_code_for_discord_identity,
 )
 from .queue_mileage_snapshot import (
     _build_queue_service_from_settings,
+    _serialize_queue_summary,
+    _serialize_queue_entry,
     _serialize_queue_event,
     _serialize_queue_snapshot,
+    _serialize_mileage_total,
     _serialize_mileage_event,
+    _serialize_mileage_tier_stat,
     _serialize_mileage_user_detail,
     _build_mileage_service_from_settings,
+    build_queue_index_snapshot,
+    build_queue_detail_snapshot,
+    build_mileage_index_snapshot,
+    build_mileage_detail_snapshot,
     _mileage_user_before_state,
     _queue_before_state,
 )
@@ -19,7 +35,10 @@ from .runtime_snapshot import (
     _build_syndication_repository_from_settings,
     _build_manual_syndication_polling_job,
     _serialize_syndication_state,
+    _run_manual_syndication_poll_all,
+    build_syndication_snapshot,
     build_bot_configuration_snapshot,
+    build_bot_commands_snapshot,
 )
 from .onboarding_routes import (
     onboarding_page,
@@ -75,6 +94,28 @@ from .mileage_routes import (
     reverse_mileage_event_api,
     reverse_mileage_event_page_action,
 )
+from .request_ui_helpers import (
+    _request_data,
+    _parse_binding_key,
+    _parse_required_text,
+    _parse_required_int,
+    _page_syndication_scope_error,
+    _page_syndication_config_error,
+    _page_config_scope_error,
+    _page_config_error,
+    _page_config_binding_error,
+    _page_commands_scope_error,
+    _page_commands_error,
+    _page_queue_scope_error,
+    _page_queue_config_error,
+    _page_queue_action_error,
+    _page_queue_not_found_error,
+    _page_queue_confirmation_error,
+    _page_mileage_scope_error,
+    _page_mileage_config_error,
+    _page_mileage_action_error,
+    _page_mileage_not_found_error,
+)
 from .queue_routes import (
     queues_page,
     queue_detail_page,
@@ -121,19 +162,30 @@ from .health_routes import (
     health_jobs_api,
 )
 from .bot_utils import (
+    DISCORD_HTTP_USER_AGENT,
     _configured_syndication_source,
+    _build_bot_config_from_runtime_settings,
+    _decode_http_error,
     _default_syndication_state,
+    _discord_request_headers,
     _manual_syndication_actions_supported,
     _mileage_active_guild_id,
     _parse_session_timestamp,
+    _serialize_audit_state,
+    _serialize_audit_value,
+    _syndication_last_poll_result,
+    _syndication_source_status,
+    _syndication_summary,
     _utcnow,
 )
 from . import bot_operator_service
 
 from datetime import timedelta
 from typing import cast
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
-from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for, has_app_context, has_request_context
 
 # Bot imports are deferred so the website can start even when deployed
 # from the website/ subdirectory (where bot/ is not on the Python path).
@@ -141,12 +193,35 @@ from flask import Blueprint, current_app, jsonify, redirect, render_template, re
 # these imports resolve normally.
 from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
 from bot.omo_bot.models import SyndicationSourceState
+from bot.omo_bot.models.mileage import MileageTierStat
+from bot.omo_bot.repositories import (
+    build_postgres_bot_config_repository,
+    build_postgres_bot_audit_log_repository,
+    build_postgres_mileage_repository,
+    build_postgres_onboarding_repository,
+    build_postgres_queue_repository,
+    build_postgres_syndication_repository,
+)
+from bot.omo_bot.jobs.syndication_polling import SyndicationPollingJob
+from bot.omo_bot.main import build_syndication_adapters
+from bot.omo_bot.services import BotAuditService
+from bot.omo_bot.services.delivery import NullSyndicationDeliverySink
 from bot.omo_bot.services.mileage_service import (
+    MileageConflictError,
     MileageNotFoundError,
+    MileageService,
+    MileageValidationError,
 )
 from bot.omo_bot.services.queue_service import (
-    QueueValidationError,
+    QueueConflictError,
+    QueueEntryNotFoundError,
+    QueueNotFoundError,
+    QueuePausedError,
+    QueueService,
 )
+from bot.omo_bot.services.onboarding_service import OnboardingService
+from bot.omo_bot.services.queue_service import QueueValidationError
+from bot.omo_bot.services.syndication_service import SyndicationPlanningService
 BOT_MODULE_AVAILABLE = True
 
 

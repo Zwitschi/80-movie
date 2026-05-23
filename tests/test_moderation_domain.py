@@ -718,9 +718,11 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/clear records queue.cleared audit event."""
     import bot_api.admin_bot as admin_bot
 
+    from bot.omo_bot.models.queue import QueueSummary
+
     repo = InMemoryQueueRepository()
     repo.save_queue(
-        summary=admin_bot.QueueSummary(
+        summary=QueueSummary(
             queue_id='q1', guild_id=100, label='Test', is_paused=False,
             paused_reason='', active_entry_id=None, waiting_count=0,
             total_entries=0, updated_at=None,
