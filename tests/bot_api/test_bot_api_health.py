@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 
-from bot.omo_bot.config import BotRuntimeSettings
-from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.repositories import InMemorySyndicationSourceRepository
+from bot.config import BotRuntimeSettings
+from bot.models import SyndicationSourceState
+from bot.repositories import InMemorySyndicationSourceRepository
 
 import bot_api.admin_bot as admin_bot
 from bot_api.app import create_app

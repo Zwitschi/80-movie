@@ -1,7 +1,7 @@
 import pytest
 from bot_api.app import create_app as create_bot_api_app
-from bot.omo_bot.models import QueueSnapshot, QueueEvent
-from bot.omo_bot.repositories import InMemoryQueueRepository
+from bot.models import QueueSnapshot, QueueEvent
+from bot.repositories import InMemoryQueueRepository
 
 
 @pytest.fixture
@@ -18,8 +18,8 @@ def client(app):
 
 def test_queue_lifecycle_via_api(client, monkeypatch):
     # Mock settings and repository to use in-memory for testing
-    from bot.omo_bot.config import BotRuntimeSettings
-    from bot.omo_bot.models import QueueSummary
+    from bot.config import BotRuntimeSettings
+    from bot.models import QueueSummary
     from bot_api import admin_bot
 
     repo = InMemoryQueueRepository()
@@ -39,8 +39,8 @@ def test_queue_lifecycle_via_api(client, monkeypatch):
         return repo
 
     def mock_build_audit_service():
-        from bot.omo_bot.services import BotAuditService
-        from bot.omo_bot.repositories import InMemoryBotAuditLogRepository
+        from bot.services import BotAuditService
+        from bot.repositories import InMemoryBotAuditLogRepository
         return BotAuditService(InMemoryBotAuditLogRepository())
 
     monkeypatch.setattr(

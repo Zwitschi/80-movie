@@ -1,6 +1,6 @@
-from bot.omo_bot.commands import handle_mileage_adjust, handle_mileage_reverse
-from bot.omo_bot.repositories import InMemoryMileageRepository
-from bot.omo_bot.services.mileage_service import MileageConflictError, MileageService, MileageValidationError
+from bot.commands import handle_mileage_adjust, handle_mileage_reverse
+from bot.repositories import InMemoryMileageRepository
+from bot.services.mileage_service import MileageConflictError, MileageService, MileageValidationError
 
 
 def test_mileage_service_adjusts_totals_and_assigns_current_tier():
@@ -176,4 +176,3 @@ def test_mileage_command_handlers_drive_adjust_and_reverse():
     )
     assert reversal.reversed_event_id == event.event_id
     assert detail.total.total_points == 0
-

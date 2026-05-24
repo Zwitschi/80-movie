@@ -1,6 +1,6 @@
-from bot.omo_bot.config import BotRuntimeSettings
-from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryQueueRepository
-from bot.omo_bot.services import QueueService
+from bot.config import BotRuntimeSettings
+from bot.repositories import InMemoryBotAuditLogRepository, InMemoryQueueRepository
+from bot.services import QueueService
 
 import bot_api.admin_bot as admin_bot
 from bot_api.app import create_app

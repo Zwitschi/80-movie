@@ -9,7 +9,7 @@
 - Base directory: `/` (repo root)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: `python -m bot.omo_bot`
+- Start command: `python -m bot`
 - No public port needed
 - Restart policy: enabled
 - Health signal: process stays alive; validate startup logs for Discord auth and polling loop

@@ -24,7 +24,7 @@ tests/             # Test suite
 | Website      | openmicodyssey.com       | 8880 | `website/`      |
 | Control Room | admin.openmicodyssey.com | 8480 | `control_room/` |
 | Bot API      | api.openmicodyssey.com   | 8787 | `bot_api/`      |
-| Bot Worker   | internal                 | none | `bot/omo_bot/`  |
+| Bot Worker   | internal                 | none | `bot/`  |
 
 All services share a PostgreSQL database at `192.168.88.35` and run on a single Coolify server behind Nginx Proxy Manager.
 
@@ -57,7 +57,7 @@ flask run
 ### Bot Worker
 
 ```bash
-python -m bot.omo_bot
+python -m bot
 ```
 
 ## Documentation
@@ -125,7 +125,7 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full deployment steps. Quick re
 | Website      | `/` (repo root) | `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`      | 8880 |
 | Control Room | `/` (repo root) | `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2` | 8480 |
 | Bot API      | `/` (repo root) | `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`      | 8787 |
-| Bot Worker   | `/`             | `python -m bot.omo_bot`                                         | none |
+| Bot Worker   | `/`             | `python -m bot`                                         | none |
 
 ### Environment variables
 

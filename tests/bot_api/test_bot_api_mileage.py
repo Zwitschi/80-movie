@@ -1,6 +1,6 @@
-from bot.omo_bot.config import BotRuntimeSettings
-from bot.omo_bot.repositories import InMemoryBotAuditLogRepository, InMemoryMileageRepository
-from bot.omo_bot.services import MileageService
+from bot.config import BotRuntimeSettings
+from bot.repositories import InMemoryBotAuditLogRepository, InMemoryMileageRepository
+from bot.services import MileageService
 
 import bot_api.admin_bot as admin_bot
 from bot_api.app import create_app

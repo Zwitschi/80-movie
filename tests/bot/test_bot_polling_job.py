@@ -4,13 +4,13 @@ from io import BytesIO
 
 import pytest
 
-from bot.omo_bot.adapters import SyndicationAdapter
-from bot.omo_bot.config import BotConfig
-from bot.omo_bot.jobs import SyndicationPollingJob
-from bot.omo_bot.models import SyndicationFetchResult, SyndicationItem, SyndicationSourceState
-from bot.omo_bot.repositories import InMemorySyndicationSourceRepository
-from bot.omo_bot.services import SyndicationDeliveryBatch, SyndicationPlanningService
-from bot.omo_bot.services import DiscordApiSyndicationDeliverySink
+from bot.adapters import SyndicationAdapter
+from bot.config import BotConfig
+from bot.jobs import SyndicationPollingJob
+from bot.models import SyndicationFetchResult, SyndicationItem, SyndicationSourceState
+from bot.repositories import InMemorySyndicationSourceRepository
+from bot.services import SyndicationDeliveryBatch, SyndicationPlanningService
+from bot.services import DiscordApiSyndicationDeliverySink
 
 
 class RecordingDeliverySink:
@@ -128,7 +128,7 @@ def test_syndication_polling_job_marks_failure_when_delivery_raises():
 
 
 def test_build_runtime_wires_polling_job_and_delivery_contract():
-    from bot.omo_bot.main import build_runtime
+    from bot.main import build_runtime
     import logging
 
     runtime = build_runtime(_build_config(), logging.getLogger("test-bot"))
@@ -161,7 +161,7 @@ def test_discord_delivery_sink_posts_items_to_configured_channel(monkeypatch):
         )
         return FakeResponse()
 
-    monkeypatch.setattr("bot.omo_bot.services.delivery.urlopen", fake_urlopen)
+    monkeypatch.setattr("bot.services.delivery.urlopen", fake_urlopen)
     sink = DiscordApiSyndicationDeliverySink(
         bot_token="token-value",
         channel_map={"announcements": 200},
@@ -189,4 +189,3 @@ def test_discord_delivery_sink_posts_items_to_configured_channel(monkeypatch):
     assert payload["allowed_mentions"] == {"parse": []}
     assert "Fresh clip" in payload["content"]
     assert "https://www.youtube.com/watch?v=video-200" in payload["content"]
-

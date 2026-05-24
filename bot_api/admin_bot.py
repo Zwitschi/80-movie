@@ -192,10 +192,10 @@ from flask import Blueprint, current_app, jsonify, redirect, render_template, re
 # from the website/ subdirectory (where bot/ is not on the Python path).
 # When bot/ is available (repo-root deploy or PYTHONPATH includes root),
 # these imports resolve normally.
-from bot.omo_bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
-from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.models.mileage import MileageTierStat
-from bot.omo_bot.repositories import (
+from bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
+from bot.models import SyndicationSourceState
+from bot.models.mileage import MileageTierStat
+from bot.repositories import (
     build_postgres_bot_config_repository,
     build_postgres_bot_audit_log_repository,
     build_postgres_mileage_repository,
@@ -203,26 +203,26 @@ from bot.omo_bot.repositories import (
     build_postgres_queue_repository,
     build_postgres_syndication_repository,
 )
-from bot.omo_bot.jobs.syndication_polling import SyndicationPollingJob
-from bot.omo_bot.main import build_syndication_adapters
-from bot.omo_bot.services import BotAuditService
-from bot.omo_bot.services.delivery import NullSyndicationDeliverySink
-from bot.omo_bot.services.mileage_service import (
+from bot.jobs.syndication_polling import SyndicationPollingJob
+from bot.main import build_syndication_adapters
+from bot.services import BotAuditService
+from bot.services.delivery import NullSyndicationDeliverySink
+from bot.services.mileage_service import (
     MileageConflictError,
     MileageNotFoundError,
     MileageService,
     MileageValidationError,
 )
-from bot.omo_bot.services.queue_service import (
+from bot.services.queue_service import (
     QueueConflictError,
     QueueEntryNotFoundError,
     QueueNotFoundError,
     QueuePausedError,
     QueueService,
 )
-from bot.omo_bot.services.onboarding_service import OnboardingService
-from bot.omo_bot.services.queue_service import QueueValidationError
-from bot.omo_bot.services.syndication_service import SyndicationPlanningService
+from bot.services.onboarding_service import OnboardingService
+from bot.services.queue_service import QueueValidationError
+from bot.services.syndication_service import SyndicationPlanningService
 BOT_MODULE_AVAILABLE = True
 
 

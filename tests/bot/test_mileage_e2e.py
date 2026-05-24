@@ -1,7 +1,7 @@
 import pytest
 from bot_api.app import create_app as create_bot_api_app
-from bot.omo_bot.models import MileageTotal, MileageEvent
-from bot.omo_bot.repositories import InMemoryMileageRepository
+from bot.models import MileageTotal, MileageEvent
+from bot.repositories import InMemoryMileageRepository
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def client(app):
 
 
 def test_mileage_lifecycle_via_api(client, monkeypatch):
-    from bot.omo_bot.config import BotRuntimeSettings
+    from bot.config import BotRuntimeSettings
     from bot_api import admin_bot
 
     repo = InMemoryMileageRepository()
@@ -37,8 +37,8 @@ def test_mileage_lifecycle_via_api(client, monkeypatch):
         return repo
 
     def mock_build_audit_service():
-        from bot.omo_bot.services import BotAuditService
-        from bot.omo_bot.repositories import InMemoryBotAuditLogRepository
+        from bot.services import BotAuditService
+        from bot.repositories import InMemoryBotAuditLogRepository
         return BotAuditService(InMemoryBotAuditLogRepository())
 
     monkeypatch.setattr(

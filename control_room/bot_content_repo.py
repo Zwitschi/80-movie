@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Callable, Protocol
 
-from bot.omo_bot.models.website_content import (
+from bot.models.website_content import (
     CampaignLink,
     ProductionMetadata,
     ScreeningEvent,

@@ -90,7 +90,7 @@ The codebase is split into four primary services with distinct responsibilities:
 - JSON-LD schema generation from structured content
 - Static export generation to `website/dist`
 - Coolify/Nixpacks website deployment configuration
-- Bot scaffold runtime in `bot/omo_bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
+- Bot scaffold runtime in `bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
 - Bot-owned operator and syndication persistence seams backed by PostgreSQL migrations
 
 ### Current Out Of Scope
@@ -405,7 +405,7 @@ Each service deploys as an independent Coolify Application resource:
 | Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | `GET /robots.txt` |
 | Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | `GET /login`      |
 | Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | `GET /health`     |
-| Bot Worker   | `/` (repo root) | `python -m bot.omo_bot`                            | none | process alive     |
+| Bot Worker   | `/` (repo root) | `python -m bot`                            | none | process alive     |
 
 ### Nginx Proxy Manager
 
@@ -799,54 +799,54 @@ Current repository shape already follows this boundary, with queue, mileage, onb
 
 ```txt
 bot/
-    omo_bot/
-        __init__.py
-        main.py
-        config.py
-        runtime/
-            client.py
-            startup.py
-            shutdown.py
-        commands/
-            onboarding.py
-            queue.py
-            mileage.py
-            admin.py
-            health.py
-        events/
-            members.py
-            reactions.py
-            scheduled.py
-        services/
-            onboarding_service.py
-            queue_service.py
-            mileage_service.py
-            syndication_service.py
-            sync_service.py
-        repositories/
-            guild_config_repo.py
-            queue_repo.py
-            mileage_repo.py
-            syndication_repo.py
-            audit_repo.py
-        adapters/
-            discord_gateway.py
-            youtube.py
-            instagram.py
-            tiktok.py
-            website_sync.py
-        models/
-            queue.py
-            mileage.py
-            syndication.py
-        jobs/
-            polling.py
-            reminders.py
+    __init__.py
+    __main__.py
+    main.py
+    config.py
+    runtime/
+        client.py
+        startup.py
+        shutdown.py
+    commands/
+        onboarding.py
+        queue.py
+        mileage.py
+        admin.py
+        health.py
+    events/
+        members.py
+        reactions.py
+        scheduled.py
+    services/
+        onboarding_service.py
+        queue_service.py
+        mileage_service.py
+        syndication_service.py
+        sync_service.py
+    repositories/
+        guild_config_repo.py
+        queue_repo.py
+        mileage_repo.py
+        syndication_repo.py
+        audit_repo.py
+    adapters/
+        discord_gateway.py
+        youtube.py
+        instagram.py
+        tiktok.py
+        website_sync.py
+    models/
+        queue.py
+        mileage.py
+        syndication.py
+    jobs/
+        polling.py
+        reminders.py
 tests/
     bot/
 ```
 
-Alternative naming such as `src/omo_bot/` is also acceptable, but bot code should stay isolated from `website/` package boundaries.
+Alternative naming such as `src/bot/` is also acceptable, but bot code should stay isolated from `website/` package boundaries.
 
 ### Module Boundary Guidance
 

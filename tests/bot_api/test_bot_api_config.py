@@ -1,6 +1,6 @@
-from bot.omo_bot.config import BotRuntimeSettings
-from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.repositories import InMemoryBotConfigRepository, InMemorySyndicationSourceRepository
+from bot.config import BotRuntimeSettings
+from bot.models import SyndicationSourceState
+from bot.repositories import InMemoryBotConfigRepository, InMemorySyndicationSourceRepository
 
 import bot_api.admin_bot as admin_bot
 from bot_api.app import create_app

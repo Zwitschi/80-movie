@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from bot.omo_bot.models.queue import QueueSummary
-from bot.omo_bot.repositories.mileage_repo import InMemoryMileageRepository
-from bot.omo_bot.repositories.queue_repo import InMemoryQueueRepository
+from bot.models.queue import QueueSummary
+from bot.repositories.mileage_repo import InMemoryMileageRepository
+from bot.repositories.queue_repo import InMemoryQueueRepository
 
 
 # ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ def _make_mileage_api_session(client, admin_bot_module):
 
 def _patch_queue_api(monkeypatch, admin_bot, repo):
     """Monkeypatch settings + queue repo + audit for API tests."""
-    from bot.omo_bot.config import BotRuntimeSettings
+    from bot.config import BotRuntimeSettings
     monkeypatch.setattr(admin_bot, '_load_bot_runtime_settings', lambda: BotRuntimeSettings(
         database_url='postgresql://fake', discord_token='fake', guild_id=100,
         channel_map={}, syndication_sources=[], syndication_poll_seconds=300, role_map={},
@@ -99,7 +99,7 @@ def test_reset_onboarding_api_calls_service(client, monkeypatch):
                 'discord_user_id': discord_user_id,
                 'actor_user_id': actor_user_id,
             })
-            from bot.omo_bot.models import OnboardingEvent
+            from bot.models import OnboardingEvent
             from datetime import datetime, timezone
             marker = OnboardingEvent(
                 event_id='ev-1',
@@ -212,7 +212,7 @@ def test_role_cleanup_api_records_event(client, monkeypatch):
         def request_role_cleanup(self, guild_id, discord_user_id, display_name, actor_user_id):
             called.append(
                 {'guild_id': guild_id, 'discord_user_id': discord_user_id})
-            from bot.omo_bot.models import OnboardingEvent
+            from bot.models import OnboardingEvent
             from datetime import datetime, timezone
             return OnboardingEvent(
                 event_id='ev-cleanup-1',
@@ -374,7 +374,7 @@ def test_queue_remove_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<eid>/remove records entry_removed audit event."""
     import bot_api.admin_bot as admin_bot
     from datetime import datetime, timezone
-    from bot.omo_bot.models.queue import QueueSummary, QueueEntry
+    from bot.models.queue import QueueSummary, QueueEntry
 
     repo = InMemoryQueueRepository()
     repo.save_queue(
@@ -412,7 +412,7 @@ def test_queue_move_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/entries/<eid>/move records entry_moved audit event."""
     import bot_api.admin_bot as admin_bot
     from datetime import datetime, timezone
-    from bot.omo_bot.models.queue import QueueSummary, QueueEntry
+    from bot.models.queue import QueueSummary, QueueEntry
 
     repo = InMemoryQueueRepository()
     repo.save_queue(
@@ -450,7 +450,7 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
     """POST /api/queues/<id>/clear records queue.cleared audit event."""
     import bot_api.admin_bot as admin_bot
 
-    from bot.omo_bot.models.queue import QueueSummary
+    from bot.models.queue import QueueSummary
     repo = InMemoryQueueRepository()
     repo.save_queue(
         summary=QueueSummary(
@@ -478,7 +478,7 @@ def test_queue_clear_api_records_audit_event(client, monkeypatch):
 def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
     """POST /api/mileage/users/<id>/adjust records mileage.adjusted audit event."""
     import bot_api.admin_bot as admin_bot
-    from bot.omo_bot.config import BotRuntimeSettings
+    from bot.config import BotRuntimeSettings
 
     audit_calls: list[dict] = []
     monkeypatch.setattr(admin_bot, '_load_bot_runtime_settings', lambda: BotRuntimeSettings(
@@ -508,9 +508,9 @@ def test_mileage_adjust_api_records_audit_event(client, monkeypatch):
 def test_mileage_reverse_api_records_audit_event(client, monkeypatch):
     """POST /api/mileage/events/<id>/reverse records mileage.reversed audit event."""
     import bot_api.admin_bot as admin_bot
-    from bot.omo_bot.config import BotRuntimeSettings
+    from bot.config import BotRuntimeSettings
     from datetime import datetime, timezone
-    from bot.omo_bot.models import MileageEvent
+    from bot.models import MileageEvent
 
     repo = InMemoryMileageRepository()
     repo.append_event(MileageEvent(

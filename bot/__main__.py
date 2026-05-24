@@ -1,4 +1,4 @@
-"""Module entrypoint for `python -m bot.omo_bot`."""
+"""Module entrypoint for `python -m bot`."""
 
 from .main import main
 

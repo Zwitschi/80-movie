@@ -7,13 +7,13 @@ This folder contains the Discord bot worker scaffold and the current syndication
 Preferred command from the repository root:
 
 ```powershell
-.venv\Scripts\python.exe -m bot.omo_bot
+.venv\Scripts\python.exe -m bot
 ```
 
 Direct module entrypoint still works:
 
 ```powershell
-.venv\Scripts\python.exe -m bot.omo_bot.main
+.venv\Scripts\python.exe -m bot.main
 ```
 
 The bot runtime reads env vars from this order when no explicit mapping is passed in code:

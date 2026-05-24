@@ -1,6 +1,6 @@
-from bot.omo_bot.commands import handle_queue_advance, handle_queue_join, handle_queue_leave
-from bot.omo_bot.repositories import InMemoryQueueRepository
-from bot.omo_bot.services.queue_service import QueueConflictError, QueuePausedError, QueueService
+from bot.commands import handle_queue_advance, handle_queue_join, handle_queue_leave
+from bot.repositories import InMemoryQueueRepository
+from bot.services.queue_service import QueueConflictError, QueuePausedError, QueueService
 
 
 def test_queue_service_join_and_advance_promotes_next_entry():
@@ -157,4 +157,3 @@ def test_queue_command_handlers_drive_queue_service():
         actor_user_id='operator-1',
     )
     assert snapshot.summary.total_entries == 0
-

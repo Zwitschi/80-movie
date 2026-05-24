@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from bot.omo_bot import config as bot_config
-from bot.omo_bot.config import BotConfig, ConfigError
-from bot.omo_bot.main import build_runtime, run
-from bot.omo_bot.models import SyndicationSourceState
-from bot.omo_bot.repositories import (
+from bot import config as bot_config
+from bot.config import BotConfig, ConfigError
+from bot.main import build_runtime, run
+from bot.models import SyndicationSourceState
+from bot.repositories import (
     InMemoryBotAuditLogRepository,
     InMemoryBotConfigRepository,
     InMemorySyndicationSourceRepository,
@@ -16,10 +16,10 @@ from bot.omo_bot.repositories import (
     InMemoryQueueRepository,
     InMemoryMileageRepository,
 )
-from bot.omo_bot.repositories.onboarding_repo import InMemoryOnboardingRepository
-from bot.omo_bot.runtime.client import BotRuntime
-from bot.omo_bot.services import BotAuditService, SyndicationPlanningService, QueueService, MileageService
-from bot.omo_bot.services.onboarding_service import OnboardingService
+from bot.repositories.onboarding_repo import InMemoryOnboardingRepository
+from bot.runtime.client import BotRuntime
+from bot.services import BotAuditService, SyndicationPlanningService, QueueService, MileageService
+from bot.services.onboarding_service import OnboardingService
 
 
 class FakeSyndicationCursor:
@@ -252,7 +252,7 @@ def test_build_runtime_falls_back_to_env_config_when_managed_config_load_fails(m
             raise RuntimeError("managed config unavailable")
 
     monkeypatch.setattr(
-        "bot.omo_bot.main.build_postgres_bot_config_repository",
+        "bot.main.build_postgres_bot_config_repository",
         lambda database_url: FailingRepository(),
     )
 
@@ -293,7 +293,7 @@ def test_build_runtime_uses_repository_managed_config(monkeypatch):
         }
     )
     monkeypatch.setattr(
-        "bot.omo_bot.main.build_postgres_bot_config_repository",
+        "bot.main.build_postgres_bot_config_repository",
         lambda database_url: InMemoryBotConfigRepository(
             guild_id=222,
             channel_map={"queue": 300},
@@ -491,4 +491,3 @@ def test_postgres_syndication_source_repository_returns_none_when_tables_missing
     loaded_state = repository.get_by_source_key("youtube")
 
     assert loaded_state is None
-

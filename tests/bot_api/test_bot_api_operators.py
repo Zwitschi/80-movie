@@ -1,4 +1,4 @@
-from bot.omo_bot.repositories import InMemoryBotAuditLogRepository
+from bot.repositories import InMemoryBotAuditLogRepository
 
 import bot_api.admin_bot as admin_bot
 import bot_api.bot_operator_repo as bot_operator_repo

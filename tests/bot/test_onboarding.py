@@ -3,9 +3,9 @@
 import pytest
 from datetime import datetime, timezone
 
-from bot.omo_bot.models import OnboardingConfig, OnboardingRoleBinding
-from bot.omo_bot.repositories.onboarding_repo import InMemoryOnboardingRepository
-from bot.omo_bot.services.onboarding_service import OnboardingService
+from bot.models import OnboardingConfig, OnboardingRoleBinding
+from bot.repositories.onboarding_repo import InMemoryOnboardingRepository
+from bot.services.onboarding_service import OnboardingService
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ def test_onboarding_replay_adds_missing_events():
     # First join — only records the join event (simulate partial failure by
     # using raw repo to insert only the join idempotency key)
     repo = svc._repo
-    from bot.omo_bot.models import OnboardingEvent
+    from bot.models import OnboardingEvent
     import uuid
     join_event = OnboardingEvent(
         event_id=str(uuid.uuid4()),
@@ -181,10 +181,10 @@ def client(app):
 
 
 def test_onboarding_events_and_replay_via_api(client, monkeypatch):
-    from bot.omo_bot.config import BotRuntimeSettings
-    from bot.omo_bot.repositories.onboarding_repo import InMemoryOnboardingRepository
-    from bot.omo_bot.services.onboarding_service import OnboardingService
-    from bot.omo_bot.models import OnboardingConfig, OnboardingRoleBinding
+    from bot.config import BotRuntimeSettings
+    from bot.repositories.onboarding_repo import InMemoryOnboardingRepository
+    from bot.services.onboarding_service import OnboardingService
+    from bot.models import OnboardingConfig, OnboardingRoleBinding
     from bot_api import admin_bot
 
     repo = InMemoryOnboardingRepository()

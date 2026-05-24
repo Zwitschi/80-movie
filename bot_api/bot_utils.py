@@ -26,8 +26,8 @@ DISCORD_HTTP_USER_AGENT = (
 # ---------------------------------------------------------------------------
 
 try:
-    from bot.omo_bot.config import BotConfig, BotRuntimeSettings, ConfigError
-    from bot.omo_bot.models import SyndicationSourceState
+    from bot.config import BotConfig, BotRuntimeSettings, ConfigError
+    from bot.models import SyndicationSourceState
 except ModuleNotFoundError:
     BotConfig = None  # type: ignore[misc,assignment]
     BotRuntimeSettings = None  # type: ignore[misc,assignment]
