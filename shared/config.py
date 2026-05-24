@@ -85,6 +85,8 @@ def get_control_room_config_values() -> dict:
         "ADMIN_USERNAME": get_env_str("ADMIN_USERNAME", "admin"),
         "ADMIN_PASSWORD": get_env_str("ADMIN_PASSWORD", ""),
         "ADMIN_PASSWORD_HASH": get_env_str("ADMIN_PASSWORD_HASH", generate_password_hash("admin")),
+        "DEFAULT_ADMIN_USERNAME": get_env_str("DEFAULT_ADMIN_USERNAME", ""),
+        "DEFAULT_ADMIN_PASSWORD_HASH": get_env_str("DEFAULT_ADMIN_PASSWORD_HASH", ""),
         "BOT_OPS_DISCORD_CLIENT_ID": get_env_str(
             "OMO_DISCORD_CLIENT_ID",
             get_env_str("DISCORD_CLIENT_ID", ""),

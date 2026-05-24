@@ -44,7 +44,7 @@ def _handle_faq_request(request):
         request.args.get('saved') == '1'
     )
     return render_template(
-        'admin/faq.html',
+        'faq.html',
         save_error=save_error,
         save_success=save_success,
         faq_items=faq_items,

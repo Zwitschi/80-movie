@@ -39,7 +39,7 @@ def _handle_film_request_post(request):
         return redirect(url_for('content.edit_film', saved='1'))
     except ContentWriteError as exc:
         return render_template(
-            'admin/edit_film.html',
+            'edit_film.html',
             save_error=str(exc),
             form_data=_movie_form_fields(update),
             raw_movie_data=update,
@@ -57,7 +57,7 @@ def _handle_film_request(request):
 
     save_success = request.args.get('saved') == '1'
     return render_template(
-        'admin/edit_film.html',
+        'edit_film.html',
         save_error=save_error,
         save_success=save_success,
         form_data=_movie_form_fields(movie_payload),

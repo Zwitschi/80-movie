@@ -7,7 +7,7 @@ def _render_media_error(save_error, gallery_items, categories=None):
     if categories is None:
         categories = []
     return render_template(
-        'admin/manage_media.html',
+        'manage_media.html',
         save_error=save_error,
         save_success=False,
         gallery_items=gallery_items,
@@ -163,7 +163,7 @@ def _handle_media_request(request):
 
     save_success = request.args.get('saved') == '1'
     return render_template(
-        'admin/manage_media.html',
+        'manage_media.html',
         save_error=save_error,
         save_success=save_success,
         gallery_items=gallery_items,

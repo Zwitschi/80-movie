@@ -68,7 +68,7 @@ def login():
 
         error = 'Invalid credentials'
 
-    return render_template('admin/login.html', error=error)
+    return render_template('login.html', error=error)
 
 
 @admin_blueprint.route('/logout')
@@ -79,7 +79,7 @@ def logout():
 
 @admin_blueprint.get('/')
 def dashboard():
-    return render_template('admin/admin.html', **_ctx())
+    return render_template('admin.html', **_ctx())
 
 
 @admin_blueprint.route('/users', methods=['GET', 'POST'])
@@ -155,7 +155,7 @@ def manage_users():
 
     users = list_users()
     return render_template(
-        'admin/manage_users.html',
+        'manage_users.html',
         users=users,
         error=error,
         success=success,

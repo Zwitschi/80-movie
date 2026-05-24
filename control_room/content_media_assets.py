@@ -11,7 +11,7 @@ def _handle_media_assets_request(request):
         assets_payload = reader.read('media_assets.json')
     except ContentReadError as exc:
         return render_template(
-            'admin/media_assets.html',
+            'media_assets.html',
             save_error=str(exc),
             save_success=False,
             media={},
@@ -80,7 +80,7 @@ def _handle_media_assets_request(request):
         request.args.get('saved') == '1'
     )
     return render_template(
-        'admin/media_assets.html',
+        'media_assets.html',
         save_error=save_error,
         save_success=save_success,
         media=media,

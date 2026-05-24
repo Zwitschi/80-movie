@@ -10,7 +10,7 @@ from .content_common import _ctx
 
 def _render_people_form(*, save_error, save_success, people, contributors, credits_people, organizations, page_context):
     return render_template(
-        'admin/people.html',
+        'people.html',
         save_error=save_error,
         save_success=save_success,
         people=people,

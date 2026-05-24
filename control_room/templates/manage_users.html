@@ -1,5 +1,5 @@
-{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Users{%
-endblock %} {% block admin_content %} {% if success %}
+{% extends '_admin_base.html' %} {% block admin_title %}Manage Users{% endblock
+%} {% block admin_content %} {% if success %}
 <p class="alert alert-success"><strong>{{ success }}</strong></p>
 {% endif %} {% if error %}
 <p class="alert alert-error"><strong>Error:</strong> {{ error }}</p>

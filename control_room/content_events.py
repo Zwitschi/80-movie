@@ -18,7 +18,7 @@ from .content_common import _ctx
 
 def _render_events_form(*, save_error, save_success, events, offers, page_context):
     return render_template(
-        'admin/events.html',
+        'events.html',
         save_error=save_error,
         save_success=save_success,
         events=events,

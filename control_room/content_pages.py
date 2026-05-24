@@ -7,7 +7,7 @@ from .content_common import _ctx
 
 def _render_content_form(*, page_context, save_error, save_success, form_pages, previews):
     return render_template(
-        'admin/content.html',
+        'content.html',
         save_error=save_error,
         save_success=save_success,
         form_pages=form_pages,

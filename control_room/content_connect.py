@@ -88,7 +88,7 @@ def _render_connect_read_error(template_name, exc):
 
 def _handle_connect_social_request(request):
 
-    template_name = 'admin/connect_social.html'
+    template_name = 'connect_social.html'
 
     try:
         state = _connect_admin_state()
@@ -166,7 +166,7 @@ def _handle_connect_social_request(request):
 
 def _handle_connect_supporters_request(request):
 
-    template_name = 'admin/connect_supporters.html'
+    template_name = 'connect_supporters.html'
 
     try:
         state = _connect_admin_state()
@@ -309,7 +309,7 @@ def _handle_connect_supporters_request(request):
 
 def _handle_connect_patreon_request(request):
 
-    template_name = 'admin/connect_patreon.html'
+    template_name = 'connect_patreon.html'
 
     try:
         state = _connect_admin_state()

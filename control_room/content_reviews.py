@@ -77,7 +77,7 @@ def _handle_reviews_request(request):
         request.args.get('saved') == '1'
     )
     return render_template(
-        'admin/reviews.html',
+        'reviews.html',
         save_error=save_error,
         save_success=save_success,
         reviews=reviews,

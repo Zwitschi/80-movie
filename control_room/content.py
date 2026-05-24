@@ -31,7 +31,7 @@ def require_login():
 
 @content_blueprint.get('/')
 def dashboard():
-    return render_template('admin/admin.html', **_ctx())
+    return render_template('admin.html', **_ctx())
 
 
 @content_blueprint.route('/film', methods=['GET', 'POST'])
@@ -96,4 +96,4 @@ def edit_reviews():
 
 @content_blueprint.get('/submissions')
 def view_submissions():
-    return render_template('admin/view_submissions.html', **_ctx())
+    return render_template('view_submissions.html', **_ctx())

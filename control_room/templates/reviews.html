@@ -1,5 +1,5 @@
-{% extends 'admin/_admin_base.html' %} {% block admin_title %}Manage Reviews{% endblock
-%} {% block admin_content %} {% if save_success %}
+{% extends '_admin_base.html' %} {% block admin_title %}Manage Reviews{%
+endblock %} {% block admin_content %} {% if save_success %}
 <p class="alert alert-success">Saved successfully.</p>
 {% endif %} {% if save_error %}
 <p class="alert alert-error">Error: {{ save_error }}</p>
@@ -156,4 +156,3 @@
   </form>
 </section>
 {% endblock %}
-

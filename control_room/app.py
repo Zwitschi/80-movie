@@ -70,6 +70,21 @@ def create_app() -> Flask:
         except Exception:
             pass
 
+    # Seed default admin from dedicated env vars (no default fallback)
+    with app.app_context():
+        try:
+            from flask import current_app as _current_app
+            from .user_repo import seed_default_admin
+            default_user = _current_app.config.get('DEFAULT_ADMIN_USERNAME', '')
+            default_hash = _current_app.config.get('DEFAULT_ADMIN_PASSWORD_HASH', '')
+            if default_user and default_hash:
+                seed_default_admin(
+                    default_user,
+                    config_password_hash=default_hash,
+                )
+        except Exception:
+            pass
+
     return app
 
 
