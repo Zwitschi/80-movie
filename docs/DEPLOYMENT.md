@@ -9,7 +9,7 @@ This document is source of truth for deploying four OMO service surfaces: websit
 | Website      | Deployable | `website/`      | `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`      | 8880 | openmicodyssey.com       |
 | Control Room | Deployable | `control_room/` | `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | admin.openmicodyssey.com |
 | Bot API      | Deployable | `bot_api/`      | `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`      | 8787 | api.openmicodyssey.com   |
-| Bot Worker   | Deployable | `bot/`          | `python -m bot`                                         | none | internal                 |
+| Bot Worker   | Deployable | `bot/`          | `python -m bot`                                                 | none | internal                 |
 
 ## Infrastructure
 

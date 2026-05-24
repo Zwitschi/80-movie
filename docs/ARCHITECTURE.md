@@ -405,7 +405,7 @@ Each service deploys as an independent Coolify Application resource:
 | Website      | `website/`      | `gunicorn app:app --bind 0.0.0.0:8880 --workers 2` | 8880 | `GET /robots.txt` |
 | Control Room | `control_room/` | `gunicorn app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | `GET /login`      |
 | Bot API      | `bot_api/`      | `gunicorn app:app --bind 0.0.0.0:8787 --workers 2` | 8787 | `GET /health`     |
-| Bot Worker   | `/` (repo root) | `python -m bot`                            | none | process alive     |
+| Bot Worker   | `/` (repo root) | `python -m bot`                                    | none | process alive     |
 
 ### Nginx Proxy Manager
 
