@@ -31,7 +31,7 @@ It covers service runtime config only. Historical or deploy-workflow-only values
 - `ADMIN_PASSWORD`: defaults to empty; optional plain-text admin password for first-run seeding or hosts that mangle `$` in hash env values.
 - `ADMIN_PASSWORD_HASH`: defaults to a generated Werkzeug hash for `admin`; preferred hashed admin credential and should be set explicitly in any real environment.
 - `OMO_BOT_API_URL`: defaults to `https://api.openmicodyssey.com`; external link target for bot dashboard shortcuts in CMS templates.
-- `CONTROL_ROOM_AUTO_CREATE`: defaults to `1`; gunicorn/module bootstrap flag, set to `0` only when you need to suppress module-level app creation.
+- `CONTROL_ROOM_AUTO_CREATE`: defaults to `1`; waitress/module bootstrap flag, set to `0` only when you need to suppress module-level app creation.
 
 ## Bot API (`api.openmicodyssey.com`)
 

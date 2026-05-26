@@ -11,7 +11,7 @@ Deploy this as its own Coolify application. This service owns the operator web U
 - Base directory: `/` (repo root, NOT bot_api/)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2
+- Start command: waitress-serve --port 8787 bot_api.app:app
 - Port: 8787
 - Health check path: /health
 

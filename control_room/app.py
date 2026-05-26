@@ -96,7 +96,7 @@ def create_app() -> Flask:
     return app
 
 
-# Module-level app instance for gunicorn (lazy creation)
+# Module-level app instance for waitress/gunicorn (lazy creation)
 _app_instance = None
 
 
@@ -108,6 +108,6 @@ def get_app():
     return _app_instance
 
 
-# Only auto-create for gunicorn (not during test imports)
+# Only auto-create for waitress (not during test imports)
 if os.environ.get('CONTROL_ROOM_AUTO_CREATE', '1') == '1':
     app = get_app()

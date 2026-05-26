@@ -1,6 +1,6 @@
 # Control room dependencies
 Flask
 flask-login
-gunicorn
+waitress
 python-dotenv
 psycopg2-binary

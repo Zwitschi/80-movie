@@ -5,6 +5,8 @@ Nothing in this module touches Flask's request/session/current_app context.
 """
 
 from __future__ import annotations
+from bot.models import SyndicationSourceState
+from bot.config import BotConfig, BotRuntimeSettings, ConfigError
 
 import json
 import logging
@@ -25,19 +27,6 @@ DISCORD_HTTP_USER_AGENT = (
     'Chrome/136.0.0.0 Safari/537.36'
 )
 
-# ---------------------------------------------------------------------------
-# Bot model imports (optional — bot/ may not be on the Python path in some
-# deployment configurations, matching the try/except pattern in admin_bot.py)
-# ---------------------------------------------------------------------------
-
-try:
-    from bot.config import BotConfig, BotRuntimeSettings, ConfigError
-    from bot.models import SyndicationSourceState
-except ModuleNotFoundError:
-    BotConfig = None  # type: ignore[misc,assignment]
-    BotRuntimeSettings = None  # type: ignore[misc,assignment]
-    ConfigError = RuntimeError  # type: ignore[misc,assignment]
-    SyndicationSourceState = None  # type: ignore[misc,assignment]
 
 # ---------------------------------------------------------------------------
 # Time
@@ -242,15 +231,15 @@ def _operator_user_id(operator_identity: dict[str, object]) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _default_syndication_state(source_key: str) -> 'SyndicationSourceState':
+def _default_syndication_state(source_key: str) -> SyndicationSourceState:
     return SyndicationSourceState(source_key=source_key)
 
 
-def _manual_syndication_actions_supported(settings: 'BotRuntimeSettings') -> bool:
+def _manual_syndication_actions_supported(settings: BotRuntimeSettings) -> bool:
     return bool(settings.database_url)
 
 
-def _syndication_last_poll_result(state: 'SyndicationSourceState') -> str:
+def _syndication_last_poll_result(state: SyndicationSourceState) -> str:
     if state.last_failed_at and (
         state.last_succeeded_at is None or state.last_failed_at >= state.last_succeeded_at
     ):
@@ -262,11 +251,7 @@ def _syndication_last_poll_result(state: 'SyndicationSourceState') -> str:
     return 'never'
 
 
-def _syndication_source_status(
-    state: 'SyndicationSourceState',
-    *,
-    due_now: bool,
-) -> str:
+def _syndication_source_status(state: SyndicationSourceState, *, due_now: bool,) -> str:
     if not state.enabled:
         return 'disabled'
     if _syndication_last_poll_result(state) == 'failed':
@@ -288,7 +273,7 @@ def _syndication_summary(source_states: list[dict[str, object]]) -> dict[str, in
     }
 
 
-def _configured_syndication_source(settings: 'BotRuntimeSettings', source_key: str) -> bool:
+def _configured_syndication_source(settings: BotRuntimeSettings, source_key: str) -> bool:
     return source_key in settings.syndication_sources
 
 
@@ -297,7 +282,7 @@ def _configured_syndication_source(settings: 'BotRuntimeSettings', source_key: s
 # ---------------------------------------------------------------------------
 
 
-def _build_bot_config_from_runtime_settings(settings: 'BotRuntimeSettings') -> 'BotConfig':
+def _build_bot_config_from_runtime_settings(settings: BotRuntimeSettings) -> BotConfig:
     return BotConfig(
         discord_token=settings.discord_token or 'control-room-placeholder-token',
         guild_id=settings.guild_id,
@@ -315,7 +300,7 @@ def _build_bot_config_from_runtime_settings(settings: 'BotRuntimeSettings') -> '
 # ---------------------------------------------------------------------------
 
 
-def _mileage_active_guild_id(settings: 'BotRuntimeSettings') -> int:
+def _mileage_active_guild_id(settings: BotRuntimeSettings) -> int:
     if settings.guild_id is None:
         raise ConfigError(
             'An active guild id is required for mileage operations.'

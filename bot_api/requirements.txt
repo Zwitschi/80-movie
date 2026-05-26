@@ -1,5 +1,5 @@
 # Bot API dependencies
 Flask
-gunicorn
+waitress
 python-dotenv
 psycopg2-binary

@@ -4,12 +4,12 @@ This document is source of truth for deploying four OMO service surfaces: websit
 
 ## Service matrix
 
-| Surface      | Status     | Source path     | Runtime entrypoint                                              | Port | Domain                   |
-| ------------ | ---------- | --------------- | --------------------------------------------------------------- | ---- | ------------------------ |
-| Website      | Deployable | `website/`      | `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`      | 8880 | openmicodyssey.com       |
-| Control Room | Deployable | `control_room/` | `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2` | 8480 | admin.openmicodyssey.com |
-| Bot API      | Deployable | `bot_api/`      | `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`      | 8787 | api.openmicodyssey.com   |
-| Bot Worker   | Deployable | `bot/`          | `python -m bot`                                                 | none | internal                 |
+| Surface      | Status     | Source path     | Runtime entrypoint                                | Port | Domain                   |
+| ------------ | ---------- | --------------- | ------------------------------------------------- | ---- | ------------------------ |
+| Website      | Deployable | `website/`      | `waitress-serve --port 8880 website.app:app`      | 8880 | openmicodyssey.com       |
+| Control Room | Deployable | `control_room/` | `waitress-serve --port 8480 control_room.app:app` | 8480 | admin.openmicodyssey.com |
+| Bot API      | Deployable | `bot_api/`      | `waitress-serve --port 8787 bot_api.app:app`      | 8787 | api.openmicodyssey.com   |
+| Bot Worker   | Deployable | `bot/`          | `python -m bot`                                   | none | internal                 |
 
 ## Infrastructure
 
@@ -24,7 +24,7 @@ This service is public-site only. Do not expect editorial CMS routes or bot oper
 1. In Coolify, create new Application resource
 2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2`
+4. Start command: `waitress-serve --port 8880 website.app:app`
 5. Port: `8880`
 6. Health check: `GET /robots.txt`
 7. Set environment variables (see `.env.website.example`)
@@ -37,7 +37,7 @@ This service owns editorial login and CMS routes only. Use `/login`, `/`, and `/
 1. In Coolify, create new Application resource
 2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2`
+4. Start command: `waitress-serve --port 8480 control_room.app:app`
 5. Port: `8480`
 6. Health check: `GET /login`
 7. Set environment variables (see `.env.control_room.example`)
@@ -50,7 +50,7 @@ This service owns bot operator HTML routes under `/bot/*`, JSON APIs under `/bot
 1. In Coolify, create new Application resource
 2. Set base directory: `/` (repo root)
 3. Build pack: Nixpacks
-4. Start command: `gunicorn bot_api.app:app --bind 0.0.0.0:8787 --workers 2`
+4. Start command: `waitress-serve --port 8787 bot_api.app:app`
 5. Port: `8787`
 6. Health check: `GET /health`
 7. Set environment variables (see `.env.bot_api.example`)

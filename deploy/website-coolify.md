@@ -9,7 +9,7 @@
 - Base directory: `/` (repo root, NOT website/)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: gunicorn website.app:app --bind 0.0.0.0:8880 --workers 2
+- Start command: waitress-serve --port 8880 website.app:app
 - Port: 8880
 - Health check path: /robots.txt
 

@@ -11,7 +11,7 @@ Deploy this as the editorial CMS only. Bot operator tooling now lives on the sep
 - Base directory: `/` (repo root, NOT control_room/)
 - Build pack: Nixpacks
 - Build command: (leave empty)
-- Start command: gunicorn control_room.app:app --bind 0.0.0.0:8480 --workers 2
+- Start command: waitress-serve --port 8480 control_room.app:app
 - Port: 8480
 - Health check path: /login
 

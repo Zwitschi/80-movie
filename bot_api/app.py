@@ -78,5 +78,5 @@ def create_app() -> Flask:
     return app
 
 
-# Module-level app instance for gunicorn
+# Module-level app instance for waitress
 app = create_app()

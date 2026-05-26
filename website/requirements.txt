@@ -1,6 +1,6 @@
 Flask
 flask-login
-gunicorn
+waitress
 jsonschema
 python-dotenv
 psycopg2-binary
