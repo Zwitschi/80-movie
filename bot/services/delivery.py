@@ -9,6 +9,8 @@ from urllib.request import Request, urlopen
 
 from ..models import SyndicationItem
 
+OMO_USER_AGENT = 'OpenMicOdysseyBot/1.0 (+https://www.openmicodyssey.com)'
+
 
 @dataclass(frozen=True)
 class SyndicationDeliveryBatch:
@@ -51,6 +53,7 @@ class DiscordApiSyndicationDeliverySink:
                     "Authorization": f"Bot {self._bot_token}",
                     "Content-Type": "application/json",
                     "Accept": "application/json",
+                    "User-Agent": OMO_USER_AGENT,
                 },
                 method="POST",
             )

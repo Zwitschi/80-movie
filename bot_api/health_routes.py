@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from flask import current_app, jsonify, render_template, session, url_for
 
-from .bot_utils import _bool_status, _health_components
+from .bot_utils import _bool_status, _health_components, _read_bot_presence
 
 
 def build_health_snapshot() -> dict[str, object]:
@@ -53,6 +53,22 @@ def build_health_snapshot() -> dict[str, object]:
             'polling_worker': 'not-yet-implemented',
         },
     }
+
+    # Add bot worker presence
+    presence = _read_bot_presence()
+    if presence:
+        components['bot_worker'] = {
+            'status': 'ok' if (presence.get('seconds_since_seen') or 999) < 120 else 'stale',
+            'worker_id': presence['worker_id'],
+            'last_seen_at': presence['last_seen_at'],
+            'state': presence['state'],
+            'seconds_since_seen': presence.get('seconds_since_seen'),
+        }
+    else:
+        components['bot_worker'] = {
+            'status': 'unavailable',
+            'note': 'No presence heartbeat table or no rows yet',
+        }
 
     overall_status = 'ok'
     if any(component['status'] == 'missing_config' for component in components.values()):

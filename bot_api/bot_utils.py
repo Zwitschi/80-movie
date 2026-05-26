@@ -294,6 +294,47 @@ def _build_bot_config_from_runtime_settings(settings: BotRuntimeSettings) -> Bot
 
 
 # ---------------------------------------------------------------------------
+# Bot presence / heartbeat
+# ---------------------------------------------------------------------------
+
+
+def _read_bot_presence(database_url: str | None = None) -> dict[str, Any] | None:
+    """Read latest heartbeat from bot_presence table."""
+    import os
+    dsn = database_url or os.environ.get(
+        'DATABASE_URL') or os.environ.get('OMO_DATABASE_URL')
+    if not dsn:
+        return None
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        conn = psycopg2.connect(dsn)
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT worker_id, last_seen_at, state, started_at "
+                    "FROM bot_presence ORDER BY last_seen_at DESC LIMIT 1"
+                )
+                row = cur.fetchone()
+                if row:
+                    return {
+                        'worker_id': row['worker_id'],
+                        'last_seen_at': row['last_seen_at'].isoformat() if row['last_seen_at'] else None,
+                        'state': row['state'],
+                        'started_at': row['started_at'].isoformat() if row['started_at'] else None,
+                        'seconds_since_seen': (
+                            int((_utcnow() - row['last_seen_at']).total_seconds())
+                            if row['last_seen_at'] else None
+                        ),
+                    }
+                return None
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
 # Mileage helpers
 # ---------------------------------------------------------------------------
 

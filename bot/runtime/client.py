@@ -13,6 +13,31 @@ from ..repositories import SyndicationSourceRepository, QueueRepository, Mileage
 from ..services import SyndicationDeliverySink, SyndicationPlanningService, QueueService, MileageService, BotAuditService, OnboardingService
 
 
+_PRESENCE_INTERVAL_SECONDS = 60
+
+
+def _write_presence(database_url: str | None, logger: logging.Logger) -> None:
+    """Write a heartbeat row to bot_presence. Non-blocking sync call."""
+    if not database_url:
+        return
+    try:
+        import psycopg2
+        conn = psycopg2.connect(database_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO bot_presence (worker_id, last_seen_at, state)
+                    VALUES ('default', now(), 'running')
+                    ON CONFLICT (worker_id)
+                    DO UPDATE SET last_seen_at = now(), state = 'running'
+                """)
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.debug("Presence heartbeat failed: %s", exc)
+
+
 @dataclass
 class BotRuntime:
     """Minimal runtime object for startup, shutdown, and health logging."""
@@ -41,6 +66,7 @@ class BotRuntime:
         default_factory=list, init=False)
     last_poll_error: str | None = field(default=None, init=False)
     polling_task_state: str = field(default="idle", init=False)
+    last_presence_at: datetime | None = field(default=None, init=False)
     _stop_event: asyncio.Event = field(
         default_factory=asyncio.Event, init=False)
     _polling_task: asyncio.Task[None] | None = field(default=None, init=False)
@@ -95,10 +121,15 @@ class BotRuntime:
             "last_poll_sources": list(self.last_poll_sources),
             "last_poll_failed_sources": list(self.last_poll_failed_sources),
             "last_poll_error": self.last_poll_error,
+            "last_presence_at": self.last_presence_at.isoformat() if self.last_presence_at else None,
         }
 
     async def _run_polling_loop(self) -> None:
         while not self._stop_event.is_set():
+            # Heartbeat every 60s independent of poll cycle
+            _write_presence(self.config.database_url, self.logger)
+            self.last_presence_at = datetime.now(timezone.utc)
+
             poll_started_at = datetime.now(timezone.utc)
             self.last_poll_started_at = poll_started_at
             self.polling_task_state = "polling"
