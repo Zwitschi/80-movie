@@ -36,6 +36,12 @@ def get_user_by_id(user_id: str) -> dict[str, Any] | None:
     if not _users_table_exists():
         return None
 
+    import uuid
+    try:
+        uuid.UUID(user_id)
+    except (ValueError, TypeError):
+        return None
+
     cursor = get_dict_cursor()
     try:
         cursor.execute(
