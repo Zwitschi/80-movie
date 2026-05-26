@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
+
 from flask import jsonify, redirect, render_template, request, url_for
+
+logger = logging.getLogger(__name__)
 
 
 def config_page():
@@ -31,6 +35,8 @@ def set_active_guild_api():
     try:
         guild = admin_bot._set_active_guild_id(
             admin_bot._parse_required_int(payload.get('guild_id'), 'guild_id'))
+        logger.info("Active guild set via API: guild_id=%s",
+                    payload.get('guild_id'))
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
 
@@ -66,6 +72,8 @@ def upsert_channel_binding_api():
             admin_bot._parse_required_int(
                 payload.get('channel_id'), 'channel_id'),
         )
+        logger.info("Channel binding upserted via API: key=%s channel=%s",
+                    payload.get('binding_key'), payload.get('channel_id'))
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
 
@@ -99,6 +107,7 @@ def delete_channel_binding_api(binding_key: str):
 
     try:
         admin_bot._delete_channel_binding(binding_key)
+        logger.info("Channel binding deleted via API: key=%s", binding_key)
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
     except KeyError:
@@ -134,6 +143,8 @@ def upsert_role_binding_api():
             admin_bot._parse_binding_key(payload.get('binding_key')),
             admin_bot._parse_required_int(payload.get('role_id'), 'role_id'),
         )
+        logger.info("Role binding upserted via API: key=%s role=%s",
+                    payload.get('binding_key'), payload.get('role_id'))
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
 
@@ -167,6 +178,7 @@ def delete_role_binding_api(binding_key: str):
 
     try:
         admin_bot._delete_role_binding(binding_key)
+        logger.info("Role binding deleted via API: key=%s", binding_key)
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_config_binding', 'message': str(exc)}}), 409
     except KeyError:

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigError(ValueError):
@@ -25,6 +28,9 @@ def _load_runtime_dotenv_files() -> None:
     for env_path in BOT_ENV_PATHS:
         if env_path.exists():
             load_dotenv(env_path, override=False)
+            logger.info("Loaded env file: %s", env_path)
+        else:
+            logger.debug("Env file not found: %s", env_path)
 
 
 def _parse_optional_int(raw_value: str | None, field_name: str) -> int | None:
@@ -162,7 +168,7 @@ def read_runtime_settings(
 
     log_level = source_env.get("OMO_LOG_LEVEL", "INFO").upper()
 
-    return BotRuntimeSettings(
+    settings = BotRuntimeSettings(
         discord_token=discord_token,
         guild_id=guild_id,
         channel_map=channel_map,
@@ -172,3 +178,18 @@ def read_runtime_settings(
         role_map={},
         log_level=log_level,
     )
+
+    logger.info(
+        "Runtime settings: guild=%s sources=%s poll_interval=%ds db=%s log=%s",
+        guild_id,
+        ",".join(syndication_sources) if syndication_sources else "none",
+        syndication_poll_seconds,
+        "configured" if database_url else "none",
+        log_level,
+    )
+    if not discord_token:
+        logger.warning("No Discord token configured (OMO_DISCORD_TOKEN)")
+    if not guild_id:
+        logger.warning("No guild ID configured (OMO_DISCORD_GUILD_ID)")
+
+    return settings

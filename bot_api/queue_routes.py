@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from flask import jsonify, render_template, request
+
+logger = logging.getLogger(__name__)
 
 
 def queues_page():
@@ -94,7 +97,9 @@ def create_queue_api():
             admin_bot._parse_required_int(payload.get('guild_id'), 'guild_id'),
             admin_bot._parse_required_text(payload.get('label'), 'label'),
         )
+        logger.info("Queue created via API: queue_id=%s", payload.get('queue_id'))
     except admin_bot.ConfigError as exc:
+        logger.warning("Queue create config error: %s", exc)
         return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
 
     return jsonify({'data': queue})
@@ -132,6 +137,7 @@ def advance_queue_api(queue_id: str):
 
     try:
         queue, event = admin_bot._advance_queue(queue_id)
+        logger.info("Queue advanced via API: queue_id=%s", queue_id)
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
     except admin_bot.QueueNotFoundError:
@@ -169,6 +175,7 @@ def remove_queue_entry_api(queue_id: str, entry_id: str):
     try:
         queue, event = admin_bot._remove_queue_entry(
             queue_id, entry_id, str(payload.get('reason') or '').strip())
+        logger.info("Queue entry removed via API: queue_id=%s entry_id=%s", queue_id, entry_id)
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_queue_config', 'message': str(exc)}}), 409
     except admin_bot.QueueNotFoundError:

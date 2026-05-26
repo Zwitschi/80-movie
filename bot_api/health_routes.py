@@ -116,3 +116,30 @@ def health_services_api():
 def health_jobs_api():
     health = build_health_snapshot()
     return jsonify({'data': _health_components(health)['jobs']})
+
+
+def operator_health_api():
+    """Combined health + syndication + queue + diagnostics for operators."""
+    from . import admin_bot
+
+    scope_error = admin_bot.require_operator_scope('ops.read')
+    if scope_error is not None:
+        return scope_error
+
+    health = build_health_snapshot()
+    syndication = admin_bot.build_syndication_snapshot()
+    queue_index = admin_bot.build_queue_index_snapshot()
+    diag_resp = admin_bot.diagnostics_api()
+    diagnostics_data = diag_resp.get_json() if hasattr(diag_resp, 'get_json') else {}
+
+    return jsonify({
+        'health': health,
+        'syndication': {
+            'status': syndication['status'],
+            'summary': syndication['summary'],
+            'sources': syndication['sources'],
+            'bot_runtime': syndication['bot_runtime'],
+        },
+        'queues': queue_index,
+        'diagnostics': diagnostics_data,
+    })

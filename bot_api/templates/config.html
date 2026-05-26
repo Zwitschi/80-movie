@@ -1,5 +1,5 @@
-{% extends '_bot_base.html' %} {% block admin_title %}Bot Config{%
-endblock %} {% block bot_content %}
+{% extends '_bot_base.html' %} {% block admin_title %}Bot Config{% endblock %}
+{% block bot_content %}
 <section>
   <h2>Runtime Configuration</h2>
   <p>
@@ -67,6 +67,58 @@ endblock %} {% block bot_content %}
     />
     <button type="submit">Save guild</button>
   </form>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Discord Guild</h2>
+  {% set guild = config_snapshot.discord_guild %} {% if guild.available and
+  guild.guild %}
+  <ul>
+    <li><strong>Name:</strong> {{ guild.guild.name }}</li>
+    <li><strong>ID:</strong> {{ guild.guild.id }}</li>
+    <li>
+      <strong>Members:</strong> {{ guild.guild.member_count or 'unknown' }}
+    </li>
+    <li><strong>Premium tier:</strong> {{ guild.guild.premium_tier or 0 }}</li>
+    <li>
+      <strong>Features:</strong> {{ guild.guild.features | join(', ') or 'none'
+      }}
+    </li>
+  </ul>
+
+  <h3>Channels ({{ guild.channels | length }})</h3>
+  {% if guild.channels %}
+  <ul>
+    {% for ch in guild.channels %}
+    <li>
+      <strong>#{{ ch.name }}</strong> (id: {{ ch.id }}, type: {{ ch.type }})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No channels fetched.</p>
+  {% endif %}
+
+  <h3>Roles ({{ guild.roles | length }})</h3>
+  {% if guild.roles %}
+  <ul>
+    {% for r in guild.roles %}
+    <li>
+      <strong>{{ r.name }}</strong> (id: {{ r.id }}, color: {{ r.color }},
+      position: {{ r.position }})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No roles fetched.</p>
+  {% endif %} {% elif guild.error == 'no_guild_id_configured' %}
+  <p>
+    No guild ID configured. Set <code>OMO_DISCORD_GUILD_ID</code> to enable
+    Discord API polling.
+  </p>
+  {% else %}
+  <p>Discord API unavailable. Check bot token and guild ID configuration.</p>
   {% endif %}
 </section>
 
@@ -177,5 +229,3 @@ endblock %} {% block bot_content %}
   </ul>
 </section>
 {% endblock %}
-
-

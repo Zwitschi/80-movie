@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from flask import jsonify, render_template, request
+
+logger = logging.getLogger(__name__)
 
 
 def mileage_page():
@@ -128,6 +131,8 @@ def adjust_mileage_user_api(user_id: str):
             admin_bot._parse_required_text(payload.get('reason'), 'reason'),
             str(payload.get('correlation_id') or '').strip() or None,
         )
+        logger.info("Mileage adjusted via API: user=%s delta=%d",
+                    user_id, payload.get('delta'))
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
     except admin_bot.MileageValidationError as exc:
@@ -137,6 +142,7 @@ def adjust_mileage_user_api(user_id: str):
 
 
 def adjust_mileage_user_page_action(user_id: str):
+    from request_ui_helpers import _mileage_page_redirect
     from . import admin_bot
 
     if not admin_bot._operator_can('mileage.write'):
@@ -157,7 +163,7 @@ def adjust_mileage_user_page_action(user_id: str):
     except admin_bot.MileageValidationError:
         return admin_bot._page_mileage_action_error(user_id)
 
-    return admin_bot._mileage_page_redirect(user_id, saved='mileage-adjusted')
+    return _mileage_page_redirect(user_id, saved='mileage-adjusted')
 
 
 def reverse_mileage_event_api(event_id: str):
@@ -173,6 +179,7 @@ def reverse_mileage_event_api(event_id: str):
             event_id,
             admin_bot._parse_required_text(payload.get('reason'), 'reason'),
         )
+        logger.info("Mileage event reversed via API: event_id=%s", event_id)
     except admin_bot.ConfigError as exc:
         return jsonify({'error': {'code': 'invalid_mileage_config', 'message': str(exc)}}), 409
     except admin_bot.MileageNotFoundError:

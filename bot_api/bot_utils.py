@@ -6,9 +6,14 @@ Nothing in this module touches Flask's request/session/current_app context.
 
 from __future__ import annotations
 
+import json
+import logging
 from datetime import datetime, timezone
 from typing import Any, cast
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Discord HTTP constant (used by request-building helpers)
@@ -119,6 +124,108 @@ def _discord_request_headers(*, access_token: str | None = None) -> dict[str, st
     if access_token:
         headers['Authorization'] = f'Bearer {access_token}'
     return headers
+
+
+# ---------------------------------------------------------------------------
+# Discord API fetchers (bot token auth)
+# ---------------------------------------------------------------------------
+
+DISCORD_API_BASE = 'https://discord.com/api/v10'
+
+
+def _discord_bot_token() -> str | None:
+    """Read the bot token from env, preferring OMO_DISCORD_TOKEN."""
+    import os
+    return os.environ.get('OMO_DISCORD_TOKEN') or os.environ.get('DISCORD_TOKEN')
+
+
+def _discord_bot_headers() -> dict[str, str]:
+    token = _discord_bot_token()
+    if not token:
+        return _discord_request_headers()
+    return {
+        'Accept': 'application/json',
+        'User-Agent': DISCORD_HTTP_USER_AGENT,
+        'Authorization': f'Bot {token}',
+    }
+
+
+def _discord_api_get(path: str) -> dict[str, Any] | list[Any] | None:
+    """Make a GET request to the Discord API with bot token auth."""
+    headers = _discord_bot_headers()
+    if 'Authorization' not in headers:
+        logger.warning("Discord API call skipped: no bot token configured")
+        return None
+    url = f'{DISCORD_API_BASE}{path}'
+    try:
+        req = Request(url, headers=headers)
+        with urlopen(req, timeout=10) as resp:
+            data: Any = json.loads(resp.read().decode('utf-8'))
+            return data
+    except HTTPError as exc:
+        logger.error("Discord API HTTP %s on GET %s: %s",
+                     exc.code, path, _decode_http_error(exc))
+        return None
+    except URLError as exc:
+        logger.error("Discord API connection error on GET %s: %s",
+                     path, exc.reason)
+        return None
+    except Exception as exc:
+        logger.error("Discord API unexpected error on GET %s: %s", path, exc)
+        return None
+
+
+def _fetch_discord_guild(guild_id: int) -> dict[str, Any] | None:
+    """Fetch guild metadata from Discord API."""
+    data = _discord_api_get(f'/guilds/{guild_id}')
+    if isinstance(data, dict):
+        return {
+            'id': data.get('id'),
+            'name': data.get('name'),
+            'icon': data.get('icon'),
+            'member_count': data.get('approximate_member_count'),
+            'features': data.get('features', []),
+            'description': data.get('description'),
+            'premium_tier': data.get('premium_tier'),
+            'preferred_locale': data.get('preferred_locale'),
+        }
+    return None
+
+
+def _fetch_discord_channels(guild_id: int) -> list[dict[str, Any]]:
+    """Fetch channel list from Discord API."""
+    data = _discord_api_get(f'/guilds/{guild_id}/channels')
+    if isinstance(data, list):
+        return [
+            {
+                'id': ch.get('id'),
+                'name': ch.get('name'),
+                'type': ch.get('type'),
+                'parent_id': ch.get('parent_id'),
+                'position': ch.get('position'),
+            }
+            for ch in data
+        ]
+    return []
+
+
+def _fetch_discord_roles(guild_id: int) -> list[dict[str, Any]]:
+    """Fetch role list from Discord API."""
+    data = _discord_api_get(f'/guilds/{guild_id}/roles')
+    if isinstance(data, list):
+        return [
+            {
+                'id': r.get('id'),
+                'name': r.get('name'),
+                'color': r.get('color'),
+                'position': r.get('position'),
+                'permissions': r.get('permissions'),
+                'managed': r.get('managed'),
+                'mentionable': r.get('mentionable'),
+            }
+            for r in data
+        ]
+    return []
 
 
 # ---------------------------------------------------------------------------

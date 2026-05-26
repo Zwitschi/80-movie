@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from .auth_runtime import (
     _audit_database_url,
     _build_bot_audit_service,
@@ -161,6 +162,7 @@ from .health_routes import (
     health_api,
     health_services_api,
     health_jobs_api,
+    operator_health_api,
 )
 from .bot_utils import (
     DISCORD_HTTP_USER_AGENT,
@@ -224,6 +226,8 @@ from bot.services.onboarding_service import OnboardingService
 from bot.services.queue_service import QueueValidationError
 from bot.services.syndication_service import SyndicationPlanningService
 BOT_MODULE_AVAILABLE = True
+
+logger = logging.getLogger(__name__)
 
 
 bp = Blueprint('bot', __name__, url_prefix='/bot')
@@ -293,7 +297,11 @@ def _operator_can(*required_scopes: str) -> bool:
 
 
 def _load_bot_runtime_settings() -> BotRuntimeSettings:
-    return read_runtime_settings()
+    settings = read_runtime_settings()
+    logger.debug("Loaded bot runtime settings: guild=%s sources=%s db=%s",
+                 settings.guild_id, settings.syndication_sources,
+                 bool(settings.database_url))
+    return settings
 
 
 def _adjust_mileage_user(user_id: str, display_name: str, delta: int, reason: str, correlation_id: str | None) -> tuple[dict[str, object], dict[str, object]]:
@@ -806,6 +814,8 @@ bp.add_url_rule(
     '/api/health/services', view_func=health_services_api, methods=['GET'])
 bp.add_url_rule(
     '/api/health/jobs', view_func=health_jobs_api, methods=['GET'])
+bp.add_url_rule(
+    '/api/operator-health', view_func=operator_health_api, methods=['GET'])
 bp.add_url_rule('/operators', view_func=operators_page, methods=['GET'])
 bp.add_url_rule('/api/operators', view_func=operators_api, methods=['GET'])
 bp.add_url_rule('/api/operators/<user_id>/disable',

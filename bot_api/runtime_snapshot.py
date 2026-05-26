@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import cast
 
 from flask import current_app, url_for
+
+logger = logging.getLogger(__name__)
 
 
 def _build_bot_config_repository_from_settings(settings):
@@ -19,6 +22,7 @@ def _effective_runtime_settings(settings):
     from . import admin_bot
 
     if not settings.database_url:
+        logger.info("No database_url — using env-backed runtime settings")
         return settings, None, False
 
     try:
@@ -27,6 +31,8 @@ def _effective_runtime_settings(settings):
             default_channel_map=settings.channel_map,
             default_role_map=settings.role_map,
         )
+        logger.info("Loaded managed runtime config: guild=%s channels=%d roles=%d",
+                     managed.guild_id, len(managed.channel_map), len(managed.role_map))
         return (
             admin_bot.BotRuntimeSettings(
                 discord_token=settings.discord_token,
@@ -42,6 +48,7 @@ def _effective_runtime_settings(settings):
             managed.managed_by_repository,
         )
     except Exception as exc:
+        logger.warning("Failed to load managed runtime config: %s", exc)
         return settings, str(exc), False
 
 
@@ -107,6 +114,41 @@ def _serialize_syndication_state(
             'retry_page': url_for('bot.retry_syndication_source_page_action', source_key=state.source_key),
             'reset_checkpoint_page': url_for('bot.reset_syndication_checkpoint_page_action', source_key=state.source_key),
         },
+    }
+
+
+def build_discord_guild_snapshot(guild_id: int | None) -> dict[str, object]:
+    """Fetch guild metadata, channels, and roles from Discord API."""
+    from .bot_utils import _fetch_discord_guild, _fetch_discord_channels, _fetch_discord_roles
+
+    if not guild_id:
+        return {
+            'available': False,
+            'guild': None,
+            'channels': [],
+            'roles': [],
+            'error': 'no_guild_id_configured',
+        }
+
+    guild = _fetch_discord_guild(guild_id)
+    if guild is None:
+        return {
+            'available': False,
+            'guild': None,
+            'channels': [],
+            'roles': [],
+            'error': 'discord_api_unavailable',
+        }
+
+    channels = _fetch_discord_channels(guild_id)
+    roles = _fetch_discord_roles(guild_id)
+
+    return {
+        'available': True,
+        'guild': guild,
+        'channels': channels,
+        'roles': roles,
+        'error': None,
     }
 
 
@@ -247,6 +289,7 @@ def build_bot_configuration_snapshot() -> dict[str, object]:
             'set_page': url_for('bot.set_active_guild_page_action'),
         },
         'bot_runtime': bot_runtime,
+        'discord_guild': build_discord_guild_snapshot(effective_settings.guild_id),
         'permissions': {
             'can_manage_sources': bool(bot_runtime['manual_actions_supported'] and bot_runtime['operator_can_write']),
             'can_manage_channel_bindings': bool(managed_by_repository and _config_write_supported(effective_settings)),

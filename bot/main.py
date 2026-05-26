@@ -49,43 +49,57 @@ def configure_logging(level: str = "INFO") -> logging.Logger:
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
 
-    logger = logging.getLogger("omo_bot")
-    logger.setLevel(resolved_level)
-    return logger
+    _logger = logging.getLogger("omo_bot")
+    _logger.setLevel(resolved_level)
+    return _logger
+
+
+_logger = logging.getLogger("omo_bot")
+logger = _logger
 
 
 def build_syndication_repository(config: BotConfig) -> SyndicationSourceRepository:
     if config.database_url:
+        logger.info("Building PostgreSQL syndication repository")
         return build_postgres_syndication_repository(config.database_url)
 
+    logger.info("Building in-memory syndication repository (no database_url)")
     return InMemorySyndicationSourceRepository()
 
 
 def build_queue_repository(config: BotConfig) -> QueueRepository:
     if config.database_url:
+        logger.info("Building PostgreSQL queue repository")
         return build_postgres_queue_repository(config.database_url)
 
+    logger.info("Building in-memory queue repository (no database_url)")
     return InMemoryQueueRepository()
 
 
 def build_mileage_repository(config: BotConfig) -> MileageRepository:
     if config.database_url:
+        logger.info("Building PostgreSQL mileage repository")
         return build_postgres_mileage_repository(config.database_url)
 
+    logger.info("Building in-memory mileage repository (no database_url)")
     return InMemoryMileageRepository()
 
 
 def build_audit_repository(config: BotConfig) -> BotAuditLogRepository:
     if config.database_url:
+        logger.info("Building PostgreSQL audit repository")
         return build_postgres_bot_audit_log_repository(config.database_url)
 
+    logger.info("Building in-memory audit repository (no database_url)")
     return InMemoryBotAuditLogRepository()
 
 
 def build_onboarding_repository(config: BotConfig) -> OnboardingRepository:
     if config.database_url:
+        logger.info("Building PostgreSQL onboarding repository")
         return build_postgres_onboarding_repository(config.database_url)
 
+    logger.info("Building in-memory onboarding repository (no database_url)")
     return InMemoryOnboardingRepository()
 
 
@@ -95,22 +109,28 @@ def build_syndication_adapters(config: BotConfig) -> dict[str, SyndicationAdapte
     if "youtube" in config.syndication_sources:
         adapters["youtube"] = YouTubeSyndicationAdapter(
             payload_loader=lambda: {"items": []})
+        logger.info("Registered YouTube syndication adapter")
 
+    logger.info("Syndication adapters built: %s", list(adapters.keys()))
     return adapters
 
 
 def build_syndication_delivery_sink(config: BotConfig):
     if config.channel_map:
+        logger.info("Building Discord API delivery sink with %d channel bindings",
+                    len(config.channel_map))
         return DiscordApiSyndicationDeliverySink(
             bot_token=config.discord_token,
             channel_map=config.channel_map,
         )
 
+    logger.info("Building null delivery sink (no channel bindings)")
     return NullSyndicationDeliverySink()
 
 
 def build_effective_bot_config(config: BotConfig) -> BotConfig:
     if not config.database_url:
+        logger.info("Using env-backed bot config (no database)")
         return config
 
     try:
@@ -121,8 +141,9 @@ def build_effective_bot_config(config: BotConfig) -> BotConfig:
             default_channel_map=config.channel_map,
             default_role_map=config.role_map,
         )
+        logger.info("Loaded managed bot config from repository")
     except Exception:
-        logging.getLogger("omo_bot").warning(
+        logger.warning(
             "Falling back to env-backed bot config because managed config could not be loaded",
             exc_info=True,
         )
@@ -141,6 +162,9 @@ def build_effective_bot_config(config: BotConfig) -> BotConfig:
 
 
 def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
+    logger.info("Building bot runtime: guild=%s sources=%s db=%s",
+                config.guild_id, config.syndication_sources,
+                "yes" if config.database_url else "no")
     effective_config = build_effective_bot_config(config)
     syndication_repository = build_syndication_repository(effective_config)
     syndication_planning_service = SyndicationPlanningService(
@@ -167,6 +191,13 @@ def build_runtime(config: BotConfig, logger: logging.Logger) -> BotRuntime:
     onboarding_repository = build_onboarding_repository(effective_config)
     onboarding_service = OnboardingService(
         onboarding_repository=onboarding_repository)
+
+    logger.info("Bot runtime built successfully: syndication=%s queue=%s mileage=%s audit=%s onboarding=%s",
+                syndication_repository.__class__.__name__,
+                queue_repository.__class__.__name__,
+                mileage_repository.__class__.__name__,
+                audit_repository.__class__.__name__,
+                onboarding_repository.__class__.__name__)
 
     return BotRuntime(
         config=effective_config,
