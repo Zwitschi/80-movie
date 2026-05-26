@@ -7,54 +7,44 @@
   <form
     method="get"
     action="{{ url_for('admin.view_logs') }}"
-    class="admin-flex-row"
-    style="max-width: 48rem; margin-bottom: 1rem"
+    style="
+      max-width: 48rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    "
   >
     <select name="service">
       <option value="">All services</option>
-      <option
-        value="website"
-        {%
-        if
-        service_filter=""
-        ="website"
-        %}selected{%
-        endif
-        %}
-      >
+      {% set svc = service_filter or '' %}
+      <option value="website" {% if svc="" ="website" %} selected{% endif %}>
         Website
       </option>
       <option
         value="control_room"
         {%
         if
-        service_filter=""
+        svc=""
         ="control_room"
-        %}selected{%
+        %}
+        selected{%
         endif
         %}
       >
         Control Room
       </option>
-      <option
-        value="bot_api"
-        {%
-        if
-        service_filter=""
-        ="bot_api"
-        %}selected{%
-        endif
-        %}
-      >
+      <option value="bot_api" {% if svc="" ="bot_api" %} selected{% endif %}>
         Bot API
       </option>
       <option
         value="bot_worker"
         {%
         if
-        service_filter=""
+        svc=""
         ="bot_worker"
-        %}selected{%
+        %}
+        selected{%
         endif
         %}
       >
@@ -63,43 +53,17 @@
     </select>
     <select name="level">
       <option value="">All levels</option>
-      <option
-        value="DEBUG"
-        {%
-        if
-        level_filter=""
-        ="DEBUG"
-        %}selected{%
-        endif
-        %}
-      >
+      {% set lvl = level_filter or '' %}
+      <option value="DEBUG" {% if lvl="" ="DEBUG" %} selected{% endif %}>
         DEBUG
       </option>
-      <option value="INFO" {% if level_filter="" ="INFO" %}selected{% endif %}>
+      <option value="INFO" {% if lvl="" ="INFO" %} selected{% endif %}>
         INFO
       </option>
-      <option
-        value="WARNING"
-        {%
-        if
-        level_filter=""
-        ="WARNING"
-        %}selected{%
-        endif
-        %}
-      >
+      <option value="WARNING" {% if lvl="" ="WARNING" %} selected{% endif %}>
         WARNING
       </option>
-      <option
-        value="ERROR"
-        {%
-        if
-        level_filter=""
-        ="ERROR"
-        %}selected{%
-        endif
-        %}
-      >
+      <option value="ERROR" {% if lvl="" ="ERROR" %} selected{% endif %}>
         ERROR
       </option>
     </select>
@@ -126,52 +90,42 @@
         </td>
         <td><code>{{ log.service_name }}</code></td>
         <td>
-          {% if log.log_level == 'ERROR' %}
-          <span style="color: #f87171">ERROR</span>
-          {% elif log.log_level == 'WARNING' %}
-          <span style="color: #fbbf24">WARNING</span>
-          {% else %}
-          <span style="color: #4ade80">{{ log.log_level }}</span>
-          {% endif %}
+          {% set lc = '#4ade80' %} {% if log.log_level == 'ERROR' %}{% set lc =
+          '#f87171' %}{% endif %} {% if log.log_level == 'WARNING' %}{% set lc =
+          '#fbbf24' %}{% endif %}
+          <span style="color:{{ lc }};">{{ log.log_level }}</span>
         </td>
         <td style="font-size: 0.78rem">{{ log.message }}</td>
-        <td
-          style="
-            font-size: 0.7rem;
-            color: #64748b;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          "
-        >
-          {% if log.metadata %}
-          <code>{{ log.metadata | tojson }}</code>
-          {% endif %}
+        <td style="font-size: 0.7rem; color: #64748b">
+          {% if log.metadata %}<code>{{ log.metadata }}</code>{% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
-  <div class="admin-flex-row" style="justify-content: center; margin-top: 1rem">
-    {% if page > 1 %}
-    <a
-      href="{{ url_for('admin.view_logs', service=service_filter, level=level_filter, page=page-1) }}"
+  <div
+    style="
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1rem;
+    "
+  >
+    {% if page > 1 %}<a
+      href="{{ url_for('admin.view_logs', service=svc, level=lvl, page=page-1) }}"
       class="btn btn-secondary btn-sm"
       >&larr; Previous</a
-    >
-    {% endif %}
+    >{% endif %}
     <span style="color: #64748b; font-size: 0.78rem"
       >Page {{ page }} of {{ total_pages }}</span
     >
-    {% if page < total_pages %}
-    <a
-      href="{{ url_for('admin.view_logs', service=service_filter, level=level_filter, page=page+1) }}"
+    {% if page < total_pages %}<a
+      href="{{ url_for('admin.view_logs', service=svc, level=lvl, page=page+1) }}"
       class="btn btn-secondary btn-sm"
       >Next &rarr;</a
-    >
-    {% endif %}
+    >{% endif %}
   </div>
   {% else %}
   <p>No log entries found.</p>

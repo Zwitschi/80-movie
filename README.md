@@ -26,7 +26,7 @@ tests/             # Test suite
 | Bot API      | api.openmicodyssey.com   | 8787 | `bot_api/`      |
 | Bot Worker   | internal                 | none | `bot/`          |
 
-All services share a PostgreSQL database at `192.168.88.35` and run on a single Coolify server behind Nginx Proxy Manager.
+All services share a PostgreSQL database at `192.168.88.35` and run on Docker containers on a single Coolify deployment server instance behind Nginx Proxy Manager.
 
 ## Quick Start
 
@@ -68,29 +68,6 @@ python -m bot
 - [Nginx](docs/NGINX.md) — proxy host configuration
 - [Testing](docs/TESTING.md) — test strategy and coverage
 
-> from [Google Docs](https://docs.google.com/document/d/1T9QmXg7GLwMNTnOL72V16Ry0WEPrJj3ahbCa4TjS6HQ/edit?tab=t.0#heading=h.flei6gybekyw)
-
-```markdown
-# Documentary movie website
-
-- Trailer (self hosted/YouTube/Vimeo)
-- Embed social media
-- Instagram
-- TikTok
-- YouTube
-- Crowdfunding campaign
-- Patreon
-- credits / links
-
-Photo gallery?
-
-Maybe a page that shows like an interactive map of the stops
-
-A stupid web game lol
-
-Something that says all the content you get from patreon like the main movie, the texas podcast, the just driving footage and music cut, and more. Maybe podcasts recorded on discord or something.
-```
-
 ## Map Easter Egg
 
 A hidden /map page displays a Mapbox GL JS route visualization of the film's road trip, built from TeslaCam GPS data.
@@ -104,13 +81,11 @@ The map is not listed in the site navigation. A hidden "Route Map" link in the f
 The map requires a Mapbox public access token:
 
 - Create a free account at [mapbox.com](https://www.mapbox.com/) and copy your public token.
-- Add it to `website/.env`:
+- Add it to `website/.env` / Coolify environment variables as `MAPBOX_ACCESS_TOKEN`.
 
 ```dotenv
 MAPBOX_ACCESS_TOKEN=pk.your_token_here
 ```
-
-- For the static export deployment, add a `MAPBOX_ACCESS_TOKEN` secret to the GitHub repository.
 
 ### Route data
 
