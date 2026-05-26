@@ -26,7 +26,13 @@ def create_app():
     # Attach DB logging
     set_service_name('website')
     import logging
-    logging.getLogger().addHandler(DbLogHandler())
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        )
+    root_logger.addHandler(DbLogHandler())
 
     app.register_blueprint(main_blueprint)
     return app

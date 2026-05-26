@@ -32,7 +32,13 @@ def create_app() -> Flask:
     # Attach DB logging
     set_service_name('bot_api')
     import logging
-    logging.getLogger().addHandler(DbLogHandler())
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s %(message)s",
+        )
+    root_logger.addHandler(DbLogHandler())
 
     # Register bot blueprint
     from .admin_bot import bp, oauth_callback
