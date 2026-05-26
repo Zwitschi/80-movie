@@ -18,52 +18,30 @@
     <select name="service">
       <option value="">All services</option>
       {% set svc = service_filter or '' %}
-      <option value="website" {% if svc="" ="website" %} selected{% endif %}>
+      <option value="website" {% if svc=="website" %} selected{% endif %}>
         Website
       </option>
-      <option
-        value="control_room"
-        {%
-        if
-        svc=""
-        ="control_room"
-        %}
-        selected{%
-        endif
-        %}
-      >
+      <option value="control_room" {% if svc=='control_room' %} selected{% endif %}      >
         Control Room
       </option>
-      <option value="bot_api" {% if svc="" ="bot_api" %} selected{% endif %}>
+      <option value="bot_api" {% if svc=='bot_api' %} selected{% endif %}>
         Bot API
       </option>
-      <option
-        value="bot_worker"
-        {%
-        if
-        svc=""
-        ="bot_worker"
-        %}
-        selected{%
-        endif
-        %}
-      >
+      <option value="bot_worker" {% if svc=='bot_worker' %} selected{% endif %}>
         Bot Worker
       </option>
     </select>
     <select name="level">
       <option value="">All levels</option>
       {% set lvl = level_filter or '' %}
-      <option value="DEBUG" {% if lvl="" ="DEBUG" %} selected{% endif %}>
+      <option value="DEBUG" {% if lvl=="DEBUG" %} selected{% endif %}>
         DEBUG
       </option>
-      <option value="INFO" {% if lvl="" ="INFO" %} selected{% endif %}>
-        INFO
-      </option>
-      <option value="WARNING" {% if lvl="" ="WARNING" %} selected{% endif %}>
+      <option value="INFO" {% if lvl=="INFO" %} selected{% endif %}>INFO</option>
+      <option value="WARNING" {% if lvl=="WARNING" %} selected{% endif %}>WARNING</option>
         WARNING
       </option>
-      <option value="ERROR" {% if lvl="" ="ERROR" %} selected{% endif %}>
+      <option value="ERROR" {% if lvl=="ERROR" %} selected{% endif %}>
         ERROR
       </option>
     </select>
