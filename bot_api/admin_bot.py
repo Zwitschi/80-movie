@@ -83,6 +83,8 @@ from .config_routes import (
     enable_syndication_source_page_action,
     disable_syndication_source_api,
     disable_syndication_source_page_action,
+    send_test_message_api,
+    send_test_message_page_action,
 )
 from .mileage_routes import (
     mileage_page,
@@ -914,6 +916,10 @@ bp.add_url_rule('/api/config/sources/<source_key>/disable',
                 view_func=disable_syndication_source_api, methods=['POST'])
 bp.add_url_rule('/config/sources/<source_key>/disable',
                 view_func=disable_syndication_source_page_action, methods=['POST'])
+bp.add_url_rule('/api/config/test-message',
+                view_func=send_test_message_api, methods=['POST'])
+bp.add_url_rule('/config/test-message',
+                view_func=send_test_message_page_action, methods=['POST'])
 bp.add_url_rule('/syndication', view_func=syndication_page, methods=['GET'])
 bp.add_url_rule('/api/syndication', view_func=syndication_api, methods=['GET'])
 bp.add_url_rule('/api/syndication/sources',

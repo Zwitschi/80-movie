@@ -34,6 +34,10 @@
   </p>
   {% elif error == 'source-not-found' %}
   <p>That configured source no longer exists.</p>
+  {% elif error == 'no-bot-token' %}
+  <p>Bot token not configured. Set <code>OMO_DISCORD_TOKEN</code> to send test messages.</p>
+  {% elif error == 'test-message-failed' %}
+  <p>Failed to send test message. Check channel ID and bot permissions.</p>
   {% endif %}
   <ul>
     <li><strong>Status:</strong> {{ config_snapshot.status }}</li>
@@ -112,6 +116,39 @@
   </ul>
   {% else %}
   <p>No roles fetched.</p>
+  {% endif %}
+
+  <h3>Members ({{ guild.members | length }})</h3>
+  {% if guild.members %}
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Nick</th>
+        <th>ID</th>
+        <th>Roles</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in guild.members %}
+      <tr>
+        <td>
+          {{ m.user.username }}{% if m.user.global_name %} ({{
+          m.user.global_name }}){% endif %}
+        </td>
+        <td>{{ m.nick or '-' }}</td>
+        <td><code>{{ m.user.id }}</code></td>
+        <td>{{ m.roles | length }} role(s)</td>
+        <td style="font-size: 0.75rem">
+          {{ m.joined_at[:10] if m.joined_at else '-' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No members fetched.</p>
   {% endif %} {% elif guild.error == 'no_guild_id_configured' %}
   <p>
     No guild ID configured. Set <code>OMO_DISCORD_GUILD_ID</code> to enable
@@ -218,6 +255,19 @@
     <button type="submit">Save role binding</button>
   </form>
   {% endif %}
+</section>
+
+<section>
+  <h2>Test Message</h2>
+  <p>Send a test message to any Discord channel the bot has access to.</p>
+  {% if save_success == 'test-message-sent' %}
+  <p>Test message sent.</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('bot.send_test_message_page_action') }}" class="admin-flex-row" style="max-width:36rem;">
+    <input type="text" name="channel_id" placeholder="Channel ID" required style="flex:1;" />
+    <input type="text" name="message" placeholder="Message text (optional)" style="flex:2;" />
+    <button type="submit" class="btn btn-primary btn-sm" style="flex:0 0 auto;">Send</button>
+  </form>
 </section>
 
 <section>

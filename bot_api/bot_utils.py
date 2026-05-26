@@ -215,6 +215,53 @@ def _fetch_discord_roles(guild_id: int) -> list[dict[str, Any]]:
     return []
 
 
+def _fetch_discord_members(guild_id: int, limit: int = 100) -> list[dict[str, Any]]:
+    """Fetch member list from Discord API."""
+    data = _discord_api_get(f'/guilds/{guild_id}/members?limit={limit}')
+    if isinstance(data, list):
+        return [
+            {
+                'user': {
+                    'id': m.get('user', {}).get('id'),
+                    'username': m.get('user', {}).get('username'),
+                    'global_name': m.get('user', {}).get('global_name'),
+                    'avatar': m.get('user', {}).get('avatar'),
+                },
+                'nick': m.get('nick'),
+                'roles': m.get('roles', []),
+                'joined_at': m.get('joined_at'),
+            }
+            for m in data
+        ]
+    return []
+
+
+def _discord_api_post(path: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Make a POST request to the Discord API with bot token auth."""
+    headers = dict(_discord_bot_headers())
+    headers['Content-Type'] = 'application/json'
+    if 'Authorization' not in headers:
+        logger.warning("Discord API POST skipped: no bot token configured")
+        return None
+    url = f'{DISCORD_API_BASE}{path}'
+    try:
+        data_bytes = json.dumps(payload).encode('utf-8')
+        req = Request(url, data=data_bytes, headers=headers)
+        with urlopen(req, timeout=10) as resp:
+            result: Any = json.loads(resp.read().decode('utf-8'))
+            return result
+    except HTTPError as exc:
+        logger.error("Discord API HTTP %s on POST %s: %s",
+                     exc.code, path, _decode_http_error(exc))
+        return None
+    except URLError as exc:
+        logger.error("Discord API connection error on POST %s: %s", path, exc.reason)
+        return None
+    except Exception as exc:
+        logger.error("Discord API unexpected error on POST %s: %s", path, exc)
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Operator identity
 # ---------------------------------------------------------------------------

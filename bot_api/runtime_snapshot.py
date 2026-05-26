@@ -118,8 +118,8 @@ def _serialize_syndication_state(
 
 
 def build_discord_guild_snapshot(guild_id: int | None) -> dict[str, object]:
-    """Fetch guild metadata, channels, and roles from Discord API."""
-    from .bot_utils import _fetch_discord_guild, _fetch_discord_channels, _fetch_discord_roles
+    """Fetch guild metadata, channels, roles, and members from Discord API."""
+    from .bot_utils import _fetch_discord_guild, _fetch_discord_channels, _fetch_discord_roles, _fetch_discord_members
 
     if not guild_id:
         return {
@@ -127,6 +127,7 @@ def build_discord_guild_snapshot(guild_id: int | None) -> dict[str, object]:
             'guild': None,
             'channels': [],
             'roles': [],
+            'members': [],
             'error': 'no_guild_id_configured',
         }
 
@@ -137,17 +138,20 @@ def build_discord_guild_snapshot(guild_id: int | None) -> dict[str, object]:
             'guild': None,
             'channels': [],
             'roles': [],
+            'members': [],
             'error': 'discord_api_unavailable',
         }
 
     channels = _fetch_discord_channels(guild_id)
     roles = _fetch_discord_roles(guild_id)
+    members = _fetch_discord_members(guild_id)
 
     return {
         'available': True,
         'guild': guild,
         'channels': channels,
         'roles': roles,
+        'members': members,
         'error': None,
     }
 

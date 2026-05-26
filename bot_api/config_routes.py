@@ -4,6 +4,8 @@ import logging
 
 from flask import jsonify, redirect, render_template, request, url_for
 
+from .bot_utils import _discord_bot_token
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,6 +24,56 @@ def config_api():
     from . import admin_bot
 
     return jsonify({'data': admin_bot.build_bot_configuration_snapshot()})
+
+
+def send_test_message_api():
+    """POST /bot/api/config/test-message — send a test message to a channel."""
+    from . import admin_bot
+
+    scope_error = admin_bot.require_operator_scope('syndication.write')
+    if scope_error is not None:
+        return scope_error
+
+    payload = admin_bot._request_data()
+    channel_id = str(payload.get('channel_id', '')).strip()
+    message = str(payload.get('message', '')).strip() or 'Test message from Open Mic Odyssey Bot API'
+    if not channel_id:
+        return jsonify({'error': {'code': 'missing_channel_id', 'message': 'channel_id is required'}}), 400
+
+    token = _discord_bot_token()
+    if not token:
+        return jsonify({'error': {'code': 'no_bot_token', 'message': 'Bot token not configured'}}), 400
+
+    from .bot_utils import _discord_api_post
+    result = _discord_api_post(f'/channels/{channel_id}/messages', {'content': message})
+    if result is None:
+        return jsonify({'error': {'code': 'discord_api_error', 'message': 'Failed to send message'}}), 502
+
+    logger.info("Test message sent to channel %s: msg=%s", channel_id, result.get('id'))
+    return jsonify({'data': {'channel_id': channel_id, 'message_id': result.get('id')}})
+
+
+def send_test_message_page_action():
+    """POST /bot/config/test-message — page action."""
+    from . import admin_bot
+
+    if not admin_bot._operator_can('syndication.write'):
+        return admin_bot._page_config_scope_error()
+
+    channel_id = str(request.form.get('channel_id', '')).strip()
+    message = str(request.form.get('message', '')).strip() or 'Test message from Open Mic Odyssey Bot API'
+
+    token = _discord_bot_token()
+    if not token:
+        return redirect(url_for('bot.config_page', error='no-bot-token'))
+
+    from .bot_utils import _discord_api_post
+    result = _discord_api_post(f'/channels/{channel_id}/messages', {'content': message})
+    if result is None:
+        return redirect(url_for('bot.config_page', error='test-message-failed'))
+
+    logger.info("Test message sent via page: channel=%s msg=%s", channel_id, result.get('id'))
+    return redirect(url_for('bot.config_page', saved='test-message-sent'))
 
 
 def set_active_guild_api():
