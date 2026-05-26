@@ -7,6 +7,7 @@ and syndication control APIs.
 import os
 from shared.db import init_app as init_db_app
 from shared.config import load_dotenv_files, get_control_room_config_values
+from shared.logging_db import DbLogHandler, set_service_name
 from flask_login import LoginManager
 from flask import Flask
 
@@ -34,6 +35,11 @@ def create_app() -> Flask:
 
     # Initialize DB
     init_db_app(app)
+
+    # Attach DB logging
+    set_service_name('control_room')
+    import logging
+    logging.getLogger().addHandler(DbLogHandler())
 
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -75,8 +81,10 @@ def create_app() -> Flask:
         try:
             from flask import current_app as _current_app
             from .user_repo import seed_default_admin
-            default_user = _current_app.config.get('DEFAULT_ADMIN_USERNAME', '')
-            default_hash = _current_app.config.get('DEFAULT_ADMIN_PASSWORD_HASH', '')
+            default_user = _current_app.config.get(
+                'DEFAULT_ADMIN_USERNAME', '')
+            default_hash = _current_app.config.get(
+                'DEFAULT_ADMIN_PASSWORD_HASH', '')
             if default_user and default_hash:
                 seed_default_admin(
                     default_user,

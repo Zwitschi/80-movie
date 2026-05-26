@@ -1,5 +1,5 @@
-{% extends '_admin_base.html' %} {% block admin_title %}Dashboard{%
-endblock %} {% block admin_content %}
+{% extends '_admin_base.html' %} {% block admin_title %}Dashboard{% endblock %}
+{% block admin_content %}
 <p>Welcome to the admin dashboard. Select a section to manage site content.</p>
 
 <div class="admin-card-grid">
@@ -63,6 +63,16 @@ endblock %} {% block admin_content %}
     <p>Individual reviews and aggregate rating fields.</p>
     <span class="card-link">Edit &rarr;</span>
   </a>
+  <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
+    <h2>Manage Users</h2>
+    <p>Create, edit, and delete admin users. Reset passwords.</p>
+    <span class="card-link">Manage &rarr;</span>
+  </a>
+  <a href="{{ url_for('admin.view_logs') }}" class="admin-card">
+    <h2>System Logs</h2>
+    <p>View and filter structured log entries from all services.</p>
+    <span class="card-link">View &rarr;</span>
+  </a>
   <a
     href="{{ config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
     target="_blank"
@@ -75,11 +85,6 @@ endblock %} {% block admin_content %}
       queues, mileage, and operator management.
     </p>
     <span class="card-link">Open bot API &rarr;</span>
-  </a>
-  <a href="{{ url_for('admin.manage_users') }}" class="admin-card">
-    <h2>Manage Users</h2>
-    <p>Create, edit, and delete admin users. Reset passwords.</p>
-    <span class="card-link">Manage &rarr;</span>
   </a>
 </div>
 {% endblock %}

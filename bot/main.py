@@ -51,6 +51,15 @@ def configure_logging(level: str = "INFO") -> logging.Logger:
 
     _logger = logging.getLogger("omo_bot")
     _logger.setLevel(resolved_level)
+
+    # Attach DB logging
+    try:
+        from shared.logging_db import DbLogHandler, set_service_name
+        set_service_name('bot_worker')
+        _logger.addHandler(DbLogHandler())
+    except Exception:
+        pass
+
     return _logger
 
 

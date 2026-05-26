@@ -9,6 +9,7 @@ from flask import Flask, jsonify, redirect, url_for
 
 from shared.config import load_dotenv_files, get_bot_api_config_values
 from shared.db import init_app as init_db_app
+from shared.logging_db import DbLogHandler, set_service_name
 
 
 def create_app() -> Flask:
@@ -27,6 +28,11 @@ def create_app() -> Flask:
 
     # Initialize DB
     init_db_app(app)
+
+    # Attach DB logging
+    set_service_name('bot_api')
+    import logging
+    logging.getLogger().addHandler(DbLogHandler())
 
     # Register bot blueprint
     from .admin_bot import bp, oauth_callback

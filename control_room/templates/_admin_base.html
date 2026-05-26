@@ -134,6 +134,13 @@
             </li>
             <li>
               <a
+                href="{{ url_for('admin.view_logs') }}"
+                class="{{ 'active' if request.endpoint == 'admin.view_logs' else '' }}"
+                >System Logs</a
+              >
+            </li>
+            <li>
+              <a
                 href="{{ config.get('BOT_API_URL', 'https://api.openmicodyssey.com') }}"
                 target="_blank"
                 rel="noopener noreferrer"

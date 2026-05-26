@@ -3,6 +3,7 @@ from flask import Flask
 
 from shared.db import init_app as init_db_app
 from shared.config import load_dotenv_files, get_website_config_values
+from shared.logging_db import DbLogHandler, set_service_name
 from .views import main_blueprint
 
 
@@ -21,6 +22,11 @@ def create_app():
     app.config.update(get_website_config_values())
 
     init_db_app(app)
+
+    # Attach DB logging
+    set_service_name('website')
+    import logging
+    logging.getLogger().addHandler(DbLogHandler())
 
     app.register_blueprint(main_blueprint)
     return app

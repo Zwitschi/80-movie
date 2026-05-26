@@ -161,3 +161,36 @@ def manage_users():
         success=success,
         **_ctx(),
     )
+
+
+@admin_blueprint.route('/logs', methods=['GET'])
+def view_logs():
+    from shared.logging_db import query_logs, get_log_count
+
+    service_filter = request.args.get('service', '') or None
+    level_filter = request.args.get('level', '') or None
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    logs = query_logs(
+        service_name=service_filter,
+        log_level=level_filter,
+        limit=per_page,
+        offset=offset,
+    )
+    total = get_log_count(
+        service_name=service_filter,
+        log_level=level_filter,
+    )
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    return render_template(
+        'view_logs.html',
+        logs=logs,
+        service_filter=service_filter,
+        level_filter=level_filter,
+        page=page,
+        total_pages=total_pages,
+        **_ctx(),
+    )

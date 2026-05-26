@@ -1,0 +1,181 @@
+{% extends '_admin_base.html' %} {% block admin_title %}System Logs{% endblock
+%} {% block admin_content %}
+
+<section class="stack-md">
+  <h2>System Logs</h2>
+
+  <form
+    method="get"
+    action="{{ url_for('admin.view_logs') }}"
+    class="admin-flex-row"
+    style="max-width: 48rem; margin-bottom: 1rem"
+  >
+    <select name="service">
+      <option value="">All services</option>
+      <option
+        value="website"
+        {%
+        if
+        service_filter=""
+        ="website"
+        %}selected{%
+        endif
+        %}
+      >
+        Website
+      </option>
+      <option
+        value="control_room"
+        {%
+        if
+        service_filter=""
+        ="control_room"
+        %}selected{%
+        endif
+        %}
+      >
+        Control Room
+      </option>
+      <option
+        value="bot_api"
+        {%
+        if
+        service_filter=""
+        ="bot_api"
+        %}selected{%
+        endif
+        %}
+      >
+        Bot API
+      </option>
+      <option
+        value="bot_worker"
+        {%
+        if
+        service_filter=""
+        ="bot_worker"
+        %}selected{%
+        endif
+        %}
+      >
+        Bot Worker
+      </option>
+    </select>
+    <select name="level">
+      <option value="">All levels</option>
+      <option
+        value="DEBUG"
+        {%
+        if
+        level_filter=""
+        ="DEBUG"
+        %}selected{%
+        endif
+        %}
+      >
+        DEBUG
+      </option>
+      <option value="INFO" {% if level_filter="" ="INFO" %}selected{% endif %}>
+        INFO
+      </option>
+      <option
+        value="WARNING"
+        {%
+        if
+        level_filter=""
+        ="WARNING"
+        %}selected{%
+        endif
+        %}
+      >
+        WARNING
+      </option>
+      <option
+        value="ERROR"
+        {%
+        if
+        level_filter=""
+        ="ERROR"
+        %}selected{%
+        endif
+        %}
+      >
+        ERROR
+      </option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+  </form>
+
+  {% if logs %}
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 16%">Timestamp</th>
+        <th style="width: 10%">Service</th>
+        <th style="width: 8%">Level</th>
+        <th style="width: 46%">Message</th>
+        <th style="width: 20%">Metadata</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td style="font-size: 0.75rem; white-space: nowrap">
+          {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else
+          '' }}
+        </td>
+        <td><code>{{ log.service_name }}</code></td>
+        <td>
+          {% if log.log_level == 'ERROR' %}
+          <span style="color: #f87171">ERROR</span>
+          {% elif log.log_level == 'WARNING' %}
+          <span style="color: #fbbf24">WARNING</span>
+          {% else %}
+          <span style="color: #4ade80">{{ log.log_level }}</span>
+          {% endif %}
+        </td>
+        <td style="font-size: 0.78rem">{{ log.message }}</td>
+        <td
+          style="
+            font-size: 0.7rem;
+            color: #64748b;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          "
+        >
+          {% if log.metadata %}
+          <code>{{ log.metadata | tojson }}</code>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="admin-flex-row" style="justify-content: center; margin-top: 1rem">
+    {% if page > 1 %}
+    <a
+      href="{{ url_for('admin.view_logs', service=service_filter, level=level_filter, page=page-1) }}"
+      class="btn btn-secondary btn-sm"
+      >&larr; Previous</a
+    >
+    {% endif %}
+    <span style="color: #64748b; font-size: 0.78rem"
+      >Page {{ page }} of {{ total_pages }}</span
+    >
+    {% if page < total_pages %}
+    <a
+      href="{{ url_for('admin.view_logs', service=service_filter, level=level_filter, page=page+1) }}"
+      class="btn btn-secondary btn-sm"
+      >Next &rarr;</a
+    >
+    {% endif %}
+  </div>
+  {% else %}
+  <p>No log entries found.</p>
+  {% endif %}
+</section>
+
+{% endblock %}
