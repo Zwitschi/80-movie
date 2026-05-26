@@ -12,7 +12,7 @@ def build_review_nodes(movie_id, base_url):
     for index, review in enumerate(reviews, start=1):
         review_nodes.append(
             render_schema_template(
-                'review.json',
+                'review.schema',
                 review_id=f'{base_url}/#review-{index}',
                 review=review,
                 movie_id=movie_id,
@@ -35,7 +35,7 @@ def build_aggregate_rating_node(movie_id, base_url):
         return None
 
     return render_schema_template(
-        'aggregate_rating.json',
+        'aggregate_rating.schema',
         rating_id=f'{base_url}/#aggregate-rating',
         aggregate_rating=aggregate_rating,
         movie_id=movie_id,

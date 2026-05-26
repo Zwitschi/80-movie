@@ -16,7 +16,7 @@ def build_organization_node(organization_id, organization_name):
         return None
 
     return render_schema_template(
-        'organization.json',
+        'organization.schema',
         organization_id=organization_id,
         organization=organization,
     )

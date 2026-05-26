@@ -1,0 +1,14 @@
+{
+  "@type": "Offer",
+  "@id": {{ offer_id|tojson }},
+  "name": {{ offer.name|tojson }},
+  "url": {{ offer.url|tojson }},
+  "description": {{ offer.description|default('', true)|tojson }},
+  "category": {{ offer.category|default('', true)|tojson }},
+  "availability": {{ offer.availability|tojson }},
+  "price": {{ offer.price|tojson }},
+  "priceCurrency": {{ offer.price_currency|tojson }},
+  "validFrom": {{ offer.valid_from|tojson }},
+  "offeredBy": {{ offered_by|tojson }},
+  "itemOffered": {{ item_offered|tojson }}
+}

@@ -24,7 +24,7 @@ def build_screening_nodes_and_offer_nodes(movie_id, base_url, organization_id):
             offer_refs.append({'@id': offer_id})
             screening_offer_nodes.append(
                 render_schema_template(
-                    'offer.json',
+                    'offer.schema',
                     offer_id=offer_id,
                     offer=offer,
                     offered_by={'@id': organization_id},
@@ -44,7 +44,7 @@ def build_screening_nodes_and_offer_nodes(movie_id, base_url, organization_id):
         }
         screening_nodes.append(
             render_schema_template(
-                'screening_event.json',
+                'screening_event.schema',
                 screening_id=screening_id,
                 screening=screening,
                 movie_id=movie_id,

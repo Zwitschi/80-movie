@@ -59,7 +59,7 @@ def build_person_nodes_and_refs(movie, base_url):
     for name, record in person_records.items():
         person_nodes.append(
             render_schema_template(
-                'person.json',
+                'person.schema',
                 person_id=person_ids_by_name[name],
                 person={
                     'name': record['name'],

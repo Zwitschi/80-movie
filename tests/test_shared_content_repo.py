@@ -17,7 +17,7 @@ def test_content_store_website_content_repository_maps_shared_dtos():
     repository = ContentStoreWebsiteContentRepository(
         reader_factory=lambda: FakeContentReader(
             {
-                'movies.json': {
+                'movies': {
                     'movie': {
                         'title': 'Open Mic Odyssey',
                         'tagline': 'Road movie',
@@ -32,8 +32,8 @@ def test_content_store_website_content_repository_maps_shared_dtos():
                         },
                     }
                 },
-                'media_assets.json': {'media': {'poster_image': '/static/images/poster.jpg'}},
-                'events.json': {
+                'media_assets': {'media': {'poster_image': '/static/images/poster.jpg'}},
+                'events': {
                     'events': [
                         {
                             'name': 'Festival Premiere',
@@ -68,7 +68,7 @@ def test_content_store_website_content_repository_maps_shared_dtos():
                         }
                     ]
                 },
-                'connect.json': {
+                'connect': {
                     'connect': {
                         'links': {
                             'campaigns': [

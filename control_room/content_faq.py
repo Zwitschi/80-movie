@@ -1,7 +1,7 @@
 from flask import redirect, render_template, url_for
 from shared.utils import (
-    load_json,
-    save_json,
+    load_content,
+    save_content,
     process_list_action,
 )
 from .content_common import _ctx
@@ -9,7 +9,7 @@ from .content_common import _ctx
 
 def _handle_faq_request(request):
     save_error = None
-    faq_payload = load_json('faq.json')
+    faq_payload = load_content('faq')
     faq_items = faq_payload.get('faq', [])
     if not isinstance(faq_items, list):
         faq_items = []
@@ -36,7 +36,7 @@ def _handle_faq_request(request):
                 candidate,
             )
             faq_payload['faq'] = updated
-            success, save_error = save_json('faq.json', faq_payload)
+            success, save_error = save_content('faq', faq_payload)
             if success:
                 return redirect(url_for('content.edit_faq', saved='1'))
 

@@ -28,9 +28,9 @@ class ContentStoreWebsiteContentRepository:
 
     def get_production_metadata(self) -> ProductionMetadata:
         reader = self._reader_factory()
-        movie_payload = _as_dict(reader.read('movies.json')).get('movie', {})
+        movie_payload = _as_dict(reader.read('movies')).get('movie', {})
         media_payload = _as_dict(reader.read(
-            'media_assets.json')).get('media', {})
+            'media_assets')).get('media', {})
         release_status = _as_dict(
             _as_dict(movie_payload).get('release_status'))
         return ProductionMetadata(
@@ -49,7 +49,7 @@ class ContentStoreWebsiteContentRepository:
 
     def list_screening_events(self) -> tuple[ScreeningEvent, ...]:
         reader = self._reader_factory()
-        events_payload = _as_dict(reader.read('events.json')).get('events', [])
+        events_payload = _as_dict(reader.read('events')).get('events', [])
         events: list[ScreeningEvent] = []
         for event in _as_list(events_payload):
             event_dict = _as_dict(event)
@@ -94,7 +94,7 @@ class ContentStoreWebsiteContentRepository:
     def list_campaign_links(self) -> tuple[CampaignLink, ...]:
         reader = self._reader_factory()
         connect_payload = _as_dict(reader.read(
-            'connect.json')).get('connect', {})
+            'connect')).get('connect', {})
         link_payload = _as_dict(_as_dict(connect_payload).get('links'))
         campaigns = []
         for campaign in _as_list(link_payload.get('campaigns')):

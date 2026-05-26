@@ -1,11 +1,11 @@
 from flask import redirect, render_template, url_for
 from .admin_utils import _review_from_form, _validate_aggregate
-from shared.utils import process_list_action, save_json, load_json
+from shared.utils import process_list_action, save_content, load_content
 from .content_common import _ctx
 
 
 def _handle_reviews_request(request):
-    reviews_payload = load_json('reviews.json')
+    reviews_payload = load_content('reviews')
     reviews = reviews_payload.get('reviews', [])
     if not isinstance(reviews, list):
         reviews = []
@@ -27,8 +27,8 @@ def _handle_reviews_request(request):
                 reviews = process_list_action(
                     reviews, 'add', '', entry)
                 reviews_payload['reviews'] = reviews
-                success, err = save_json(
-                    'reviews.json', reviews_payload)
+                success, err = save_content(
+                    'reviews', reviews_payload)
                 if success:
                     return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err
@@ -40,8 +40,8 @@ def _handle_reviews_request(request):
                 request.form.get('review_index', ''),
             )
             reviews_payload['reviews'] = reviews
-            success, err = save_json(
-                'reviews.json', reviews_payload)
+            success, err = save_content(
+                'reviews', reviews_payload)
             if success:
                 return redirect(url_for('content.edit_reviews', saved='1'))
             save_error = err
@@ -67,8 +67,8 @@ def _handle_reviews_request(request):
                 save_error = err
             else:
                 reviews_payload['aggregate_rating'] = candidate
-                success, err = save_json(
-                    'reviews.json', reviews_payload)
+                success, err = save_content(
+                    'reviews', reviews_payload)
                 if success:
                     return redirect(url_for('content.edit_reviews', saved='1'))
                 save_error = err

@@ -1,6 +1,6 @@
 import re
 from flask import current_app
-from shared.content_store import ContentReadError, ContentWriteError
+from shared.content_store import ContentWriteError
 
 
 def get_admin_reader():
@@ -13,20 +13,15 @@ def get_admin_writer():
     return get_content_writer()
 
 
-def load_json(filename: str, default_val=None):
-    if default_val is None:
-        default_val = {}
-    try:
-        from shared.content_store import get_content_reader
-        return get_content_reader().read(filename)
-    except ContentReadError:
-        return default_val
+def load_content(content_key: str):
+    from shared.content_store import get_content_reader
+    return get_content_reader().read(content_key)
 
 
-def save_json(filename: str, payload: dict) -> tuple[bool, str | None]:
+def save_content(content_key: str, payload: dict) -> tuple[bool, str | None]:
     try:
         from shared.content_store import get_content_writer
-        get_content_writer().write(filename, payload)
+        get_content_writer().write(content_key, payload)
         return True, None
     except ContentWriteError as exc:
         return False, str(exc)

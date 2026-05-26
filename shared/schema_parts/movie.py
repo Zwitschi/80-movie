@@ -27,7 +27,7 @@ def build_movie_node(
     cursor.close()
 
     return render_schema_template(
-        'movie.json',
+        'movie.schema',
         movie_id=movie_id,
         movie=movie,
         base_url=base_url,
@@ -57,7 +57,7 @@ def build_faq_node(movie_id, base_url):
         return None
 
     return render_schema_template(
-        'faq_page.json',
+        'faq_page.schema',
         faq_id=f'{base_url}/#faq',
         page_url=f'{base_url}/#faq',
         faq_items=faq_items,

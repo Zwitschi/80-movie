@@ -20,7 +20,7 @@ def build_trailer_node(trailer_id, movie_id, organization_id):
     cursor.close()
 
     return render_schema_template(
-        'video_object.json',
+        'video_object.schema',
         trailer_id=trailer_id,
         trailer=trailer,
         movie_id=movie_id,

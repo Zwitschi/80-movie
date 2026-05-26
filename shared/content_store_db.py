@@ -60,18 +60,18 @@ class DbContentReader:
 
     def _read_file(self, cursor, filename: str):
         readers = {
-            'movies.json': self._read_movies,
-            'gallery.json': self._read_gallery,
-            'events.json': self._read_events,
-            'faq.json': self._read_faq,
-            'reviews.json': self._read_reviews,
-            'people.json': self._read_people,
-            'organizations.json': self._read_organizations,
-            'offers.json': self._read_offers,
-            'social.json': self._read_social,
-            'connect.json': self._read_connect,
-            'content.json': self._read_content,
-            'media_assets.json': self._read_media_assets,
+            'movies': self._read_movies,
+            'gallery': self._read_gallery,
+            'events': self._read_events,
+            'faq': self._read_faq,
+            'reviews': self._read_reviews,
+            'people': self._read_people,
+            'organizations': self._read_organizations,
+            'offers': self._read_offers,
+            'social': self._read_social,
+            'connect': self._read_connect,
+            'content': self._read_content,
+            'media_assets': self._read_media_assets,
         }
         handler = readers.get(filename)
         if handler:
@@ -411,10 +411,10 @@ class DbContentReader:
     def read_all(self) -> dict:
         result = {}
         for filename in [
-            'movies.json', 'gallery.json', 'events.json', 'faq.json',
-            'reviews.json', 'people.json', 'organizations.json',
-            'offers.json', 'social.json', 'connect.json',
-            'content.json', 'media_assets.json',
+            'movies', 'gallery', 'events', 'faq',
+            'reviews', 'people', 'organizations',
+            'offers', 'social', 'connect',
+            'content', 'media_assets',
         ]:
             result[filename] = self.read(filename)
         return result
@@ -449,18 +449,18 @@ class DbContentWriter:
 
     def _write_file(self, cursor, conn, filename: str, payload):
         writers = {
-            'movies.json': self._write_movies,
-            'gallery.json': self._write_gallery,
-            'events.json': self._write_events,
-            'faq.json': self._write_faq,
-            'reviews.json': self._write_reviews,
-            'people.json': self._write_people,
-            'organizations.json': self._write_organizations,
-            'offers.json': self._write_offers,
-            'social.json': self._write_social,
-            'connect.json': self._write_connect,
-            'content.json': self._write_content,
-            'media_assets.json': self._write_media_assets,
+            'movies': self._write_movies,
+            'gallery': self._write_gallery,
+            'events': self._write_events,
+            'faq': self._write_faq,
+            'reviews': self._write_reviews,
+            'people': self._write_people,
+            'organizations': self._write_organizations,
+            'offers': self._write_offers,
+            'social': self._write_social,
+            'connect': self._write_connect,
+            'content': self._write_content,
+            'media_assets': self._write_media_assets,
         }
         handler = writers.get(filename)
         if handler:

@@ -6,7 +6,7 @@ from shared.content_store import get_content_reader
 def _ctx():
     """Build admin page context for control room templates."""
     reader = get_content_reader()
-    movies = reader.read('movies.json')
+    movies = reader.read('movies')
     movie = movies.get('movie', {})
     return {
         'movie_title': movie.get('title', ''),

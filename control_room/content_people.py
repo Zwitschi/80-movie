@@ -1,8 +1,8 @@
 from flask import redirect, render_template, url_for
 from .admin_utils import _contributor_from_form, _credit_from_form, _person_from_form, _org_from_form, CONTRIBUTOR_SECTIONS
 from shared.utils import (
-    load_json,
-    save_json,
+    load_content,
+    save_content,
     process_list_action,
 )
 from .content_common import _ctx
@@ -23,8 +23,8 @@ def _render_people_form(*, save_error, save_success, people, contributors, credi
 
 
 def _handle_people_request(request):
-    people_payload = load_json('people.json')
-    orgs_payload = load_json('organizations.json')
+    people_payload = load_content('people')
+    orgs_payload = load_content('organizations')
 
     people = people_payload.get('people', {})
     if not isinstance(people, dict):
@@ -53,8 +53,8 @@ def _handle_people_request(request):
                 people = dict(people)
                 people[entry['name']] = entry
                 people_payload['people'] = people
-                success, save_error = save_json(
-                    'people.json', people_payload)
+                success, save_error = save_content(
+                    'people', people_payload)
                 if success:
                     return redirect(url_for('content.edit_people', saved='1'))
 
@@ -64,8 +64,8 @@ def _handle_people_request(request):
                 people = dict(people)
                 del people[key]
                 people_payload['people'] = people
-                success, save_error = save_json(
-                    'people.json', people_payload)
+                success, save_error = save_content(
+                    'people', people_payload)
                 if success:
                     return redirect(url_for('content.edit_people', saved='1'))
 
@@ -90,8 +90,8 @@ def _handle_people_request(request):
                         entry,
                     )
                     people_payload['contributors'] = contributors
-                    success, save_error = save_json(
-                        'people.json', people_payload)
+                    success, save_error = save_content(
+                        'people', people_payload)
                     if success:
                         return redirect(url_for('content.edit_people', saved='1'))
 
@@ -106,8 +106,8 @@ def _handle_people_request(request):
                 idx_str,
             )
             people_payload['contributors'] = contributors
-            success, save_error = save_json(
-                'people.json', people_payload)
+            success, save_error = save_content(
+                'people', people_payload)
             if success:
                 return redirect(url_for('content.edit_people', saved='1'))
 
@@ -124,8 +124,8 @@ def _handle_people_request(request):
                     entry,
                 )
                 people_payload['credits_people'] = credits_people
-                success, save_error = save_json(
-                    'people.json', people_payload)
+                success, save_error = save_content(
+                    'people', people_payload)
                 if success:
                     return redirect(url_for('content.edit_people', saved='1'))
 
@@ -136,8 +136,8 @@ def _handle_people_request(request):
                 request.form.get('credit_index', ''),
             )
             people_payload['credits_people'] = credits_people
-            success, save_error = save_json(
-                'people.json', people_payload)
+            success, save_error = save_content(
+                'people', people_payload)
             if success:
                 return redirect(url_for('content.edit_people', saved='1'))
 
@@ -150,8 +150,8 @@ def _handle_people_request(request):
                 organizations = dict(organizations)
                 organizations[entry['name']] = entry
                 orgs_payload['organizations'] = organizations
-                success, save_error = save_json(
-                    'organizations.json', orgs_payload)
+                success, save_error = save_content(
+                    'organizations', orgs_payload)
                 if success:
                     return redirect(url_for('content.edit_people', saved='1'))
 
@@ -161,8 +161,8 @@ def _handle_people_request(request):
                 organizations = dict(organizations)
                 del organizations[key]
                 orgs_payload['organizations'] = organizations
-                success, save_error = save_json(
-                    'organizations.json', orgs_payload)
+                success, save_error = save_content(
+                    'organizations', orgs_payload)
                 if success:
                     return redirect(url_for('content.edit_people', saved='1'))
 

@@ -606,6 +606,30 @@ img {
   color: var(--text-muted);
 }
 
+.social-embed-grid {
+  margin-top: 1.25rem;
+}
+
+.social-embed-wrap {
+  aspect-ratio: 9 / 16;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.social-embed-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.social-profile-grid {
+  margin-top: 1.25rem;
+}
+
+.gallery-profile-card {
+  min-height: 220px;
+}
+
 .gallery-notes-grid {
   align-items: stretch;
 }

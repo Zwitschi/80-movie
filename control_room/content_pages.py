@@ -52,7 +52,7 @@ def _handle_content_post(request, content_payload, pages_payload, page_context, 
 
     content_payload['pages'] = updated_pages
     try:
-        writer.write('content.json', content_payload)
+        writer.write('content', content_payload)
     except ContentWriteError as exc:
         form_pages = {
             key: _content_page_form_fields(
@@ -80,7 +80,7 @@ def _handle_content_request(request):
     page_context = _ctx()
 
     try:
-        content_payload = reader.read('content.json')
+        content_payload = reader.read('content')
     except ContentReadError as exc:
         return _render_content_form(
             page_context=page_context,

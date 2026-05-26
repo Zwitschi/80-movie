@@ -59,6 +59,64 @@ block page_content %}
         {% endfor %}
       </div>
     </section>
+
+    <section>
+      <div class="section-header">
+        <h2>{{ page_content.get('social_gallery_heading') or 'TikTok & Instagram Gallery' }}</h2>
+        <p>
+          {{ page_content.get('social_gallery_description') or 'Embedded short-form posts and clips from the official film accounts.' }}
+        </p>
+      </div>
+
+      {% if movie.social_gallery_embed_items %}
+      <div class="gallery-grid social-embed-grid">
+        {% for item in movie.social_gallery_embed_items %}
+        <article class="content-card gallery-card gallery-embed-card">
+          <div class="gallery-image-wrap social-embed-wrap">
+            <iframe
+              src="{{ item.embed_url }}"
+              class="social-embed-frame"
+              title="{{ item.label }} embed"
+              loading="lazy"
+              allowfullscreen
+              scrolling="no"
+              referrerpolicy="strict-origin-when-cross-origin"
+            ></iframe>
+          </div>
+          <div class="gallery-copy stack-sm">
+            <span class="eyebrow eyebrow-small">{{ item.platform | title }}</span>
+            <h3>{{ item.label }}</h3>
+            {% if item.description %}
+            <p>{{ item.description }}</p>
+            {% endif %}
+            <a href="{{ item.url }}" class="text-link" target="_blank" rel="noopener noreferrer"
+              >Open Original Post</a
+            >
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if movie.social_gallery_profile_items %}
+      <div class="gallery-grid social-profile-grid">
+        {% for item in movie.social_gallery_profile_items %}
+        <article class="content-card gallery-card gallery-profile-card">
+          <div class="gallery-copy stack-sm">
+            <span class="eyebrow eyebrow-small">{{ item.platform | title }}</span>
+            <h3>{{ item.label }}</h3>
+            {% if item.description %}
+            <p>{{ item.description }}</p>
+            {% endif %}
+            <a href="{{ item.url }}" class="text-link" target="_blank" rel="noopener noreferrer"
+              >View Account</a
+            >
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
   </div>
 </main>
 {% endblock %}

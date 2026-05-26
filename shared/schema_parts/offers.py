@@ -16,7 +16,7 @@ def build_offer_nodes_and_refs(movie_id, base_url, organization_id):
         movie_offer_refs.append({'@id': offer_id})
         movie_offer_nodes.append(
             render_schema_template(
-                'offer.json',
+                'offer.schema',
                 offer_id=offer_id,
                 offer=offer,
                 offered_by={'@id': organization_id},

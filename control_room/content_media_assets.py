@@ -8,7 +8,7 @@ def _handle_media_assets_request(request):
     writer = get_content_writer()
 
     try:
-        assets_payload = reader.read('media_assets.json')
+        assets_payload = reader.read('media_assets')
     except ContentReadError as exc:
         return render_template(
             'media_assets.html',
@@ -44,7 +44,7 @@ def _handle_media_assets_request(request):
 
             assets_payload['media'] = media
             try:
-                writer.write('media_assets.json', assets_payload)
+                writer.write('media_assets', assets_payload)
                 return redirect(url_for('content.edit_media_assets', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -71,7 +71,7 @@ def _handle_media_assets_request(request):
             media['trailer'] = trailer
             assets_payload['media'] = media
             try:
-                writer.write('media_assets.json', assets_payload)
+                writer.write('media_assets', assets_payload)
                 return redirect(url_for('content.edit_media_assets', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)

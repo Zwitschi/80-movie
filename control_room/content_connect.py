@@ -14,8 +14,8 @@ def _connect_admin_state():
     reader = get_content_reader()
     writer = get_content_writer()
 
-    social_payload = reader.read('social.json')
-    connect_payload = reader.read('connect.json')
+    social_payload = reader.read('social')
+    connect_payload = reader.read('connect')
 
     social = social_payload.get('social', [])
     if not isinstance(social, list):
@@ -111,7 +111,7 @@ def _handle_connect_social_request(request):
             else:
                 social_payload['social'] = list(social) + [entry]
                 try:
-                    writer.write('social.json', social_payload)
+                    writer.write('social', social_payload)
                     return redirect(url_for('content.edit_connect_social', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
@@ -123,7 +123,7 @@ def _handle_connect_social_request(request):
                 if 0 <= idx < len(updated):
                     updated.pop(idx)
                     social_payload['social'] = updated
-                    writer.write('social.json', social_payload)
+                    writer.write('social', social_payload)
                     return redirect(url_for('content.edit_connect_social', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -139,7 +139,7 @@ def _handle_connect_social_request(request):
                     if 0 <= idx < len(updated):
                         updated[idx] = entry
                         social_payload['social'] = updated
-                        writer.write('social.json', social_payload)
+                        writer.write('social', social_payload)
                         return redirect(url_for('content.edit_connect_social', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -153,7 +153,7 @@ def _handle_connect_social_request(request):
                     request.form.get('social_index', '').strip(),
                 )
                 social_payload['social'] = updated
-                writer.write('social.json', social_payload)
+                writer.write('social', social_payload)
                 return redirect(url_for('content.edit_connect_social', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -192,7 +192,7 @@ def _handle_connect_supporters_request(request):
                 connect.setdefault('links', {})['campaigns'] = updated
                 connect_payload['connect'] = connect
                 try:
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
@@ -205,7 +205,7 @@ def _handle_connect_supporters_request(request):
                     updated.pop(idx)
                     connect.setdefault('links', {})['campaigns'] = updated
                     connect_payload['connect'] = connect
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -222,7 +222,7 @@ def _handle_connect_supporters_request(request):
                         updated[idx] = entry
                         connect.setdefault('links', {})['campaigns'] = updated
                         connect_payload['connect'] = connect
-                        writer.write('connect.json', connect_payload)
+                        writer.write('connect', connect_payload)
                         return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -237,7 +237,7 @@ def _handle_connect_supporters_request(request):
                 )
                 connect.setdefault('links', {})['campaigns'] = updated
                 connect_payload['connect'] = connect
-                writer.write('connect.json', connect_payload)
+                writer.write('connect', connect_payload)
                 return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -251,7 +251,7 @@ def _handle_connect_supporters_request(request):
                 connect.setdefault('links', {})['channels'] = updated
                 connect_payload['connect'] = connect
                 try:
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
@@ -264,7 +264,7 @@ def _handle_connect_supporters_request(request):
                     updated.pop(idx)
                     connect.setdefault('links', {})['channels'] = updated
                     connect_payload['connect'] = connect
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -281,7 +281,7 @@ def _handle_connect_supporters_request(request):
                         updated[idx] = entry
                         connect.setdefault('links', {})['channels'] = updated
                         connect_payload['connect'] = connect
-                        writer.write('connect.json', connect_payload)
+                        writer.write('connect', connect_payload)
                         return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -296,7 +296,7 @@ def _handle_connect_supporters_request(request):
                 )
                 connect.setdefault('links', {})['channels'] = updated
                 connect_payload['connect'] = connect
-                writer.write('connect.json', connect_payload)
+                writer.write('connect', connect_payload)
                 return redirect(url_for('content.edit_connect_supporters', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -343,7 +343,7 @@ def _handle_connect_patreon_request(request):
             connect['page'] = page
             connect_payload['connect'] = connect
             try:
-                writer.write('connect.json', connect_payload)
+                writer.write('connect', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -357,7 +357,7 @@ def _handle_connect_patreon_request(request):
                 connect['page'] = page
                 connect_payload['connect'] = connect
                 try:
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
@@ -371,7 +371,7 @@ def _handle_connect_patreon_request(request):
                     page['benefits'] = updated
                     connect['page'] = page
                     connect_payload['connect'] = connect
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -390,7 +390,7 @@ def _handle_connect_patreon_request(request):
                         page['benefits'] = updated
                         connect['page'] = page
                         connect_payload['connect'] = connect
-                        writer.write('connect.json', connect_payload)
+                        writer.write('connect', connect_payload)
                         return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -406,7 +406,7 @@ def _handle_connect_patreon_request(request):
                 page['benefits'] = updated
                 connect['page'] = page
                 connect_payload['connect'] = connect
-                writer.write('connect.json', connect_payload)
+                writer.write('connect', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)
@@ -421,7 +421,7 @@ def _handle_connect_patreon_request(request):
                 connect['page'] = page
                 connect_payload['connect'] = connect
                 try:
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
                 except ContentWriteError as exc:
                     save_error = str(exc)
@@ -435,7 +435,7 @@ def _handle_connect_patreon_request(request):
                     page['tiers'] = updated
                     connect['page'] = page
                     connect_payload['connect'] = connect
-                    writer.write('connect.json', connect_payload)
+                    writer.write('connect', connect_payload)
                     return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -454,7 +454,7 @@ def _handle_connect_patreon_request(request):
                         page['tiers'] = updated
                         connect['page'] = page
                         connect_payload['connect'] = connect
-                        writer.write('connect.json', connect_payload)
+                        writer.write('connect', connect_payload)
                         return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except (ValueError, ContentWriteError) as exc:
                 save_error = str(exc)
@@ -470,7 +470,7 @@ def _handle_connect_patreon_request(request):
                 page['tiers'] = updated
                 connect['page'] = page
                 connect_payload['connect'] = connect
-                writer.write('connect.json', connect_payload)
+                writer.write('connect', connect_payload)
                 return redirect(url_for('content.edit_connect_patreon', saved='1'))
             except ContentWriteError as exc:
                 save_error = str(exc)

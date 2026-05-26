@@ -2,7 +2,7 @@ from flask import redirect, render_template, url_for
 from .content_common import _ctx
 from shared.utils import (
     _movie_form_fields,
-    load_json,
+    load_content,
     _coerce_release_status,
 )
 from shared.content_store import ContentWriteError, get_content_reader, get_content_writer
@@ -11,7 +11,7 @@ from shared.content_store import ContentWriteError, get_content_reader, get_cont
 def _handle_film_request_post(request):
     writer = get_content_writer()
     reader = get_content_reader()
-    payload = reader.read('movies.json')
+    payload = reader.read('movies')
     movie = payload.get('movie', {})
     update = dict(movie)
     update['title'] = request.form.get('title', '').strip()
@@ -35,7 +35,7 @@ def _handle_film_request_post(request):
 
     payload['movie'] = update
     try:
-        writer.write('movies.json', payload)
+        writer.write('movies', payload)
         return redirect(url_for('content.edit_film', saved='1'))
     except ContentWriteError as exc:
         return render_template(
@@ -49,7 +49,7 @@ def _handle_film_request_post(request):
 
 def _handle_film_request(request):
     save_error = None
-    movies_payload = load_json('movies.json')
+    movies_payload = load_content('movies')
     movie_payload = movies_payload.get('movie', {})
 
     if request.method == 'POST':

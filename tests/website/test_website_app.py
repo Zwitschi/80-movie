@@ -42,10 +42,10 @@ class TestMovieData:
 
     def test_content_store_payload_integrity(self, app):
         logical_files = [
-            'movies.json', 'people.json', 'organizations.json',
-            'media_assets.json', 'events.json', 'reviews.json',
-            'offers.json', 'faq.json', 'gallery.json', 'social.json',
-            'connect.json'
+            'movies', 'people', 'organizations',
+            'media_assets', 'events', 'reviews',
+            'offers', 'faq', 'gallery', 'social',
+            'connect'
         ]
 
         with app.app_context():
@@ -59,7 +59,7 @@ class TestMovieData:
 
     def test_db_content_reader_exposes_movie_payload(self, app):
         with app.app_context():
-            payload = get_content_reader().read('movies.json')
+            payload = get_content_reader().read('movies')
 
         assert 'movie' in payload
         assert isinstance(payload['movie'], dict)
@@ -69,11 +69,11 @@ class TestMovieData:
         class FakeReader:
             def read_all(self):
                 return {
-                    'movies.json': {'movie': {'title': 'Open Mic Odyssey'}},
-                    'media_assets.json': {'media': {}},
-                    'reviews.json': {},
-                    'offers.json': {},
-                    'people.json': {
+                    'movies': {'movie': {'title': 'Open Mic Odyssey'}},
+                    'media_assets': {'media': {}},
+                    'reviews': {},
+                    'offers': {},
+                    'people': {
                         'people': {
                             'Alpha': {
                                 'name': 'Alpha',
@@ -92,13 +92,13 @@ class TestMovieData:
                             {'name': 'Beta', 'role': 'actor'},
                         ],
                     },
-                    'organizations.json': {'organizations': {}},
-                    'events.json': {'events': []},
-                    'faq.json': {'faq': []},
-                    'gallery.json': {'gallery': []},
-                    'social.json': {'social': []},
-                    'connect.json': {'connect': {'page': {}, 'links': {}}},
-                    'content.json': {'pages': {}},
+                    'organizations': {'organizations': {}},
+                    'events': {'events': []},
+                    'faq': {'faq': []},
+                    'gallery': {'gallery': []},
+                    'social': {'social': []},
+                    'connect': {'connect': {'page': {}, 'links': {}}},
+                    'content': {'pages': {}},
                 }
 
         monkeypatch.setattr(
@@ -120,6 +120,72 @@ class TestMovieData:
                 'description': '',
             },
         ]
+
+    def test_get_movie_data_builds_social_gallery_items(self, app, monkeypatch):
+        class FakeReader:
+            def read_all(self):
+                return {
+                    'movies': {'movie': {'title': 'Open Mic Odyssey'}},
+                    'media_assets': {'media': {}},
+                    'reviews': {},
+                    'offers': {},
+                    'people': {
+                        'people': {},
+                        'contributors': {},
+                        'credits_people': [],
+                    },
+                    'organizations': {'organizations': {}},
+                    'events': {'events': []},
+                    'faq': {'faq': []},
+                    'gallery': {'gallery': []},
+                    'social': {
+                        'social': [
+                            {
+                                'label': 'Instagram Post',
+                                'url': 'https://www.instagram.com/p/C0FFEE123/',
+                                'description': 'A still from the road.',
+                            },
+                            {
+                                'label': 'TikTok Clip',
+                                'url': 'https://www.tiktok.com/@openmicodyssey/video/7450123456789012345',
+                                'description': 'Behind-the-scenes clip.',
+                            },
+                            {
+                                'label': 'Instagram',
+                                'url': 'https://www.instagram.com/openmicodyssey/',
+                                'description': 'Official profile.',
+                            },
+                            {
+                                'label': 'TikTok',
+                                'url': 'https://www.tiktok.com/@openmicodyssey',
+                                'description': 'Official TikTok account.',
+                            },
+                            {
+                                'label': 'YouTube',
+                                'url': 'https://www.youtube.com/@openmicodyssey',
+                                'description': 'Channel link.',
+                            },
+                        ]
+                    },
+                    'connect': {'connect': {'page': {}, 'links': {}}},
+                    'content': {'pages': {}},
+                }
+
+        monkeypatch.setattr(
+            movie_data, 'get_content_reader', lambda _=None: FakeReader())
+
+        with app.app_context():
+            data = get_movie_data()
+
+        assert len(data['social_gallery_items']) == 4
+        assert len(data['social_gallery_embed_items']) == 2
+        assert len(data['social_gallery_profile_items']) == 2
+        assert data['social_gallery_embed_items'][0]['embed_url'] == (
+            'https://www.instagram.com/p/C0FFEE123/embed/captioned/'
+        )
+        assert data['social_gallery_embed_items'][1]['embed_url'] == (
+            'https://www.tiktok.com/embed/v2/7450123456789012345'
+        )
 
 
 class TestFlaskApp:

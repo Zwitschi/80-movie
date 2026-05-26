@@ -5,8 +5,8 @@ from .admin_utils import (
 )
 
 from shared.utils import (
-    load_json,
-    save_json,
+    load_content,
+    save_content,
     process_list_action,
     EVENT_STATUSES,
     EVENT_ATTENDANCE_MODES,
@@ -31,8 +31,8 @@ def _render_events_form(*, save_error, save_success, events, offers, page_contex
 
 
 def _handle_events_request(request):
-    events_payload = load_json('events.json')
-    offers_payload = load_json('offers.json')
+    events_payload = load_content('events')
+    offers_payload = load_content('offers')
     events = events_payload.get('events', [])
     if not isinstance(events, list):
         events = []
@@ -53,8 +53,8 @@ def _handle_events_request(request):
                 request.form.get('event_index', ''),
             )
             events_payload['events'] = events
-            success, err = save_json(
-                'events.json', events_payload)
+            success, err = save_content(
+                'events', events_payload)
             if success:
                 return redirect(url_for('content.edit_events', saved='1'))
             save_error = err
@@ -66,8 +66,8 @@ def _handle_events_request(request):
                 request.form.get('offer_index', ''),
             )
             offers_payload['offers'] = offers
-            success, err = save_json(
-                'offers.json', offers_payload)
+            success, err = save_content(
+                'offers', offers_payload)
             if success:
                 return redirect(url_for('content.edit_events', saved='1'))
             save_error = err
@@ -80,8 +80,8 @@ def _handle_events_request(request):
                 events = process_list_action(
                     events, 'add', '', new_event)
                 events_payload['events'] = events
-                success, err = save_json(
-                    'events.json', events_payload)
+                success, err = save_content(
+                    'events', events_payload)
                 if success:
                     return redirect(url_for('content.edit_events', saved='1'))
                 save_error = err
@@ -94,8 +94,8 @@ def _handle_events_request(request):
                 offers = process_list_action(
                     offers, 'add', '', new_offer)
                 offers_payload['offers'] = offers
-                success, err = save_json(
-                    'offers.json', offers_payload)
+                success, err = save_content(
+                    'offers', offers_payload)
                 if success:
                     return redirect(url_for('content.edit_events', saved='1'))
                 save_error = err

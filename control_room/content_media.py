@@ -1,5 +1,5 @@
 from flask import redirect, render_template, url_for
-from shared.utils import _gallery_form_fields, process_list_action, save_json, load_json
+from shared.utils import _gallery_form_fields, process_list_action, save_content, load_content
 from .content_common import _ctx
 
 
@@ -32,8 +32,8 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
             if category_name not in categories:
                 categories.append(category_name)
                 gallery_payload['categories'] = categories
-                success, save_error = save_json(
-                    'gallery.json', gallery_payload)
+                success, save_error = save_content(
+                    'gallery', gallery_payload)
                 if success:
                     return redirect(url_for('content.manage_media', saved='1'))
                 return _render_media_error(save_error, gallery_items, categories)
@@ -51,7 +51,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 if item.get('category') == category_name:
                     item['category'] = ''
             gallery_payload['gallery'] = gallery_items
-            success, save_error = save_json('gallery.json', gallery_payload)
+            success, save_error = save_content('gallery', gallery_payload)
             if success:
                 return redirect(url_for('content.manage_media', saved='1'))
             return _render_media_error(save_error, gallery_items, categories)
@@ -71,7 +71,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 if item.get('category') == old_name:
                     item['category'] = new_name
             gallery_payload['gallery'] = gallery_items
-            success, save_error = save_json('gallery.json', gallery_payload)
+            success, save_error = save_content('gallery', gallery_payload)
             if success:
                 return redirect(url_for('content.manage_media', saved='1'))
             return _render_media_error(save_error, gallery_items, categories)
@@ -86,8 +86,8 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 if len(order) == len(gallery_items):
                     gallery_items = [gallery_items[index] for index in order]
                     gallery_payload['gallery'] = gallery_items
-                    success, _save_error = save_json(
-                        'gallery.json', gallery_payload)
+                    success, _save_error = save_content(
+                        'gallery', gallery_payload)
                     if success:
                         return redirect(url_for('content.manage_media', saved='1'))
             except (ValueError, IndexError):
@@ -109,8 +109,8 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
                 gallery_items[idx]['description'] = request.form.get(
                     'description', '').strip()
                 gallery_payload['gallery'] = gallery_items
-                success, save_error = save_json(
-                    'gallery.json', gallery_payload)
+                success, save_error = save_content(
+                    'gallery', gallery_payload)
                 if success:
                     return redirect(url_for('content.manage_media', saved='1'))
                 return _render_media_error(save_error, gallery_items, categories)
@@ -142,7 +142,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
 
     gallery_payload['gallery'] = updated_items
 
-    success, save_error = save_json('gallery.json', gallery_payload)
+    success, save_error = save_content('gallery', gallery_payload)
     if success:
         return redirect(url_for('content.manage_media', saved='1'))
     return _render_media_error(save_error, gallery_items, categories)
@@ -150,7 +150,7 @@ def _handle_media_request_post(request, gallery_payload, gallery_items):
 
 def _handle_media_request(request):
     save_error = None
-    gallery_payload = load_json('gallery.json')
+    gallery_payload = load_content('gallery')
     gallery_items = gallery_payload.get('gallery', [])
     if not isinstance(gallery_items, list):
         gallery_items = []

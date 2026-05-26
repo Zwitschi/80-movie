@@ -1,6 +1,6 @@
 from website.movie_site.db import get_conn
-from website.movie_site.content_store import JsonContentReader
 from website.app import create_app
+from shared.content_store import get_content_reader
 import uuid
 import os
 import json
@@ -365,19 +365,20 @@ def main():
     """
     print("Starting database initialization...")
     conn = None
+    cursor = None
     try:
         conn = get_conn()
         cursor = conn.cursor()
 
-        print("Reading all JSON data files...")
-        reader = JsonContentReader()
+        print("Reading all content payloads...")
+        reader = get_content_reader()
         all_content = reader.read_all()
         print("Data loaded.")
 
         # Insert data in order of dependency
-        insert_organizations(cursor, all_content.get('organizations.json', {}))
-        insert_people(cursor, all_content.get('people.json', {}))
-        insert_movie(cursor, all_content.get('movies.json', {}))
+        insert_organizations(cursor, all_content.get('organizations', {}))
+        insert_people(cursor, all_content.get('people', {}))
+        insert_movie(cursor, all_content.get('movies', {}))
 
         # Get the movie_id to link other data
         cursor.execute("SELECT id FROM movie LIMIT 1;")
@@ -386,9 +387,9 @@ def main():
 
         if movie_id:
             print("Movie ID:", movie_id)
-            insert_reviews(cursor, all_content.get('reviews.json', {}), movie_id)
+            insert_reviews(cursor, all_content.get('reviews', {}), movie_id)
             insert_aggregate_rating(
-                cursor, all_content.get('reviews.json', {}), movie_id)
+                cursor, all_content.get('reviews', {}), movie_id)
 
             # Get the organization_id to link events and offers
             cursor.execute("SELECT id FROM organization WHERE name = %s;",
@@ -398,20 +399,20 @@ def main():
 
             if movie_id and organization_id:
                 insert_events_and_offers(cursor, all_content.get(
-                    'events.json', {}), movie_id, organization_id)
+                    'events', {}), movie_id, organization_id)
             else:
                 print(
                     "Cannot insert events without movie_id and organization_id.", file=sys.stderr)
 
             # Insert FAQ and gallery items for the movie
-            insert_faq_items(cursor, all_content.get('faq.json', {}), movie_id)
+            insert_faq_items(cursor, all_content.get('faq', {}), movie_id)
             insert_gallery_items(cursor, all_content.get(
-                'gallery.json', {}), movie_id)
+                'gallery', {}), movie_id)
 
-        insert_social_links(cursor, all_content.get('social.json', {}))
-        insert_connect_channels(cursor, all_content.get('connect.json', {}))
-        insert_patreon_info(cursor, all_content.get('connect.json', {}))
-        insert_pages(cursor, all_content.get('content.json', {}))
+        insert_social_links(cursor, all_content.get('social', {}))
+        insert_connect_channels(cursor, all_content.get('connect', {}))
+        insert_patreon_info(cursor, all_content.get('connect', {}))
+        insert_pages(cursor, all_content.get('content', {}))
 
         conn.commit()
         print("Database initialization committed successfully.")
@@ -424,7 +425,8 @@ def main():
         sys.exit(1)
     finally:
         if conn:
-            cursor.close()
+            if cursor:
+                cursor.close()
             conn.close()
             print("Database connection closed.")
 
