@@ -24,7 +24,7 @@ tests/             # Test suite
 | Website      | openmicodyssey.com       | 8880 | `website/`      |
 | Control Room | admin.openmicodyssey.com | 8480 | `control_room/` |
 | Bot API      | api.openmicodyssey.com   | 8787 | `bot_api/`      |
-| Bot Worker   | internal                 | none | `bot/`  |
+| Bot Worker   | internal                 | none | `bot/`          |
 
 All services share a PostgreSQL database at `192.168.88.35` and run on a single Coolify server behind Nginx Proxy Manager.
 

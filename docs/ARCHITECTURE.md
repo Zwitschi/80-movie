@@ -64,9 +64,10 @@ The codebase is split into four primary services with distinct responsibilities:
 ### Bot API (`bot_api/`)
 
 - **Role**: Operator Dashboard & Ops API.
-- **Responsibility**: Discord OAuth operator login, bot health/config/command views, queue/mileage/onboarding/moderation endpoints, and syndication controls.
-- **Data Access**: Read-write access to bot-specific tables and read-only access to shared content where needed.
+- **Responsibility**: Discord OAuth operator login, bot health/config/command views, queue/mileage/onboarding/moderation endpoints, syndication controls, and **Discord API polling** for guild/channel/role enrichment.
+- **Data Access**: Read-write access to bot-specific tables and read-only access to shared content where needed. Fetches live Discord guild metadata via bot token auth.
 - **Authentication**: Discord OAuth plus locally managed operator scopes.
+- **Logging**: Structured `logging.getLogger(__name__)` across all route modules, runtime snapshot builders, and bot worker bootstrap code. Logs config parsing, repository wiring, operator actions, and syndication events.
 
 ### Bot Worker (`bot/`)
 
@@ -92,6 +93,9 @@ The codebase is split into four primary services with distinct responsibilities:
 - Coolify/Nixpacks website deployment configuration
 - Bot scaffold runtime in `bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
 - Bot-owned operator and syndication persistence seams backed by PostgreSQL migrations
+- Discord API fetchers for guild metadata, channel list, and role list via bot token auth, enriching the bot config snapshot
+- Structured logging with `logging.getLogger(__name__)` across bot worker (`config.py`, `main.py`) and bot API (`admin_bot.py`, `runtime_snapshot.py`, all route modules)
+- Operator health endpoint (`GET /bot/api/operator-health`) combining health status, syndication snapshot, queue index, and diagnostics
 
 ### Current Out Of Scope
 
@@ -251,6 +255,9 @@ Bot API routes in current code:
 - `/bot/mileage`
 - `/bot/queues`
 - `/bot/api/health`
+- `/bot/api/health/services`
+- `/bot/api/health/jobs`
+- `/bot/api/operator-health`
 - `/bot/api/queues`
 - `/bot/api/mileage/users`
 - `/bot/api/syndication/sources`
@@ -355,6 +362,16 @@ Current code reality:
 2. Bot API page or client-side fetch calls `GET /bot/api/health` on the same service.
 3. Bot API returns runtime state, DB reachability, job freshness, and config presence.
 4. The operator health dashboard renders status indicators from that payload.
+5. For a combined view, operators can call `GET /bot/api/operator-health` (scope: `ops.read`) which merges health component statuses, syndication snapshot, queue index, and diagnostics into a single response.
+
+### Scenario: Discord API Polling (Bot API Config View)
+
+1. Operator opens `/bot/config` on the bot API service.
+2. `build_bot_configuration_snapshot()` calls `build_discord_guild_snapshot(guild_id)`.
+3. Bot API fetches guild metadata, channel list, and role list from Discord's REST API using the bot token (`OMO_DISCORD_TOKEN`).
+4. Results are cached per-request and included in the config snapshot.
+5. The config template displays guild name, member count, features, channel list, and role list.
+6. If the bot token or guild ID is missing, the section shows a clear "unavailable" message.
 
 ### Scenario: Syndication Polling (Bot Worker)
 
@@ -466,7 +483,7 @@ Repository also supports generating static HTML output from same public routes. 
 
 ### Bot API Optional Environment Variables
 
-- `OMO_DISCORD_TOKEN` / `DISCORD_TOKEN`
+- `OMO_DISCORD_TOKEN` / `DISCORD_TOKEN` — used for Discord API fetches (guild, channels, roles) and bot runtime config
 - `OMO_DISCORD_GUILD_ID`
 - `OMO_SYNDICATION_SOURCES`
 - `OMO_SYNDICATION_POLL_SECONDS`
@@ -668,6 +685,9 @@ Implemented today:
 - standalone bot API operator auth, health/config/commands pages, and syndication actions
 - standalone bot API queue, mileage, onboarding, moderation, and diagnostics routes
 - bot operator and syndication persistence migrations
+- Discord API fetchers for guild metadata, channels, and roles via bot token auth
+- structured logging across bot worker and bot API modules
+- operator health endpoint (`GET /bot/api/operator-health`) combining health, syndication, queue, and diagnostics
 
 Still planned:
 

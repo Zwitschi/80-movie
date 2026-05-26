@@ -43,11 +43,12 @@ OMO_LOG_LEVEL=INFO
 
 ## Current behavior
 
-- parses bot runtime config from env
-- builds repository-backed or in-memory syndication state
+- parses bot runtime config from env with structured logging (env file loading, parsed settings, missing token/guild warnings)
+- builds repository-backed or in-memory syndication state (logs backend choice)
 - builds YouTube syndication adapter seam
 - builds polling job and null delivery sink
 - starts runtime lifecycle scaffold
+- logs each repository/adapter build step and final runtime summary
 
 Current runtime is still scaffold-level. It is useful for config validation, startup smoke checks, and exercising worker wiring, but it is not yet a feature-complete Discord automation service.
 
