@@ -1,0 +1,127 @@
+{% extends '_bot_base.html' %} {% block admin_title %}Discord Guild{% endblock
+%} {% block bot_content %}
+
+<section>
+  <h2>Active Guild Configuration</h2>
+  {% if save_success == 'guild-updated' %}
+  <p>Active guild updated.</p>
+  {% endif %} {% if error == 'operator-scope-required' %}
+  <p>Syndication write scope is required for guild configuration changes.</p>
+  {% elif error == 'invalid-config-binding' %}
+  <p>
+    Guild configuration changes require valid ids and a database-backed bot
+    config repository.
+  </p>
+  {% endif %} {% set guild = config_snapshot.discord_guild %} {% set gc =
+  config_snapshot.guild_config %}
+
+  <ul>
+    <li><strong>Active guild:</strong> {{ gc.guild_id or 'none' }}</li>
+    <li><strong>Managed by:</strong> {{ gc.managed_by }}</li>
+  </ul>
+
+  {% if gc.editable %}
+  <form method="post" action="{{ gc.set_page }}">
+    <label for="guild_id">Active guild id</label>
+    <input
+      id="guild_id"
+      name="guild_id"
+      type="text"
+      value="{{ gc.guild_id or '' }}"
+    />
+    <button type="submit">Save guild</button>
+  </form>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Discord Guild</h2>
+  {% if guild.available and guild.guild %}
+  <ul>
+    <li><strong>Name:</strong> {{ guild.guild.name }}</li>
+    <li><strong>ID:</strong> {{ guild.guild.id }}</li>
+    <li>
+      <strong>Members:</strong> {{ guild.guild.member_count or 'unknown' }}
+    </li>
+    <li><strong>Premium tier:</strong> {{ guild.guild.premium_tier or 0 }}</li>
+    <li>
+      <strong>Features:</strong> {{ guild.guild.features | join(', ') or 'none'
+      }}
+    </li>
+  </ul>
+
+  <h3>Channels ({{ guild.channels | length }})</h3>
+  {% if guild.channels %}
+  <ul>
+    {% for ch in guild.channels %}
+    <li>
+      <strong>#{{ ch.name }}</strong> (id: {{ ch.id }}, type: {{ ch.type }})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No channels fetched.</p>
+  {% endif %}
+
+  <h3>Roles ({{ guild.roles | length }})</h3>
+  {% if guild.roles %}
+  <ul>
+    {% for r in guild.roles %}
+    <li>
+      <strong>{{ r.name }}</strong> (id: {{ r.id }}, color: {{ r.color }},
+      position: {{ r.position }})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No roles fetched.</p>
+  {% endif %}
+
+  <h3>Members ({{ guild.members | length }})</h3>
+  {% if guild.members %}
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Nick</th>
+        <th>ID</th>
+        <th>Roles</th>
+        <th>Joined</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in guild.members %}
+      <tr>
+        <td>
+          {{ m.user.username }}{% if m.user.global_name %} ({{
+          m.user.global_name }}){% endif %}
+        </td>
+        <td>{{ m.nick or '-' }}</td>
+        <td><code>{{ m.user.id }}</code></td>
+        <td>{{ m.roles | length }} role(s)</td>
+        <td style="font-size: 0.75rem">
+          {{ m.joined_at[:10] if m.joined_at else '-' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No members fetched.</p>
+  {% endif %} {% elif guild.error == 'no_guild_id_configured' %}
+  <p>
+    No guild ID configured. Set <code>OMO_DISCORD_GUILD_ID</code> to enable
+    Discord API polling.
+  </p>
+  {% else %}
+  <p>Discord API unavailable. Check bot token and guild ID configuration.</p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>API Links</h2>
+  <ul>
+    <li><a href="{{ url_for('bot.config_api') }}">Configuration JSON</a></li>
+  </ul>
+</section>
+{% endblock %}

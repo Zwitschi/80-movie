@@ -69,6 +69,7 @@ from .syndication_routes import (
 from .config_routes import (
     config_page,
     config_api,
+    guild_page,
     set_active_guild_api,
     set_active_guild_page_action,
     upsert_channel_binding_api,
@@ -887,6 +888,7 @@ bp.add_url_rule('/api/mileage/events/<event_id>/reverse',
 bp.add_url_rule('/mileage/events/<event_id>/reverse',
                 view_func=reverse_mileage_event_page_action, methods=['POST'])
 bp.add_url_rule('/config', view_func=config_page, methods=['GET'])
+bp.add_url_rule('/config/guild', view_func=guild_page, methods=['GET'])
 bp.add_url_rule('/api/config', view_func=config_api, methods=['GET'])
 bp.add_url_rule('/api/config/guild',
                 view_func=set_active_guild_api, methods=['POST'])

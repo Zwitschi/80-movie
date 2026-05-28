@@ -20,6 +20,17 @@ def config_page():
     )
 
 
+def guild_page():
+    from . import admin_bot
+
+    return render_template(
+        'guild.html',
+        config_snapshot=admin_bot.build_bot_configuration_snapshot(),
+        save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
 def config_api():
     from . import admin_bot
 
@@ -36,7 +47,8 @@ def send_test_message_api():
 
     payload = admin_bot._request_data()
     channel_id = str(payload.get('channel_id', '')).strip()
-    message = str(payload.get('message', '')).strip() or 'Test message from Open Mic Odyssey Bot API'
+    message = str(payload.get('message', '')).strip(
+    ) or 'Test message from Open Mic Odyssey Bot API'
     if not channel_id:
         return jsonify({'error': {'code': 'missing_channel_id', 'message': 'channel_id is required'}}), 400
 
@@ -45,11 +57,13 @@ def send_test_message_api():
         return jsonify({'error': {'code': 'no_bot_token', 'message': 'Bot token not configured'}}), 400
 
     from .bot_utils import _discord_api_post
-    result = _discord_api_post(f'/channels/{channel_id}/messages', {'content': message})
+    result = _discord_api_post(
+        f'/channels/{channel_id}/messages', {'content': message})
     if result is None:
         return jsonify({'error': {'code': 'discord_api_error', 'message': 'Failed to send message'}}), 502
 
-    logger.info("Test message sent to channel %s: msg=%s", channel_id, result.get('id'))
+    logger.info("Test message sent to channel %s: msg=%s",
+                channel_id, result.get('id'))
     return jsonify({'data': {'channel_id': channel_id, 'message_id': result.get('id')}})
 
 
@@ -61,19 +75,22 @@ def send_test_message_page_action():
         return admin_bot._page_config_scope_error()
 
     channel_id = str(request.form.get('channel_id', '')).strip()
-    message = str(request.form.get('message', '')).strip() or 'Test message from Open Mic Odyssey Bot API'
+    message = str(request.form.get('message', '')).strip(
+    ) or 'Test message from Open Mic Odyssey Bot API'
 
     token = _discord_bot_token()
     if not token:
-        return redirect(url_for('bot.config_page', error='no-bot-token'))
+        return redirect(url_for('bot.commands_page', error='no-bot-token'))
 
     from .bot_utils import _discord_api_post
-    result = _discord_api_post(f'/channels/{channel_id}/messages', {'content': message})
+    result = _discord_api_post(
+        f'/channels/{channel_id}/messages', {'content': message})
     if result is None:
-        return redirect(url_for('bot.config_page', error='test-message-failed'))
+        return redirect(url_for('bot.commands_page', error='test-message-failed'))
 
-    logger.info("Test message sent via page: channel=%s msg=%s", channel_id, result.get('id'))
-    return redirect(url_for('bot.config_page', saved='test-message-sent'))
+    logger.info("Test message sent via page: channel=%s msg=%s",
+                channel_id, result.get('id'))
+    return redirect(url_for('bot.commands_page', saved='test-message-sent'))
 
 
 def set_active_guild_api():
@@ -107,7 +124,7 @@ def set_active_guild_page_action():
     except admin_bot.ConfigError:
         return admin_bot._page_config_binding_error()
 
-    return redirect(url_for('bot.config_page', saved='guild-updated'))
+    return redirect(url_for('bot.guild_page', saved='guild-updated'))
 
 
 def upsert_channel_binding_api():

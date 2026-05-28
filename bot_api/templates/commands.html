@@ -1,5 +1,5 @@
-{% extends '_bot_base.html' %} {% block admin_title %}Bot Commands{%
-endblock %} {% block bot_content %}
+{% extends '_bot_base.html' %} {% block admin_title %}Bot Commands{% endblock %}
+{% block bot_content %}
 <section>
   <h2>Command Actions</h2>
   <p>
@@ -7,6 +7,8 @@ endblock %} {% block bot_content %}
   </p>
   {% if save_success == 'poll-all' %}
   <p>Poll-all command completed.</p>
+  {% elif save_success == 'test-message-sent' %}
+  <p>Test message sent.</p>
   {% endif %} {% if error == 'operator-scope-required' %}
   <p>Syndication write scope is required for manual poll commands.</p>
   {% elif error == 'invalid-syndication-config' %}
@@ -16,6 +18,13 @@ endblock %} {% block bot_content %}
   </p>
   {% elif error == 'command-failed' %}
   <p>Command failed. Check source status and runtime logs.</p>
+  {% elif error == 'no-bot-token' %}
+  <p>
+    Bot token not configured. Set <code>OMO_DISCORD_TOKEN</code> to send test
+    messages.
+  </p>
+  {% elif error == 'test-message-failed' %}
+  <p>Failed to send test message. Check channel ID and bot permissions.</p>
   {% endif %}
   <ul>
     <li><strong>Status:</strong> {{ commands_snapshot.status }}</li>
@@ -46,6 +55,33 @@ endblock %} {% block bot_content %}
 </section>
 
 <section>
+  <h2>Test Message</h2>
+  <p>Send a test message to any Discord channel the bot has access to.</p>
+  <form
+    method="post"
+    action="{{ url_for('bot.send_test_message_page_action') }}"
+    class="admin-flex-row"
+    style="max-width: 36rem"
+  >
+    <select name="channel_id" required style="flex: 1">
+      <option value="">-- Select channel --</option>
+      {% for ch in discord_channels %}
+      <option value="{{ ch.id }}">#{{ ch.name }} ({{ ch.id }})</option>
+      {% endfor %}
+    </select>
+    <input
+      type="text"
+      name="message"
+      placeholder="Message text (optional)"
+      style="flex: 2"
+    />
+    <button type="submit" class="btn btn-primary btn-sm" style="flex: 0 0 auto">
+      Send
+    </button>
+  </form>
+</section>
+
+<section>
   <h2>Configured Sources</h2>
   <ul>
     {% for source in commands_snapshot.sources %}
@@ -65,5 +101,3 @@ endblock %} {% block bot_content %}
   </ul>
 </section>
 {% endblock %}
-
-

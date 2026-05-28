@@ -6,9 +6,15 @@ from flask import jsonify, redirect, render_template, request, url_for
 def commands_page():
     from . import admin_bot
 
+    config_snapshot = admin_bot.build_bot_configuration_snapshot()
+    discord_guild = config_snapshot.get('discord_guild', {})
+    discord_channels = discord_guild.get(
+        'channels', []) if discord_guild.get('available') else []
+
     return render_template(
         'commands.html',
         commands_snapshot=admin_bot.build_bot_commands_snapshot(),
+        discord_channels=discord_channels,
         save_success=request.args.get('saved'),
         error=request.args.get('error'),
     )
