@@ -1,18 +1,25 @@
-{% extends '_bot_base.html' %} {% block admin_title %}Bot Operator
-Login{% endblock %} {% block bot_content %}
+{% extends '_bot_base.html' %} {% block extra_head %}
+<style>
+  #discord-oauth {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #5865f2;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+</style>
+{% endblock %} {% block admin_title %}Bot Operator Login{% endblock %} {% block
+bot_content %}
 <section>
   <h2>Operator Login</h2>
-  <p>
-    Sign in with Discord to access the control room. This operator session stays
-    separate from the editorial CMS login and only grants access to
-    `/admin/bot`.
-  </p>
+  <p>Sign in with Discord to access the control room.</p>
 
   {% if error %}
   <p><strong>{{ error }}</strong></p>
   {% endif %} {% if oauth_ready %}
   <p>
-    <a href="{{ url_for('bot.oauth_start', next=next_url) }}"
+    <a id="discord-oauth" href="{{ url_for('bot.oauth_start', next=next_url) }}"
       >Continue with Discord</a
     >
   </p>
@@ -25,5 +32,3 @@ Login{% endblock %} {% block bot_content %}
   {% endif %}
 </section>
 {% endblock %}
-
-
