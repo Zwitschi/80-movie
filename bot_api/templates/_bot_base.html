@@ -16,8 +16,8 @@
         --color-bg-secondary: #111;
         --color-border: #555;
         --color-text: #f3f3f3;
-        --color-primary: #1a8ce9;
-        --color-primary-hover: #041230;
+        --link-color: #2e7dbd;
+        --link-hover-color: #4eabf7;
       }
       * {
         box-sizing: border-box;
@@ -28,6 +28,16 @@
         margin: 0;
         color: var(--color-text);
         background: var(--color-bg);
+      }
+
+      a,
+      a:visited {
+        color: var(--link-color);
+      }
+
+      a:hover,
+      a:focus {
+        color: var(--link-hover-color);
       }
 
       .app-shell {
@@ -73,16 +83,17 @@
 
       nav a {
         text-decoration: none;
-        color: var(--color-primary);
+        color: var(--link-color);
         display: block;
         padding: 0.45rem 0.5rem;
         border-radius: 6px;
         font-size: 0.95rem;
       }
 
-      nav a:hover {
+      nav a:hover,
+      nav a:focus {
         text-decoration: none;
-        background: var(--color-primary-hover);
+        background: var(--link-hover-color);
       }
 
       .sidebar form {
@@ -91,7 +102,7 @@
 
       .sidebar button {
         width: 100%;
-        border: 1px solid var(--color-border);
+        border: 1px solid var(--link-color);
         background: var(--color-bg-secondary);
         color: var(--color-text);
         border-radius: 6px;
@@ -99,8 +110,9 @@
         cursor: pointer;
       }
 
-      .sidebar button:hover {
-        background: var(--color-border);
+      .sidebar button:hover,
+      .sidebar button:focus {
+        background: var(--link-hover-color);
       }
 
       .content-area {
