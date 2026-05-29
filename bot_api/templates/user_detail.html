@@ -1,0 +1,123 @@
+{% extends '_bot_base.html' %} {% block admin_title %}User Detail — {{
+user.user_id }}{% endblock %} {% block bot_content %}
+
+<section>
+  <h2>User Detail</h2>
+  <p><a href="{{ url_for('bot.guild_page') }}">Back to guild</a></p>
+  {% if error == 'operator-scope-required' %}
+  <p>Insufficient permissions to view user details.</p>
+  {% endif %}
+</section>
+
+{% set member = user.discord_member %} {% if member %}
+<section>
+  <h2>Discord Profile</h2>
+  <ul>
+    <li>
+      <strong>Username:</strong>
+      {{ member.user.username }}{% if member.user.global_name %} ({{
+      member.user.global_name }}){% endif %}
+    </li>
+    <li><strong>ID:</strong> <code>{{ member.user.id }}</code></li>
+    <li><strong>Nickname:</strong> {{ member.nick or '-' }}</li>
+    <li>
+      <strong>Joined server:</strong>
+      {{ member.joined_at[:10] if member.joined_at else 'unknown' }}
+    </li>
+    {% if member.premium_since %}
+    <li><strong>Boosting since:</strong> {{ member.premium_since[:10] }}</li>
+    {% endif %} {% if member.communication_disabled_until %}
+    <li>
+      <strong>Timed out until:</strong> {{ member.communication_disabled_until
+      }}
+    </li>
+    {% endif %}
+    <li><strong>Deafened:</strong> {{ 'yes' if member.deaf else 'no' }}</li>
+    <li><strong>Muted:</strong> {{ 'yes' if member.mute else 'no' }}</li>
+    <li>
+      <strong>Pending verification:</strong>
+      {{ 'yes' if member.pending else 'no' }}
+    </li>
+    {% if member.user.avatar %}
+    <li>
+      <strong>Avatar:</strong>
+      <img
+        src="https://cdn.discordapp.com/avatars/{{ member.user.id }}/{{ member.user.avatar }}.png?size=128"
+        alt="avatar"
+        width="64"
+        height="64"
+        style="border-radius: 50%"
+      />
+    </li>
+    {% endif %}
+  </ul>
+
+  <h3>Roles ({{ user.roles | length }})</h3>
+  {% if user.roles %}
+  <ul>
+    {% for r in user.roles %}
+    <li>
+      <strong
+        style="color: #{{ '%06x' | format(r.color) if r.color else 'inherit' }}"
+      >
+        {{ r.name }}
+      </strong>
+      (id: {{ r.id }}, position: {{ r.position }})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No roles assigned.</p>
+  {% endif %}
+</section>
+{% elif user.discord_member is not none and not user.discord_member %}
+<section>
+  <h2>Discord Profile</h2>
+  <p>Member not found in Discord API. The user may have left the server.</p>
+</section>
+{% else %}
+<section>
+  <h2>Discord Profile</h2>
+  <p>Discord API unavailable. Check bot token and guild ID configuration.</p>
+</section>
+{% endif %} {% set mileage = user.mileage %} {% if mileage %}
+<section>
+  <h2>Mileage</h2>
+  {% set total = mileage.total %}
+  <ul>
+    <li><strong>Display name:</strong> {{ total.display_name }}</li>
+    <li><strong>Total points:</strong> {{ total.total_points }}</li>
+    <li>
+      <strong>Current tier:</strong> {{ total.current_tier_name or 'none' }}
+    </li>
+    <li>
+      <strong>Last activity:</strong> {{ total.last_event_at or 'never' }}
+    </li>
+  </ul>
+  <p>
+    <a href="{{ total.detail_page }}">Open full mileage detail &rarr;</a>
+  </p>
+
+  <h3>Recent Events ({{ mileage.events | length }})</h3>
+  {% if mileage.events %}
+  <ul>
+    {% for event in mileage.events[:10] %}
+    <li>
+      <strong>{{ event.event_type }}</strong>
+      <br />Delta: {{ event.points_delta }} <br />Reason: {{ event.reason }}
+      <br />Created: {{ event.created_at }} <br />Actor: {{ event.actor_user_id
+      or 'system' }} {% if event.reversed_event_id %} <br />Reversal of: {{
+      event.reversed_event_id }} {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No mileage events recorded yet.</p>
+  {% endif %}
+</section>
+{% elif user.error == 'mileage_unavailable' %}
+<section>
+  <h2>Mileage</h2>
+  <p>Mileage data is currently unavailable.</p>
+</section>
+{% endif %} {% endblock %}

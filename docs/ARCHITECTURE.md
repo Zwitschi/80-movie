@@ -89,9 +89,8 @@ The codebase is split into four primary services with distinct responsibilities:
 - Discord OAuth operator login for the bot API
 - PostgreSQL-backed content read/write layer
 - JSON-LD schema generation from structured content
-- Static export generation to `website/dist`
 - Coolify/Nixpacks website deployment configuration
-- Bot scaffold runtime in `bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
+- Bot runtime in `bot/` for config parsing, startup lifecycle, operator-facing health/config inspection, and syndication polling seams
 - Bot-owned operator and syndication persistence seams backed by PostgreSQL migrations
 - Discord API fetchers for guild metadata, channel list, and role list via bot token auth, enriching the bot config snapshot
 - Structured logging with `logging.getLogger(__name__)` across bot worker (`config.py`, `main.py`) and bot API (`admin_bot.py`, `runtime_snapshot.py`, all route modules)
@@ -103,10 +102,6 @@ The codebase is split into four primary services with distinct responsibilities:
 - Queue, mileage / XP, onboarding, and moderation domains
 - Separate React/Vite dashboard application
 - Native mobile applications
-
-### Known Documentation / Code Gap
-
-Documentation and config mention `DATA_SOURCE=JSON` fallback, but current `website/movie_site/content_store.py` factory always returns DB-backed reader/writer. Architecture must treat DB-backed content as current implemented path.
 
 ## 4. Context
 
@@ -120,7 +115,7 @@ Four independent services share one PostgreSQL database:
 
 - **Website** (openmicodyssey.com) serves public pages on port 8880.
 - **Control Room** (admin.openmicodyssey.com) provides editorial login and CMS routes on port 8480.
-- **Bot API** (api.openmicodyssey.com) exposes operator pages plus health, queue, mileage, onboarding, moderation, syndication, and bot management endpoints on port 8787.
+- **Bot API** (api.openmicodyssey.com) exposes operator pages and bot management endpoints on port 8787.
 - **Bot Worker** runs as a separate long-lived process with no public HTTP surface.
 
 All traffic routes through Nginx Proxy Manager on the Coolify server. The Discord bot worker connects to Discord's gateway API and reads/writes bot-owned tables in the shared database.
@@ -136,22 +131,22 @@ All traffic routes through Nginx Proxy Manager on the Coolify server. The Discor
 │ Entrypoint                                                 │
 │  └─ website/app.py                                         │
 │                                                            │
-│ App composition                                             │
+│ App composition                                            │
 │  └─ movie_site/__init__.py -> create_app()                 │
 │                                                            │
-│ Public web surface                                          │
+│ Public web surface                                         │
 │  └─ movie_site/views.py                                    │
 │                                                            │
-│ Configuration                                               │
+│ Configuration                                              │
 │  └─ movie_site/config.py                                   │
 │                                                            │
-│ Data / Logic (Delegated to shared/)                         │
+│ Data / Logic (Delegated to shared/)                        │
 │  ├─ shared/movie_data.py                                   │
 │  ├─ shared/content_store.py                                │
 │  ├─ shared/schema.py                                       │
 │  └─ shared/db.py                                           │
 │                                                            │
-│ Export + assets                                             │
+│ Export + assets                                            │
 │  ├─ website/export_static.py                               │
 │  ├─ website/templates/                                     │
 │  └─ website/static/                                        │

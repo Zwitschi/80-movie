@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from flask import current_app, jsonify, render_template, session, url_for
+from flask import current_app, jsonify, render_template, request, session, url_for
 
-from .bot_utils import _bool_status, _health_components, _read_bot_presence
+from .bot_utils import _bool_status, _health_components, _read_bot_presence, _write_bot_presence
 
 
 def build_health_snapshot() -> dict[str, object]:
@@ -159,3 +159,23 @@ def operator_health_api():
         'queues': queue_index,
         'diagnostics': diagnostics_data,
     })
+
+
+def upsert_worker_heartbeat():
+    """POST /api/worker/heartbeat — register/update bot worker presence.
+
+    Expects JSON body with optional: worker_id, state, metadata.
+    No operator authentication required.
+    """
+    data = request.get_json(silent=True) or {}
+    worker_id = str(data.get('worker_id', 'default')).strip() or 'default'
+    state = str(data.get('state', 'running')).strip() or 'running'
+    metadata = data.get('metadata') if isinstance(
+        data.get('metadata'), dict) else None
+
+    success = _write_bot_presence(worker_id, state=state, metadata=metadata)
+    if success:
+        return jsonify({'data': {'worker_id': worker_id, 'status': 'recorded'}}), 200
+    return jsonify({
+        'error': {'code': 'database_unavailable', 'message': 'Could not write presence row.'}
+    }), 503

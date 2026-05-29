@@ -36,7 +36,8 @@ except ImportError as _exc:
     ConfigError = _BotUtilsMissingStubError  # type: ignore[assignment]
     BotConfig = _BotUtilsMissingStubError  # type: ignore[assignment]
     BotRuntimeSettings = _BotUtilsMissingStubError  # type: ignore[assignment]
-    SyndicationSourceState = _BotUtilsMissingStubError  # type: ignore[assignment]
+    # type: ignore[assignment]
+    SyndicationSourceState = _BotUtilsMissingStubError
 
 
 def _require_bot_utils_module() -> None:
@@ -270,6 +271,29 @@ def _fetch_discord_members(guild_id: int, limit: int = 100) -> list[dict[str, An
     return []
 
 
+def _fetch_discord_member(guild_id: int, user_id: str) -> dict[str, Any] | None:
+    """Fetch a single member from Discord API."""
+    data = _discord_api_get(f'/guilds/{guild_id}/members/{user_id}')
+    if isinstance(data, dict):
+        return {
+            'user': {
+                'id': data.get('user', {}).get('id'),
+                'username': data.get('user', {}).get('username'),
+                'global_name': data.get('user', {}).get('global_name'),
+                'avatar': data.get('user', {}).get('avatar'),
+            },
+            'nick': data.get('nick'),
+            'roles': data.get('roles', []),
+            'joined_at': data.get('joined_at'),
+            'premium_since': data.get('premium_since'),
+            'deaf': data.get('deaf'),
+            'mute': data.get('mute'),
+            'pending': data.get('pending'),
+            'communication_disabled_until': data.get('communication_disabled_until'),
+        }
+    return None
+
+
 def _discord_api_post(path: str, payload: dict[str, Any]) -> dict[str, Any] | None:
     """Make a POST request to the Discord API with bot token auth."""
     headers = dict(_discord_bot_headers())
@@ -415,6 +439,44 @@ def _read_bot_presence(database_url: str | None = None) -> dict[str, Any] | None
             conn.close()
     except Exception:
         return None
+
+
+def _write_bot_presence(
+    worker_id: str,
+    state: str = "running",
+    metadata: dict[str, object] | None = None,
+    *,
+    database_url: str | None = None,
+) -> bool:
+    """INSERT or UPDATE bot_presence heartbeat row. Returns True on success."""
+    import os
+    dsn = database_url or os.environ.get(
+        'DATABASE_URL') or os.environ.get('OMO_DATABASE_URL')
+    if not dsn:
+        return False
+    try:
+        import psycopg2
+        conn = psycopg2.connect(dsn)
+        try:
+            with conn.cursor() as cur:
+                meta_json = json.dumps(metadata) if metadata else None
+                cur.execute(
+                    """
+                    INSERT INTO bot_presence (worker_id, state, metadata, started_at, last_seen_at)
+                    VALUES (%s, %s, %s, now(), now())
+                    ON CONFLICT (worker_id) DO UPDATE SET
+                        state      = EXCLUDED.state,
+                        metadata   = EXCLUDED.metadata,
+                        last_seen_at = now()
+                    """,
+                    (worker_id, state, meta_json),
+                )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+    except Exception:
+        return False
 
 
 # ---------------------------------------------------------------------------

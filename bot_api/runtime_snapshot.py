@@ -156,6 +156,51 @@ def build_discord_guild_snapshot(guild_id: int | None) -> dict[str, object]:
     }
 
 
+def build_user_detail_snapshot(guild_id: int | None, user_id: str) -> dict[str, object]:
+    """Build user detail data: Discord member info + mileage summary."""
+    from .bot_utils import _fetch_discord_member, _fetch_discord_roles
+    from . import admin_bot
+
+    discord_member: dict[str, object] | None = None
+    roles: list[dict[str, object]] = []
+    mileage_data: dict[str, object] | None = None
+    error: str | None = None
+
+    # Fetch Discord member + guild roles
+    if guild_id:
+        discord_member = _fetch_discord_member(guild_id, user_id)
+        if discord_member is not None:
+            all_roles = _fetch_discord_roles(guild_id)
+            member_role_ids = set(cast(list[str], discord_member.get('roles', [])))
+            roles = [
+                r for r in all_roles if str(r.get('id')) in member_role_ids
+            ]
+
+    # Fetch mileage data
+    try:
+        settings = admin_bot._load_bot_runtime_settings()
+        mileage_guild_id = admin_bot._mileage_active_guild_id(settings)
+        mileage_service = admin_bot._build_mileage_service_from_settings(settings)
+        detail = mileage_service.get_user_detail(
+            guild_id=mileage_guild_id, discord_user_id=user_id)
+        can_write = admin_bot._operator_can('mileage.write')
+        mileage_data = admin_bot._serialize_mileage_user_detail(
+            detail, can_write=can_write)
+    except (admin_bot.ConfigError, admin_bot.MileageNotFoundError):
+        mileage_data = None
+    except Exception:
+        mileage_data = None
+        error = 'mileage_unavailable'
+
+    return {
+        'user_id': user_id,
+        'discord_member': discord_member,
+        'roles': roles,
+        'mileage': mileage_data,
+        'error': error,
+    }
+
+
 def build_syndication_snapshot() -> dict[str, object]:
     from . import admin_bot
 

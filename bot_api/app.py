@@ -50,6 +50,15 @@ def create_app() -> Flask:
         methods=['GET'],
     )
 
+    # Register worker heartbeat endpoint (no operator auth required)
+    from .health_routes import upsert_worker_heartbeat
+    app.add_url_rule(
+        '/api/worker/heartbeat',
+        endpoint='upsert_worker_heartbeat',
+        view_func=upsert_worker_heartbeat,
+        methods=['POST'],
+    )
+
     @app.route('/')
     def root():
         """Redirect bare bot API hostname to the operator dashboard."""

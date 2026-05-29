@@ -93,8 +93,9 @@
       {% for m in guild.members %}
       <tr>
         <td>
-          {{ m.user.username }}{% if m.user.global_name %} ({{
-          m.user.global_name }}){% endif %}
+          <a href="{{ url_for('bot.user_detail_page', user_id=m.user.id) }}">
+            {{ m.user.username }}{% if m.user.global_name %} ({{ m.user.global_name }}){% endif %}
+          </a>
         </td>
         <td>{{ m.nick or '-' }}</td>
         <td><code>{{ m.user.id }}</code></td>

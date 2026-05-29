@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import cast
 
 from flask import jsonify, redirect, render_template, request, url_for
 
@@ -27,6 +28,24 @@ def guild_page():
         'guild.html',
         config_snapshot=admin_bot.build_bot_configuration_snapshot(),
         save_success=request.args.get('saved'),
+        error=request.args.get('error'),
+    )
+
+
+def user_detail_page(user_id: str):
+    """GET /bot/config/user/<user_id> — detailed user profile."""
+    from . import admin_bot
+    from .runtime_snapshot import build_user_detail_snapshot
+
+    config_snapshot = admin_bot.build_bot_configuration_snapshot()
+    guild_config = cast(dict[str, object], config_snapshot.get('guild_config', {}))
+    guild_id_raw = guild_config.get('guild_id')
+    guild_id = int(guild_id_raw) if isinstance(guild_id_raw, (int, str)) else None
+
+    user_snapshot = build_user_detail_snapshot(guild_id, user_id)
+    return render_template(
+        'user_detail.html',
+        user=user_snapshot,
         error=request.args.get('error'),
     )
 

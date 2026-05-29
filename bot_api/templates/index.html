@@ -1,5 +1,5 @@
-{% extends '_bot_base.html' %} {% block admin_title %}Bot Overview{%
-endblock %} {% block bot_content %}
+{% extends '_bot_base.html' %} {% block admin_title %}Bot Overview{% endblock %}
+{% block bot_content %}
 <section>
   <h2>Overview</h2>
   <p>
@@ -20,6 +20,31 @@ endblock %} {% block bot_content %}
   </ul>
 </section>
 
+{% set worker = health.components.get('bot_worker') %} {% if worker %}
+<section>
+  <h2>Bot Worker</h2>
+  {% if worker.status == 'ok' %}
+  <p>Worker is healthy — last heartbeat within 120s.</p>
+  {% elif worker.status == 'stale' %}
+  <p>Worker heartbeat is stale.</p>
+  {% else %}
+  <p>Worker is {{ worker.status }}.</p>
+  {% endif %}
+  <ul>
+    <li><strong>Worker ID:</strong> <code>{{ worker.worker_id }}</code></li>
+    <li><strong>State:</strong> {{ worker.state }}</li>
+    <li><strong>Last seen:</strong> {{ worker.last_seen_at or 'unknown' }}</li>
+    {% if worker.seconds_since_seen is not none %}
+    <li>
+      <strong>Seconds since last seen:</strong> {{ worker.seconds_since_seen }}
+    </li>
+    {% endif %} {% if worker.started_at %}
+    <li><strong>Started at:</strong> {{ worker.started_at }}</li>
+    {% endif %}
+  </ul>
+</section>
+{% endif %}
+
 <section>
   <h2>Component Snapshot</h2>
   <ul>
@@ -31,9 +56,7 @@ endblock %} {% block bot_content %}
     {% endfor %}
   </ul>
   <p>
-    <a href="{{ url_for('bot.health_page') }}"
-      >Open detailed health view</a
-    >
+    <a href="{{ url_for('bot.health_page') }}">Open detailed health view</a>
   </p>
 </section>
 
@@ -51,8 +74,8 @@ endblock %} {% block bot_content %}
     </li>
     <li><a href="{{ url_for('bot.operators_page') }}">Operators</a></li>
   </ul>
-  <p>Config, command, retry, and audit actions now share one control-room home.</p>
+  <p>
+    Config, command, retry, and audit actions now share one control-room home.
+  </p>
 </section>
 {% endblock %}
-
-

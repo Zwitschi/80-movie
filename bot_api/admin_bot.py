@@ -70,6 +70,7 @@ from .config_routes import (
     config_page,
     config_api,
     guild_page,
+    user_detail_page,
     set_active_guild_api,
     set_active_guild_page_action,
     upsert_channel_binding_api,
@@ -183,6 +184,8 @@ from .bot_utils import (
     _syndication_source_status,
     _syndication_summary,
     _utcnow,
+    _read_bot_presence,
+    _write_bot_presence,
 )
 from . import bot_operator_service
 
@@ -927,6 +930,8 @@ bp.add_url_rule('/mileage/events/<event_id>/reverse',
                 view_func=reverse_mileage_event_page_action, methods=['POST'])
 bp.add_url_rule('/config', view_func=config_page, methods=['GET'])
 bp.add_url_rule('/config/guild', view_func=guild_page, methods=['GET'])
+bp.add_url_rule(
+    '/config/user/<user_id>', view_func=user_detail_page, methods=['GET'])
 bp.add_url_rule('/api/config', view_func=config_api, methods=['GET'])
 bp.add_url_rule('/api/config/guild',
                 view_func=set_active_guild_api, methods=['POST'])
