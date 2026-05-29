@@ -89,9 +89,9 @@ This service runs the Discord bot worker, including syndication polling, queue m
 
 ## Detailed Coolify configs
 
-See `deploy/` directory for per-service Coolify configuration files:
+See `docs/deploy/` directory for per-service Coolify configuration files:
 
-- `deploy/website-coolify.md`
-- `deploy/control-room-coolify.md`
-- `deploy/bot-api-coolify.md`
-- `deploy/bot-worker-coolify.md`
+- [Coolify](deploy/website-coolify.md)
+- [Control Room](deploy/control-room-coolify.md)
+- [Bot API](deploy/bot-api-coolify.md)
+- [Bot Worker](deploy/bot-worker-coolify.md)
