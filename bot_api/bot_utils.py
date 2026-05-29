@@ -5,9 +5,6 @@ Nothing in this module touches Flask's request/session/current_app context.
 """
 
 from __future__ import annotations
-from bot.models import SyndicationSourceState
-from bot.config import BotConfig, BotRuntimeSettings, ConfigError
-
 import json
 import logging
 from datetime import datetime, timezone
@@ -18,8 +15,45 @@ from urllib.request import Request, urlopen
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Lazy bot imports -- allow bot_api to start even without bot/ on Python path.
+# from __future__ import annotations makes all annotations strings.
+# pyright: reportInvalidTypeForm=false, reportCallIssue=false, reportAttributeAccessIssue=false
+# ---------------------------------------------------------------------------
+
+_BOT_UTILS_IMPORT_ERROR: ImportError | None = None
+
+try:
+    from bot.models import SyndicationSourceState
+    from bot.config import BotConfig, BotRuntimeSettings, ConfigError
+    _BOT_UTILS_AVAILABLE = True
+except ImportError as _exc:
+    _BOT_UTILS_IMPORT_ERROR = _exc
+    _BOT_UTILS_AVAILABLE = False
+
+    class _BotUtilsMissingStubError(Exception):
+        """Placeholder for a bot.* exception when bot/ is not available."""
+
+    ConfigError = _BotUtilsMissingStubError  # type: ignore[assignment]
+    BotConfig = _BotUtilsMissingStubError  # type: ignore[assignment]
+    BotRuntimeSettings = _BotUtilsMissingStubError  # type: ignore[assignment]
+    SyndicationSourceState = _BotUtilsMissingStubError  # type: ignore[assignment]
+
+
+def _require_bot_utils_module() -> None:
+    """Raise ImportError if bot/ failed to import. Call before using runtime symbols."""
+    if not _BOT_UTILS_AVAILABLE:
+        msg = (
+            "Bot module is not available. The bot/ package must be on the "
+            "Python path (deploy from repo root or set PYTHONPATH)."
+        )
+        if _BOT_UTILS_IMPORT_ERROR is not None:
+            raise ImportError(msg) from _BOT_UTILS_IMPORT_ERROR
+        raise ImportError(msg)
+
+# ---------------------------------------------------------------------------
 # Discord HTTP constant (used by request-building helpers)
 # ---------------------------------------------------------------------------
+
 
 DISCORD_HTTP_USER_AGENT = (
     'OpenMicOdysseyBot/1.0 (+https://www.openmicodyssey.com)'
@@ -255,7 +289,8 @@ def _discord_api_post(path: str, payload: dict[str, Any]) -> dict[str, Any] | No
                      exc.code, path, _decode_http_error(exc))
         return None
     except URLError as exc:
-        logger.error("Discord API connection error on POST %s: %s", path, exc.reason)
+        logger.error("Discord API connection error on POST %s: %s",
+                     path, exc.reason)
         return None
     except Exception as exc:
         logger.error("Discord API unexpected error on POST %s: %s", path, exc)
@@ -370,7 +405,8 @@ def _read_bot_presence(database_url: str | None = None) -> dict[str, Any] | None
                         'state': row['state'],
                         'started_at': row['started_at'].isoformat() if row['started_at'] else None,
                         'seconds_since_seen': (
-                            int((_utcnow() - row['last_seen_at']).total_seconds())
+                            int((_utcnow() -
+                                row['last_seen_at']).total_seconds())
                             if row['last_seen_at'] else None
                         ),
                     }

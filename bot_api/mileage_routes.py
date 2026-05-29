@@ -192,6 +192,7 @@ def reverse_mileage_event_api(event_id: str):
 
 def reverse_mileage_event_page_action(event_id: str):
     from . import admin_bot
+    from request_ui_helpers import _mileage_page_redirect
 
     if not admin_bot._operator_can('mileage.write'):
         return admin_bot._page_mileage_scope_error()
@@ -208,7 +209,7 @@ def reverse_mileage_event_page_action(event_id: str):
     except (admin_bot.MileageValidationError, admin_bot.MileageConflictError):
         return admin_bot._page_mileage_action_error()
 
-    return admin_bot._mileage_page_redirect(
+    return _mileage_page_redirect(
         str(cast(dict[str, object], user['total'])['discord_user_id']),
         saved='mileage-reversed',
     )

@@ -193,42 +193,79 @@ from urllib.request import urlopen
 
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for, has_app_context, has_request_context
 
-# Bot imports are deferred so the website can start even when deployed
-# from the website/ subdirectory (where bot/ is not on the Python path).
+# Bot imports are lazy so the bot API server can start even when the bot/
+# package is not on the Python path (e.g. deployed from website/ subdirectory).
 # When bot/ is available (repo-root deploy or PYTHONPATH includes root),
-# these imports resolve normally.
-from bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
-from bot.models import SyndicationSourceState
-from bot.models.mileage import MileageTierStat
-from bot.repositories import (
-    build_postgres_bot_config_repository,
-    build_postgres_bot_audit_log_repository,
-    build_postgres_mileage_repository,
-    build_postgres_onboarding_repository,
-    build_postgres_queue_repository,
-    build_postgres_syndication_repository,
-)
-from bot.jobs.syndication_polling import SyndicationPollingJob
-from bot.main import build_syndication_adapters
-from bot.services import BotAuditService
-from bot.services.delivery import NullSyndicationDeliverySink
-from bot.services.mileage_service import (
-    MileageConflictError,
-    MileageNotFoundError,
-    MileageService,
-    MileageValidationError,
-)
-from bot.services.queue_service import (
-    QueueConflictError,
-    QueueEntryNotFoundError,
-    QueueNotFoundError,
-    QueuePausedError,
-    QueueService,
-)
-from bot.services.onboarding_service import OnboardingService
-from bot.services.queue_service import QueueValidationError
-from bot.services.syndication_service import SyndicationPlanningService
-BOT_MODULE_AVAILABLE = True
+# these imports resolve normally at first use.
+# pyright: reportPossiblyUnboundVariable=false
+_BOT_IMPORT_ERROR: ImportError | None = None
+
+try:
+    from bot.config import BotRuntimeSettings, ConfigError, read_runtime_settings
+    from bot.models import SyndicationSourceState
+    from bot.models.mileage import MileageTierStat
+    from bot.repositories import (
+        build_postgres_bot_config_repository,
+        build_postgres_bot_audit_log_repository,
+        build_postgres_mileage_repository,
+        build_postgres_onboarding_repository,
+        build_postgres_queue_repository,
+        build_postgres_syndication_repository,
+    )
+    from bot.jobs.syndication_polling import SyndicationPollingJob
+    from bot.main import build_syndication_adapters
+    from bot.services import BotAuditService
+    from bot.services.delivery import NullSyndicationDeliverySink
+    from bot.services.mileage_service import (
+        MileageConflictError,
+        MileageNotFoundError,
+        MileageService,
+        MileageValidationError,
+    )
+    from bot.services.queue_service import (
+        QueueConflictError,
+        QueueEntryNotFoundError,
+        QueueNotFoundError,
+        QueuePausedError,
+        QueueService,
+    )
+    from bot.services.onboarding_service import OnboardingService
+    from bot.services.queue_service import QueueValidationError
+    from bot.services.syndication_service import SyndicationPlanningService
+    BOT_MODULE_AVAILABLE = True
+except ImportError as _exc:
+    _BOT_IMPORT_ERROR = _exc
+    BOT_MODULE_AVAILABLE = False
+
+    class _BotMissingStubError(Exception):
+        """Placeholder for bot.* exceptions when bot/ is not available."""
+
+    ConfigError = _BotMissingStubError  # type: ignore[assignment]
+    MileageConflictError = _BotMissingStubError  # type: ignore[assignment]
+    MileageNotFoundError = _BotMissingStubError  # type: ignore[assignment]
+    MileageValidationError = _BotMissingStubError  # type: ignore[assignment]
+    QueueConflictError = _BotMissingStubError  # type: ignore[assignment]
+    QueueEntryNotFoundError = _BotMissingStubError  # type: ignore[assignment]
+    QueueNotFoundError = _BotMissingStubError  # type: ignore[assignment]
+    QueuePausedError = _BotMissingStubError  # type: ignore[assignment]
+    QueueValidationError = _BotMissingStubError  # type: ignore[assignment]
+
+
+def _require_bot_module() -> None:
+    """Raise ImportError if the bot/ package failed to import.
+
+    Call at the top of any function that uses bot.* symbols so the caller
+    gets a clear error instead of a confusing NameError or NoneType crash.
+    """
+    if not BOT_MODULE_AVAILABLE:
+        msg = (
+            "Bot module is not available. The bot/ package must be on the "
+            "Python path (deploy from repo root or set PYTHONPATH)."
+        )
+        if _BOT_IMPORT_ERROR is not None:
+            raise ImportError(msg) from _BOT_IMPORT_ERROR
+        raise ImportError(msg)
+
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +337,7 @@ def _operator_can(*required_scopes: str) -> bool:
 
 
 def _load_bot_runtime_settings() -> BotRuntimeSettings:
+    _require_bot_module()
     settings = read_runtime_settings()
     logger.debug("Loaded bot runtime settings: guild=%s sources=%s db=%s",
                  settings.guild_id, settings.syndication_sources,
