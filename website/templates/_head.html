@@ -44,6 +44,19 @@
     f.parentNode.insertBefore(j, f);
   })(window, document, "script", "dataLayer", "GTM-KNL236VG");
 </script>
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-867734CLHX"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+
+  gtag("config", "G-867734CLHX");
+</script>
 {% if movie_schema_json %}
 <script type="application/ld+json">
   {{ movie_schema_json | safe }}
