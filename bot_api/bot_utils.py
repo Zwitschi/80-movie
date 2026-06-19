@@ -57,7 +57,7 @@ def _require_bot_utils_module() -> None:
 
 
 DISCORD_HTTP_USER_AGENT = (
-    'OpenMicOdysseyBot/1.0 (+https://www.openmicodyssey.com)'
+    'OpenMicOdysseyBot/1.0 (+https://openmicodyssey.com)'
 )
 
 

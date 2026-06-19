@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 
 from ..models import SyndicationItem
 
-OMO_USER_AGENT = 'OpenMicOdysseyBot/1.0 (+https://www.openmicodyssey.com)'
+OMO_USER_AGENT = 'OpenMicOdysseyBot/1.0 (+https://openmicodyssey.com)'
 
 
 @dataclass(frozen=True)

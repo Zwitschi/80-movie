@@ -12,9 +12,9 @@ from uuid import uuid4
 DEFAULT_TRAILER = {
     'name': 'Open Mic Odyssey official trailer',
     'description': 'Trailer for the documentary feature Open Mic Odyssey.',
-    'url': 'https://www.openmicodyssey.com/',
+    'url': 'https://openmicodyssey.com/',
     'embed_url': 'https://www.youtube.com/embed/tjGlVSgLhrU?si=cEkkJgf8-m-6HU0J',
-    'thumbnail_url': 'https://www.openmicodyssey.com/static/images/trailer_thumbnail.png',
+    'thumbnail_url': 'https://openmicodyssey.com/static/images/trailer_thumbnail.png',
     'upload_date': '',
     'duration_iso': '',
     'encoding_format': 'video/mp4',

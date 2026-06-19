@@ -10,7 +10,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 class DefaultConfig:
     SITE_NAME = 'Open Mic Odyssey'
-    SITE_URL = os.getenv('SITE_URL', 'https://www.openmicodyssey.com')
+    SITE_URL = os.getenv('SITE_URL', 'https://openmicodyssey.com')
     DATABASE_URL = os.getenv(
         'DATABASE_URL', 'postgresql://user:password@localhost/omo')
     DATA_SOURCE = os.getenv('DATA_SOURCE', 'DB')  # 'JSON' or 'DB'

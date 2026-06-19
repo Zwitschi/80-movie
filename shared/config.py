@@ -66,7 +66,7 @@ def get_website_config_values() -> dict:
     """Get website-specific configuration values from environment."""
     return {
         "SITE_NAME": "Open Mic Odyssey",
-        "SITE_URL": get_env_str("SITE_URL", "https://www.openmicodyssey.com"),
+        "SITE_URL": get_env_str("SITE_URL", "https://openmicodyssey.com"),
         "DATABASE_URL": get_env_str("DATABASE_URL", "postgresql://user:password@localhost/omo"),
         "DATA_SOURCE": get_env_str("DATA_SOURCE", "DB"),
         "CURRENT_YEAR": get_current_year(),
