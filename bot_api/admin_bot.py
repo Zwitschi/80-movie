@@ -56,6 +56,7 @@ from .command_routes import (
     poll_all_sources_api,
     poll_all_sources_page_action,
 )
+from .content_routes import register_content_api_routes
 from .syndication_routes import (
     syndication_page,
     syndication_api,
@@ -995,6 +996,9 @@ bp.add_url_rule('/onboarding/reset',
 bp.add_url_rule('/onboarding/role-cleanup',
                 view_func=request_onboarding_role_cleanup_api, methods=['POST'])
 bp.add_url_rule('/api/diagnostics', view_func=diagnostics_api, methods=['GET'])
+
+# Content screening/offer API endpoints
+register_content_api_routes(bp)
 
 
 @bp.get('/moderation')

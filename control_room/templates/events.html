@@ -27,7 +27,14 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
         <td>{{ event.location.name if event.location else '' }}</td>
         <td>{{ event.event_status.replace('https://schema.org/', '') }}</td>
         <td>
-          <form method="post" action="{{ url_for('content.edit_events') }}">
+          <a href="{{ url_for('content.edit_events', edit_event=loop.index0) }}"
+            >Edit</a
+          >
+          <form
+            method="post"
+            action="{{ url_for('content.edit_events') }}"
+            style="display: inline"
+          >
             <input type="hidden" name="action" value="remove_event" />
             <input type="hidden" name="event_index" value="{{ loop.index0 }}" />
             <button type="submit">Remove</button>
@@ -39,8 +46,156 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
   </table>
   {% else %}
   <p>No screenings yet.</p>
-  {% endif %}
+  {% endif %} {% if edit_event %}
+  <h3>Edit Screening</h3>
+  <form method="post" action="{{ url_for('content.edit_events') }}">
+    <input type="hidden" name="action" value="update_event" />
+    <input type="hidden" name="edit_index" value="{{ edit_index }}" />
 
+    <label for="event_name">Name <span aria-hidden="true">*</span></label>
+    <input
+      id="event_name"
+      name="event_name"
+      type="text"
+      required
+      value="{{ edit_event.name }}"
+    />
+
+    <label for="event_description">Description</label>
+    <textarea id="event_description" name="event_description" rows="3">
+{{ edit_event.description }}</textarea
+    >
+
+    <label for="event_start_date">Start date (YYYY-MM-DDTHH:MM:SS±HH:MM)</label>
+    <input
+      id="event_start_date"
+      name="event_start_date"
+      type="text"
+      placeholder="2026-06-12T19:00:00-07:00"
+      value="{{ edit_event.start_date }}"
+    />
+
+    <label for="event_end_date">End date (YYYY-MM-DDTHH:MM:SS±HH:MM)</label>
+    <input
+      id="event_end_date"
+      name="event_end_date"
+      type="text"
+      placeholder="2026-06-12T21:30:00-07:00"
+      value="{{ edit_event.end_date }}"
+    />
+
+    <label for="event_status">Event status</label>
+    <select id="event_status" name="event_status">
+      {% for status in event_statuses %} {% set selected = 'selected' if
+      edit_event.event_status == status else '' %}
+      <option value="{{ status }}" {{ selected }}>
+        {{ status.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="event_attendance_mode">Attendance mode</label>
+    <select id="event_attendance_mode" name="event_attendance_mode">
+      {% for mode in event_attendance_modes %} {% set selected = 'selected' if
+      edit_event.event_attendance_mode == mode else '' %}
+      <option value="{{ mode }}" {{ selected }}>
+        {{ mode.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="event_attendance_mode">Attendance mode</label>
+    <select id="event_attendance_mode" name="event_attendance_mode">
+      {% for mode in event_attendance_modes %} {% set selected = 'selected' if
+      edit_event.event_attendance_mode == mode else '' %}
+      <option value="{{ mode }}" {{ selected }}>
+        {{ mode.replace('https://schema.org/', '') }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <fieldset>
+      <legend>Venue</legend>
+      <label for="event_location_name">Venue name</label>
+      <input
+        id="event_location_name"
+        name="event_location_name"
+        type="text"
+        value="{{ edit_event.location.name if edit_event.location else '' }}"
+      />
+
+      <label for="event_location_url">Venue URL</label>
+      <input
+        id="event_location_url"
+        name="event_location_url"
+        type="url"
+        value="{{ edit_event.location.url if edit_event.location else '' }}"
+      />
+
+      <label for="event_street_address">Street address</label>
+      <input
+        id="event_street_address"
+        name="event_street_address"
+        type="text"
+        value="{{ edit_event.location.address.street_address if edit_event.location and edit_event.location.address else '' }}"
+      />
+
+      <label for="event_address_locality">City</label>
+      <input
+        id="event_address_locality"
+        name="event_address_locality"
+        type="text"
+        value="{{ edit_event.location.address.address_locality if edit_event.location and edit_event.location.address else '' }}"
+      />
+
+      <label for="event_address_region">State / Region</label>
+      <input
+        id="event_address_region"
+        name="event_address_region"
+        type="text"
+        value="{{ edit_event.location.address.address_region if edit_event.location and edit_event.location.address else '' }}"
+      />
+
+      <label for="event_postal_code">Postal code</label>
+      <input
+        id="event_postal_code"
+        name="event_postal_code"
+        type="text"
+        value="{{ edit_event.location.address.postal_code if edit_event.location and edit_event.location.address else '' }}"
+      />
+
+      <label for="event_address_country">Country code (e.g. US)</label>
+      <input
+        id="event_address_country"
+        name="event_address_country"
+        type="text"
+        maxlength="2"
+        value="{{ edit_event.location.address.address_country if edit_event.location and edit_event.location.address else '' }}"
+      />
+    </fieldset>
+
+    <label for="event_video_format">Video format</label>
+    <input
+      id="event_video_format"
+      name="event_video_format"
+      type="text"
+      placeholder="HD"
+      value="{{ edit_event.video_format }}"
+    />
+
+    <label for="event_subtitle_language">Subtitle language (BCP-47)</label>
+    <input
+      id="event_subtitle_language"
+      name="event_subtitle_language"
+      type="text"
+      placeholder="en"
+      value="{{ edit_event.subtitle_language }}"
+    />
+
+    <button type="submit">Update Screening</button>
+    <a href="{{ url_for('content.edit_events') }}">Cancel</a>
+  </form>
+  {% else %}
   <h3>Add Screening</h3>
   <form method="post" action="{{ url_for('content.edit_events') }}">
     <input type="hidden" name="action" value="add_event" />
@@ -148,6 +303,7 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
 
     <button type="submit">Add Screening</button>
   </form>
+  {% endif %}
 </section>
 
 {# ── Global Offers ────────────────────────────────────────────── #}
