@@ -100,6 +100,15 @@ block page_content %}
                 screening.location.address.address_region %}, {% endif %}{{
                 screening.location.address.address_region }}
               </span>
+              {% endif %} {% if screening.location and screening.location.url %}
+              <span class="screening-url">
+                <a
+                  href="{{ screening.location.url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ screening.location.url }}</a
+                >
+              </span>
               {% endif %}
             </li>
             {% endfor %}
