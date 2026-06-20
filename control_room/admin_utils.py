@@ -28,6 +28,10 @@ def _event_from_form(form) -> tuple[dict, str | None]:
 
     if not name:
         return {}, 'Event name is required.'
+    if ' ' in start_date:
+        start_date = start_date.replace(' ', 'T')
+    if ' ' in end_date:
+        end_date = end_date.replace(' ', 'T')
     if start_date and not _validate_iso_datetime(start_date):
         return {}, f'Invalid start_date format: {start_date!r}. Use YYYY-MM-DDTHH:MM:SS±HH:MM.'
     if end_date and not _validate_iso_datetime(end_date):
