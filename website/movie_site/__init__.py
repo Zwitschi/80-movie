@@ -4,6 +4,7 @@ from flask import Flask
 from shared.db import init_app as init_db_app
 from shared.config import load_dotenv_files, get_website_config_values
 from shared.logging_db import DbLogHandler, set_service_name
+from .utils import format_screening_local_time
 from .views import main_blueprint
 
 
@@ -33,6 +34,8 @@ def create_app():
             format="%(asctime)s %(levelname)s %(name)s %(message)s",
         )
     root_logger.addHandler(DbLogHandler())
+
+    app.jinja_env.filters['screening_local_time'] = format_screening_local_time
 
     app.register_blueprint(main_blueprint)
     return app

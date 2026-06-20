@@ -146,6 +146,7 @@ class DbContentReader:
                 },
                 'video_format': row.get('video_format', ''),
                 'subtitle_language': row.get('subtitle_language', ''),
+                'event_timezone': row.get('event_timezone', ''),
                 'offers': [],
             }
             cursor.execute(
@@ -530,8 +531,8 @@ class DbContentWriter:
                 "INSERT INTO screening_event (movie_id, name, description, start_date, end_date, "
                 "event_status, event_attendance_mode, location_name, location_url, "
                 "location_street_address, location_locality, location_region, location_postal_code, location_country, "
-                "video_format, subtitle_language) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                "video_format, subtitle_language, event_timezone) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
                 (
                     str(_get_movie_id(cursor)),
                     event.get('name', ''),
@@ -549,6 +550,7 @@ class DbContentWriter:
                     addr.get('address_country', ''),
                     event.get('video_format', ''),
                     event.get('subtitle_language', ''),
+                    event.get('event_timezone', ''),
                 )
             )
             event_id = cursor.fetchone()['id']

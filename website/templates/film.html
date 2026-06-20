@@ -32,7 +32,10 @@ block page_content %}
             {% for screening in movie.screenings %}
             <li class="screening-item stack-xs">
               <strong>{{ screening.name }}</strong>
-              <span class="screening-date">{{ screening.start_date }}</span>
+              <span class="screening-date"
+                >{{ screening.start_date |
+                screening_local_time(screening.event_timezone) }}</span
+              >
               {% if screening.location and screening.location.name %}
               <span class="screening-venue">{{ screening.location.name }}</span>
               {% endif %} {% if screening.location and

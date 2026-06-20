@@ -1,5 +1,7 @@
 import re
 import sys
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from flask import current_app
 from .content_store import ContentWriteError
 
@@ -174,3 +176,41 @@ def _validate_iso_date(value: str) -> bool:
 
 def _validate_schema_org_url(value: str) -> bool:
     return bool(_SCHEMA_ORG_RE.match(value.strip()))
+
+
+def _parse_iso_datetime(value: str) -> datetime | None:
+    if not value:
+        return None
+    normalized = value.strip().replace(' ', 'T')
+    if normalized.endswith('Z'):
+        normalized = f'{normalized[:-1]}+00:00'
+    try:
+        dt = datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def format_screening_local_time(value: str, event_timezone: str = '') -> str:
+    dt = _parse_iso_datetime(value)
+    if dt is None:
+        return value or ''
+
+    tz_name = (event_timezone or '').strip()
+    if tz_name:
+        try:
+            dt = dt.astimezone(ZoneInfo(tz_name))
+        except ZoneInfoNotFoundError:
+            tz_name = ''
+
+    date_text = dt.strftime('%b %d, %Y')
+    time_text = dt.strftime('%I:%M %p').lstrip('0')
+    if tz_name:
+        return f'{date_text} {time_text} ({tz_name})'
+
+    tz_abbrev = dt.strftime('%Z')
+    if tz_abbrev:
+        return f'{date_text} {time_text} ({tz_abbrev})'
+    return f'{date_text} {time_text}'

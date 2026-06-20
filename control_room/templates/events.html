@@ -13,6 +13,7 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
         <th>Name</th>
         <th>Start</th>
         <th>End</th>
+        <th>Timezone</th>
         <th>Venue</th>
         <th>Status</th>
         <th></th>
@@ -24,6 +25,7 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
         <td>{{ event.name }}</td>
         <td>{{ event.start_date }}</td>
         <td>{{ event.end_date }}</td>
+        <td>{{ event.event_timezone }}</td>
         <td>{{ event.location.name if event.location else '' }}</td>
         <td>{{ event.event_status.replace('https://schema.org/', '') }}</td>
         <td>
@@ -82,6 +84,15 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
       type="text"
       placeholder="2026-06-12T21:30:00-07:00"
       value="{{ edit_event.end_date }}"
+    />
+
+    <label for="event_timezone">Timezone (IANA, e.g. Europe/Zurich)</label>
+    <input
+      id="event_timezone"
+      name="event_timezone"
+      type="text"
+      placeholder="Europe/Zurich"
+      value="{{ edit_event.event_timezone }}"
     />
 
     <label for="event_status">Event status</label>
@@ -224,6 +235,14 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
       name="event_end_date"
       type="text"
       placeholder="2026-06-12T21:30:00-07:00"
+    />
+
+    <label for="event_timezone">Timezone (IANA, e.g. Europe/Zurich)</label>
+    <input
+      id="event_timezone"
+      name="event_timezone"
+      type="text"
+      placeholder="Europe/Zurich"
     />
 
     <label for="event_status">Event status</label>

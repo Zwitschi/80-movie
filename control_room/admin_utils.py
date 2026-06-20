@@ -1,4 +1,5 @@
 from shared.utils import _validate_iso_date, _validate_iso_datetime, _validate_schema_org_url
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 REQUIRED_CONTENT_PAGES = ('index', 'film', 'media', 'connect', 'patreon')
@@ -25,6 +26,7 @@ def _event_from_form(form) -> tuple[dict, str | None]:
     address_country = form.get('event_address_country', '').strip()
     video_format = form.get('event_video_format', '').strip()
     subtitle_language = form.get('event_subtitle_language', '').strip()
+    event_timezone = form.get('event_timezone', '').strip()
 
     if not name:
         return {}, 'Event name is required.'
@@ -40,6 +42,11 @@ def _event_from_form(form) -> tuple[dict, str | None]:
         return {}, 'event_status must be a schema.org URL.'
     if event_attendance_mode and not _validate_schema_org_url(event_attendance_mode):
         return {}, 'event_attendance_mode must be a schema.org URL.'
+    if event_timezone:
+        try:
+            ZoneInfo(event_timezone)
+        except ZoneInfoNotFoundError:
+            return {}, f'Invalid event timezone: {event_timezone!r}. Use IANA timezone like Europe/Zurich.'
 
     event = {
         'name': name,
@@ -61,6 +68,7 @@ def _event_from_form(form) -> tuple[dict, str | None]:
         },
         'video_format': video_format,
         'subtitle_language': subtitle_language,
+        'event_timezone': event_timezone,
         'offers': [],
     }
     return event, None
