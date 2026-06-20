@@ -89,19 +89,9 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
     <label for="event_timezone">Timezone</label>
     <select id="event_timezone" name="event_timezone">
       <option value="">Select timezone</option>
-      {% for timezone in screening_timezones %}
-      <option
-        value="{{ timezone }}"
-        {%
-        if
-        edit_event.event_timezone=""
-        ="timezone"
-        %}selected{%
-        endif
-        %}
-      >
-        {{ timezone }}
-      </option>
+      {% for timezone in screening_timezones %} {% set selected = 'selected' if
+      edit_event.event_timezone == timezone else '' %}
+      <option value="{{ timezone }}" {{ selected }}>{{ timezone }}</option>
       {% endfor %}
     </select>
 
