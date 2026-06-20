@@ -67,4 +67,4 @@ scripts/
 cleanup.ps1
 
 # local images
-images/
+/images/
