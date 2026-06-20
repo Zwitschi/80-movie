@@ -163,7 +163,8 @@ CREATE TABLE screening_event (
     location_locality       TEXT,
     location_region         TEXT,
     location_postal_code    TEXT,
-    location_country        TEXT
+    location_country        TEXT,
+    event_timezone          TEXT DEFAULT ''
 );
 
 CREATE INDEX idx_screening_movie ON screening_event(movie_id);
