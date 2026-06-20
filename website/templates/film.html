@@ -24,6 +24,31 @@ block page_content %}
           <span class="meta-pill">{{ movie_runtime }}</span>
           <span class="meta-pill">{{ release_date }}</span>
         </div>
+
+        {% if movie.screenings %}
+        <div class="film-screenings">
+          <span class="eyebrow eyebrow-small">Upcoming Screenings</span>
+          <ul class="screenings-list">
+            {% for screening in movie.screenings %}
+            <li class="screening-item stack-xs">
+              <strong>{{ screening.name }}</strong>
+              <span class="screening-date">{{ screening.start_date }}</span>
+              {% if screening.location and screening.location.name %}
+              <span class="screening-venue">{{ screening.location.name }}</span>
+              {% endif %} {% if screening.location and
+              screening.location.address %}
+              <span class="screening-location">
+                {{ screening.location.address.address_locality }}{% if
+                screening.location.address.address_locality and
+                screening.location.address.address_region %}, {% endif %}{{
+                screening.location.address.address_region }}
+              </span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
       </div>
 
       <aside class="content-card side-panel panel-card stack-md">
