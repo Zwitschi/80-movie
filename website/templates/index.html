@@ -18,7 +18,9 @@ block page_content %}
 
       <div class="content-card overview-trailer-card panel-card">
         <div class="overview-trailer-copy stack-md">
-          <span class="eyebrow eyebrow-small">{{ page_content.trailer_eyebrow }}</span>
+          <span class="eyebrow eyebrow-small"
+            >{{ page_content.trailer_eyebrow }}</span
+          >
           <h2>{{ movie.trailer.name }}</h2>
           <p>{{ movie.trailer.description }}</p>
           <div class="hero-actions overview-actions overview-trailer-actions">
@@ -68,11 +70,39 @@ block page_content %}
           <span class="eyebrow eyebrow-small">{{ card.eyebrow }}</span>
           <h3>{{ card.title }}</h3>
           <p>{{ card.description }}</p>
-          <a href="{{ url_for(card.link_route) }}" class="btn btn-{{ card.link_style }}"
+          <a
+            href="{{ url_for(card.link_route) }}"
+            class="btn btn-{{ card.link_style }}"
             >{{ card.link_label }}</a
           >
         </article>
-        {% endfor %}
+        {% endfor %} {% if movie.screenings %}
+        <article
+          class="feature feature-highlight overview-cta-card card-lite stack-sm"
+        >
+          <span class="eyebrow eyebrow-small">Screenings</span>
+          <h3>Upcoming Screenings</h3>
+          <ul class="screenings-list">
+            {% for screening in movie.screenings %}
+            <li class="screening-item stack-xs">
+              <strong>{{ screening.name }}</strong>
+              <span class="screening-date">{{ screening.start_date }}</span>
+              {% if screening.location and screening.location.name %}
+              <span class="screening-venue">{{ screening.location.name }}</span>
+              {% endif %} {% if screening.location and
+              screening.location.address %}
+              <span class="screening-location">
+                {{ screening.location.address.address_locality }}{% if
+                screening.location.address.address_locality and
+                screening.location.address.address_region %}, {% endif %}{{
+                screening.location.address.address_region }}
+              </span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </article>
+        {% endif %}
       </div>
     </div>
   </section>
