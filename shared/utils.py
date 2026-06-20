@@ -157,6 +157,48 @@ OFFER_AVAILABILITIES = [
     'https://schema.org/Discontinued',
 ]
 
+SCREENING_TIMEZONES = [
+    'America/New_York',
+    'America/Detroit',
+    'America/Indiana/Indianapolis',
+    'America/Indiana/Marengo',
+    'America/Indiana/Petersburg',
+    'America/Indiana/Vevay',
+    'America/Chicago',
+    'America/Indiana/Knox',
+    'America/Indiana/Tell_City',
+    'America/Indiana/Vincennes',
+    'America/Menominee',
+    'America/Denver',
+    'America/Boise',
+    'America/Phoenix',
+    'America/Los_Angeles',
+    'America/Anchorage',
+    'America/Juneau',
+    'America/Sitka',
+    'America/Yakutat',
+    'America/Nome',
+    'America/Adak',
+    'Pacific/Honolulu',
+    'America/Atka',
+    'America/Metlakatla',
+    'America/Indiana/Winamac',
+    'America/Kentucky/Louisville',
+    'America/Kentucky/Monticello',
+    'America/North_Dakota/Beulah',
+    'America/North_Dakota/Center',
+    'America/North_Dakota/New_Salem',
+    'America/Puerto_Rico',
+    'America/Virgin',
+    'America/St_Thomas',
+    'Pacific/Guam',
+    'Pacific/Saipan',
+    'Pacific/Samoa',
+    'Pacific/Guadalcanal',
+    'Europe/London',
+    'Europe/Zurich',
+]
+
 
 def _validate_iso_datetime(value: str) -> bool:
     return bool(_ISO_DATETIME_RE.match(value.strip()))

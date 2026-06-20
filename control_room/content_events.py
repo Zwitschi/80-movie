@@ -11,6 +11,7 @@ from shared.utils import (
     EVENT_STATUSES,
     EVENT_ATTENDANCE_MODES,
     OFFER_AVAILABILITIES,
+    SCREENING_TIMEZONES,
 
 )
 from .content_common import _ctx
@@ -27,6 +28,7 @@ def _render_events_form(*, save_error, save_success, events, offers, page_contex
         event_statuses=EVENT_STATUSES,
         event_attendance_modes=EVENT_ATTENDANCE_MODES,
         offer_availabilities=OFFER_AVAILABILITIES,
+        screening_timezones=SCREENING_TIMEZONES,
         edit_event=edit_event,
         edit_index=edit_index,
         **page_context,

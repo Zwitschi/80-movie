@@ -86,14 +86,24 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
       value="{{ edit_event.end_date }}"
     />
 
-    <label for="event_timezone">Timezone (IANA, e.g. Europe/Zurich)</label>
-    <input
-      id="event_timezone"
-      name="event_timezone"
-      type="text"
-      placeholder="Europe/Zurich"
-      value="{{ edit_event.event_timezone }}"
-    />
+    <label for="event_timezone">Timezone</label>
+    <select id="event_timezone" name="event_timezone">
+      <option value="">Select timezone</option>
+      {% for timezone in screening_timezones %}
+      <option
+        value="{{ timezone }}"
+        {%
+        if
+        edit_event.event_timezone=""
+        ="timezone"
+        %}selected{%
+        endif
+        %}
+      >
+        {{ timezone }}
+      </option>
+      {% endfor %}
+    </select>
 
     <label for="event_status">Event status</label>
     <select id="event_status" name="event_status">
@@ -101,16 +111,6 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
       edit_event.event_status == status else '' %}
       <option value="{{ status }}" {{ selected }}>
         {{ status.replace('https://schema.org/', '') }}
-      </option>
-      {% endfor %}
-    </select>
-
-    <label for="event_attendance_mode">Attendance mode</label>
-    <select id="event_attendance_mode" name="event_attendance_mode">
-      {% for mode in event_attendance_modes %} {% set selected = 'selected' if
-      edit_event.event_attendance_mode == mode else '' %}
-      <option value="{{ mode }}" {{ selected }}>
-        {{ mode.replace('https://schema.org/', '') }}
       </option>
       {% endfor %}
     </select>
@@ -237,13 +237,13 @@ Offers{% endblock %} {% block admin_content %} {% if save_success %}
       placeholder="2026-06-12T21:30:00-07:00"
     />
 
-    <label for="event_timezone">Timezone (IANA, e.g. Europe/Zurich)</label>
-    <input
-      id="event_timezone"
-      name="event_timezone"
-      type="text"
-      placeholder="Europe/Zurich"
-    />
+    <label for="event_timezone">Timezone</label>
+    <select id="event_timezone" name="event_timezone">
+      <option value="">Select timezone</option>
+      {% for timezone in screening_timezones %}
+      <option value="{{ timezone }}">{{ timezone }}</option>
+      {% endfor %}
+    </select>
 
     <label for="event_status">Event status</label>
     <select id="event_status" name="event_status">
