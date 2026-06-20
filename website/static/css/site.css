@@ -1044,6 +1044,26 @@ section {
   font-weight: 800;
 }
 
+.screenings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.screening-item {
+  border-bottom: 1px solid var(--color-border, #eee);
+  padding-block: 0.5rem;
+}
+.screening-item:last-child {
+  border-bottom: none;
+}
+.screening-date,
+.screening-venue,
+.screening-location {
+  display: block;
+  font-size: 0.9em;
+  color: var(--color-muted, #666);
+}
+
 .bullet-list {
   margin-top: 1rem;
   padding-left: 1.1rem;
