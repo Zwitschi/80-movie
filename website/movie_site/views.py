@@ -83,6 +83,43 @@ def index():
     )
 
 
+# ── Backward-compat redirects for old .html URLs ──
+
+@main_blueprint.get('/index.html')
+def index_html():
+    return redirect(url_for('main.index'))
+
+
+@main_blueprint.get('/connect.html')
+def connect_html():
+    return redirect(url_for('main.connect'))
+
+
+@main_blueprint.get('/film.html')
+def film_html():
+    return redirect(url_for('main.film'))
+
+
+@main_blueprint.get('/media.html')
+def media_html():
+    return redirect(url_for('main.media'))
+
+
+@main_blueprint.get('/patreon.html')
+def patreon_html():
+    return redirect(url_for('main.patreon'))
+
+
+@main_blueprint.get('/watch.html')
+def watch_html():
+    return redirect(url_for('main.watch'))
+
+
+@main_blueprint.get('/credits.html')
+def credits_html():
+    return redirect(url_for('main.credits'))
+
+
 @main_blueprint.get('/film')
 def film():
     return render_template(
