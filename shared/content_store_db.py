@@ -4,6 +4,8 @@ Supports both Flask app context (via shared.db) and standalone usage
 (via shared.db context managers).
 """
 
+from datetime import datetime, timezone
+
 from shared.db import get_conn, get_dict_cursor, get_connection, get_dict_cursor_ctx
 import json
 from uuid import uuid4
@@ -124,14 +126,22 @@ class DbContentReader:
 
     def _read_events(self, cursor):
         cursor.execute("SELECT * FROM screening_event ORDER BY start_date")
-        events = []
+        now = datetime.now(timezone.utc)
+        upcoming = []
+        past = []
         for row in cursor.fetchall():
+            start_date = row.get('start_date')
+            is_past = isinstance(start_date, datetime) and start_date < now
+            event_status = row.get('event_status', '')
+            if is_past and not event_status:
+                event_status = 'https://schema.org/EventScheduled'
+
             event = {
                 'name': row.get('name', ''),
                 'description': row.get('description', ''),
-                'start_date': str(row.get('start_date', '')) if row.get('start_date') else '',
+                'start_date': str(start_date) if start_date else '',
                 'end_date': str(row.get('end_date', '')) if row.get('end_date') else '',
-                'event_status': row.get('event_status', ''),
+                'event_status': event_status,
                 'event_attendance_mode': row.get('event_attendance_mode', ''),
                 'location': {
                     'name': row.get('location_name', ''),
@@ -164,8 +174,11 @@ class DbContentReader:
                     'availability': offer_row.get('availability', ''),
                     'valid_from': str(offer_row.get('valid_from', '')) if offer_row.get('valid_from') else '',
                 })
-            events.append(event)
-        return {'events': events}
+            if is_past:
+                past.append(event)
+            else:
+                upcoming.append(event)
+        return {'events': upcoming, 'past_events': past}
 
     def _read_faq(self, cursor):
         cursor.execute("SELECT * FROM faq_item ORDER BY sort_order, id")

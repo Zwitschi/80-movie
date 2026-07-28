@@ -429,6 +429,16 @@ img {
   margin-top: 0.35rem;
 }
 
+.overview-screenings-section {
+  padding-bottom: 4rem;
+}
+
+.screenings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
 .credits-page {
   display: grid;
   gap: 1rem;
@@ -1218,6 +1228,7 @@ section {
   .overview-band,
   .overview-grid,
   .overview-cta-grid,
+  .screenings-grid,
   .overview-trailer-card,
   .credits-hero-grid,
   .watch-grid,

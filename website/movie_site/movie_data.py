@@ -29,6 +29,7 @@ def get_movie_data():
         'organizations': organizations,
         'production_company': production_company,
         'screenings': all_data.get('events', {}).get('events', []),
+        'past_screenings': all_data.get('events', {}).get('past_events', []),
         'faq_items': all_data.get('faq', {}).get('faq', []),
         'gallery_items': all_data.get('gallery', {}).get('gallery', []),
         'social_links': all_data.get('social', {}).get('social', []),

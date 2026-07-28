@@ -76,10 +76,20 @@ block page_content %}
             >{{ card.link_label }}</a
           >
         </article>
-        {% endfor %} {% if movie.screenings %}
-        <article
-          class="feature feature-highlight overview-cta-card card-lite stack-sm"
-        >
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if movie.screenings or movie.past_screenings %}
+  <section class="overview-screenings-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Screenings</h2>
+      </div>
+      <div class="screenings-grid">
+        {% if movie.screenings %}
+        <article class="feature feature-highlight card-lite stack-sm">
           <span class="eyebrow eyebrow-small">Screenings</span>
           <h3>Upcoming Screenings</h3>
           <ul class="screenings-list">
@@ -114,10 +124,47 @@ block page_content %}
             {% endfor %}
           </ul>
         </article>
+        {% endif %} {% if movie.past_screenings %}
+        <article class="feature feature-highlight card-lite stack-sm">
+          <span class="eyebrow eyebrow-small">Screenings</span>
+          <h3>Past Screenings</h3>
+          <ul class="screenings-list">
+            {% for screening in movie.past_screenings %}
+            <li class="screening-item stack-xs">
+              <strong>{{ screening.name }}</strong>
+              <span class="screening-date"
+                >{{ screening.start_date |
+                screening_local_time(screening.event_timezone) }}</span
+              >
+              {% if screening.location and screening.location.name %}
+              <span class="screening-venue">{{ screening.location.name }}</span>
+              {% endif %} {% if screening.location and
+              screening.location.address %}
+              <span class="screening-location">
+                {{ screening.location.address.address_locality }}{% if
+                screening.location.address.address_locality and
+                screening.location.address.address_region %}, {% endif %}{{
+                screening.location.address.address_region }}
+              </span>
+              {% endif %} {% if screening.location and screening.location.url %}
+              <span class="screening-url">
+                <a
+                  href="{{ screening.location.url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ screening.location.url }}</a
+                >
+              </span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </article>
         {% endif %}
       </div>
     </div>
   </section>
+  {% endif %}
 
   <section class="overview-synopsis-section">
     <div class="container overview-synopsis-shell">

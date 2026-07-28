@@ -59,6 +59,7 @@ def get_movie_data(flask_app=None):
         'organizations': organizations,
         'production_company': production_company,
         'screenings': all_data.get('events', {}).get('events', []),
+        'past_screenings': all_data.get('events', {}).get('past_events', []),
         'faq_items': all_data.get('faq', {}).get('faq', []),
         'gallery_items': all_data.get('gallery', {}).get('gallery', []),
         'social_links': social_links,

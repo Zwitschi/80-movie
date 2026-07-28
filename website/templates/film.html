@@ -60,6 +60,41 @@ block page_content %}
             {% endfor %}
           </ul>
         </div>
+        {% endif %} {% if movie.past_screenings %}
+        <div class="film-screenings">
+          <span class="eyebrow eyebrow-small">Past Screenings</span>
+          <ul class="screenings-list">
+            {% for screening in movie.past_screenings %}
+            <li class="screening-item stack-xs">
+              <strong>{{ screening.name }}</strong>
+              <span class="screening-date"
+                >{{ screening.start_date |
+                screening_local_time(screening.event_timezone) }}</span
+              >
+              {% if screening.location and screening.location.name %}
+              <span class="screening-venue">{{ screening.location.name }}</span>
+              {% endif %} {% if screening.location and
+              screening.location.address %}
+              <span class="screening-location">
+                {{ screening.location.address.address_locality }}{% if
+                screening.location.address.address_locality and
+                screening.location.address.address_region %}, {% endif %}{{
+                screening.location.address.address_region }}
+              </span>
+              {% endif %} {% if screening.location and screening.location.url %}
+              <span class="screening-url">
+                <a
+                  href="{{ screening.location.url }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ screening.location.url }}</a
+                >
+              </span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
         {% endif %}
       </div>
 
