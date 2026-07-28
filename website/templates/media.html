@@ -19,17 +19,6 @@ block page_content %}
           >
         </div>
       </div>
-
-      <aside class="content-card side-panel panel-card stack-md">
-        <span class="eyebrow eyebrow-small"
-          >{{ page_content.scope_eyebrow }}</span
-        >
-        <ul class="bullet-list">
-          {% for item in page_content.scope_items %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-      </aside>
     </div>
   </section>
 
@@ -62,9 +51,13 @@ block page_content %}
 
     <section>
       <div class="section-header">
-        <h2>{{ page_content.get('social_gallery_heading') or 'TikTok & Instagram Gallery' }}</h2>
+        <h2>
+          {{ page_content.get('social_gallery_heading') or 'TikTok & Instagram
+          Gallery' }}
+        </h2>
         <p>
-          {{ page_content.get('social_gallery_description') or 'Embedded short-form posts and clips from the official film accounts.' }}
+          {{ page_content.get('social_gallery_description') or 'Embedded
+          short-form posts and clips from the official film accounts.' }}
         </p>
       </div>
 
@@ -84,31 +77,41 @@ block page_content %}
             ></iframe>
           </div>
           <div class="gallery-copy stack-sm">
-            <span class="eyebrow eyebrow-small">{{ item.platform | title }}</span>
+            <span class="eyebrow eyebrow-small"
+              >{{ item.platform | title }}</span
+            >
             <h3>{{ item.label }}</h3>
             {% if item.description %}
             <p>{{ item.description }}</p>
             {% endif %}
-            <a href="{{ item.url }}" class="text-link" target="_blank" rel="noopener noreferrer"
+            <a
+              href="{{ item.url }}"
+              class="text-link"
+              target="_blank"
+              rel="noopener noreferrer"
               >Open Original Post</a
             >
           </div>
         </article>
         {% endfor %}
       </div>
-      {% endif %}
-
-      {% if movie.social_gallery_profile_items %}
+      {% endif %} {% if movie.social_gallery_profile_items %}
       <div class="gallery-grid social-profile-grid">
         {% for item in movie.social_gallery_profile_items %}
         <article class="content-card gallery-card gallery-profile-card">
           <div class="gallery-copy stack-sm">
-            <span class="eyebrow eyebrow-small">{{ item.platform | title }}</span>
+            <span class="eyebrow eyebrow-small"
+              >{{ item.platform | title }}</span
+            >
             <h3>{{ item.label }}</h3>
             {% if item.description %}
             <p>{{ item.description }}</p>
             {% endif %}
-            <a href="{{ item.url }}" class="text-link" target="_blank" rel="noopener noreferrer"
+            <a
+              href="{{ item.url }}"
+              class="text-link"
+              target="_blank"
+              rel="noopener noreferrer"
               >View Account</a
             >
           </div>
